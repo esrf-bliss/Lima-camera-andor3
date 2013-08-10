@@ -6,6 +6,19 @@
 	objectVersion = 46;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		958C873C17B65DBA003B74B2 /* Anddor3Camera.h in Headers */ = {isa = PBXBuildFile; fileRef = 958C873817B65DBA003B74B2 /* Anddor3Camera.h */; };
+		958C873D17B65DBA003B74B2 /* Andor3DetInfoCtrlObj.h in Headers */ = {isa = PBXBuildFile; fileRef = 958C873917B65DBA003B74B2 /* Andor3DetInfoCtrlObj.h */; };
+		958C873E17B65DBA003B74B2 /* Andor3Interface.h in Headers */ = {isa = PBXBuildFile; fileRef = 958C873A17B65DBA003B74B2 /* Andor3Interface.h */; };
+		958C873F17B65DBA003B74B2 /* Andor3SyncCtrlObj.h in Headers */ = {isa = PBXBuildFile; fileRef = 958C873B17B65DBA003B74B2 /* Andor3SyncCtrlObj.h */; };
+		958C874417B65DC9003B74B2 /* Anddor3Camera.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 958C874017B65DC9003B74B2 /* Anddor3Camera.cpp */; };
+		958C874517B65DC9003B74B2 /* Andor3DetInfoCtrlObj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 958C874117B65DC9003B74B2 /* Andor3DetInfoCtrlObj.cpp */; };
+		958C874617B65DC9003B74B2 /* Andor3Interface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 958C874217B65DC9003B74B2 /* Andor3Interface.cpp */; };
+		958C874717B65DC9003B74B2 /* Andor3SyncCtrlObj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 958C874317B65DC9003B74B2 /* Andor3SyncCtrlObj.cpp */; };
+		958C874917B65DD0003B74B2 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 958C874817B65DD0003B74B2 /* Makefile */; };
+		958C874B17B65DDC003B74B2 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 958C874A17B65DDC003B74B2 /* Makefile */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		95365B76152449960099116D /* common */ = {isa = PBXFileReference; lastKnownFileType = folder; name = common; path = ../../common; sourceTree = "<group>"; };
 		95365B77152449960099116D /* control */ = {isa = PBXFileReference; lastKnownFileType = folder; name = control; path = ../../control; sourceTree = "<group>"; };
@@ -13,6 +26,21 @@
 		956C320F1523BB6B00F0632C /* andor3.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = andor3.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		956C32141523BB6C00F0632C /* andor3Proj.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = andor3Proj.xcconfig; sourceTree = "<group>"; };
 		956C32151523BB6C00F0632C /* andor3Target.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = andor3Target.xcconfig; sourceTree = "<group>"; };
+		958C873817B65DBA003B74B2 /* Anddor3Camera.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Anddor3Camera.h; sourceTree = "<group>"; };
+		958C873917B65DBA003B74B2 /* Andor3DetInfoCtrlObj.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Andor3DetInfoCtrlObj.h; sourceTree = "<group>"; };
+		958C873A17B65DBA003B74B2 /* Andor3Interface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Andor3Interface.h; sourceTree = "<group>"; };
+		958C873B17B65DBA003B74B2 /* Andor3SyncCtrlObj.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Andor3SyncCtrlObj.h; sourceTree = "<group>"; };
+		958C874017B65DC9003B74B2 /* Anddor3Camera.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Anddor3Camera.cpp; sourceTree = "<group>"; };
+		958C874117B65DC9003B74B2 /* Andor3DetInfoCtrlObj.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Andor3DetInfoCtrlObj.cpp; sourceTree = "<group>"; };
+		958C874217B65DC9003B74B2 /* Andor3Interface.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Andor3Interface.cpp; sourceTree = "<group>"; };
+		958C874317B65DC9003B74B2 /* Andor3SyncCtrlObj.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Andor3SyncCtrlObj.cpp; sourceTree = "<group>"; };
+		958C874817B65DD0003B74B2 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		958C874A17B65DDC003B74B2 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		958C874C17B65DE8003B74B2 /* Andor3Camera.sip */ = {isa = PBXFileReference; lastKnownFileType = text; path = Andor3Camera.sip; sourceTree = "<group>"; };
+		958C874D17B65DE8003B74B2 /* Andor3Interface.sip */ = {isa = PBXFileReference; lastKnownFileType = text; path = Andor3Interface.sip; sourceTree = "<group>"; };
+		958C874E17B65DF0003B74B2 /* __init__.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = __init__.py; sourceTree = "<group>"; };
+		958C874F17B65E1F003B74B2 /* index.rst */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.rst; sourceTree = "<group>"; };
+		958C875017B65E1F003B74B2 /* neo_header.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = neo_header.jpg; sourceTree = "<group>"; };
 		95D5EA221526233B008221ED /* adsc */ = {isa = PBXFileReference; lastKnownFileType = folder; name = adsc; path = ../adsc; sourceTree = "<group>"; };
 		95D5EA231526233B008221ED /* andor */ = {isa = PBXFileReference; lastKnownFileType = folder; name = andor; path = ../andor; sourceTree = "<group>"; };
 		95D5EA241526233B008221ED /* basler */ = {isa = PBXFileReference; lastKnownFileType = folder; name = basler; path = ../basler; sourceTree = "<group>"; };
@@ -49,8 +77,12 @@
 		955AAC3F17B6584000A74F95 /* include */ = {
 			isa = PBXGroup;
 			children = (
+				958C873817B65DBA003B74B2 /* Anddor3Camera.h */,
+				958C873917B65DBA003B74B2 /* Andor3DetInfoCtrlObj.h */,
+				958C873A17B65DBA003B74B2 /* Andor3Interface.h */,
+				958C873B17B65DBA003B74B2 /* Andor3SyncCtrlObj.h */,
 			);
-			name = include;
+			path = include;
 			sourceTree = "<group>";
 		};
 		956B30DD152621ED00FB4D2D /* Other Cameras */ = {
@@ -98,6 +130,7 @@
 			children = (
 				95D5EA1D1526230A008221ED /* LIMA-other */,
 				956B30DD152621ED00FB4D2D /* Other Cameras */,
+				958C874A17B65DDC003B74B2 /* Makefile */,
 				955AAC3F17B6584000A74F95 /* include */,
 				95B6659E14E9846400A8C6FC /* src */,
 				95B6659F14E9847500A8C6FC /* sip */,
@@ -111,29 +144,39 @@
 		95B6659E14E9846400A8C6FC /* src */ = {
 			isa = PBXGroup;
 			children = (
+				958C874817B65DD0003B74B2 /* Makefile */,
+				958C874017B65DC9003B74B2 /* Anddor3Camera.cpp */,
+				958C874117B65DC9003B74B2 /* Andor3DetInfoCtrlObj.cpp */,
+				958C874217B65DC9003B74B2 /* Andor3Interface.cpp */,
+				958C874317B65DC9003B74B2 /* Andor3SyncCtrlObj.cpp */,
 			);
-			name = src;
+			path = src;
 			sourceTree = "<group>";
 		};
 		95B6659F14E9847500A8C6FC /* sip */ = {
 			isa = PBXGroup;
 			children = (
+				958C874C17B65DE8003B74B2 /* Andor3Camera.sip */,
+				958C874D17B65DE8003B74B2 /* Andor3Interface.sip */,
 			);
-			name = sip;
+			path = sip;
 			sourceTree = "<group>";
 		};
 		95B665A414E984D800A8C6FC /* python */ = {
 			isa = PBXGroup;
 			children = (
+				958C874E17B65DF0003B74B2 /* __init__.py */,
 			);
-			name = python;
+			path = python;
 			sourceTree = "<group>";
 		};
 		95B665A814E9851000A8C6FC /* doc */ = {
 			isa = PBXGroup;
 			children = (
+				958C874F17B65E1F003B74B2 /* index.rst */,
+				958C875017B65E1F003B74B2 /* neo_header.jpg */,
 			);
-			name = doc;
+			path = doc;
 			sourceTree = "<group>";
 		};
 		95D5EA1D1526230A008221ED /* LIMA-other */ = {
@@ -165,6 +208,10 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				958C873C17B65DBA003B74B2 /* Anddor3Camera.h in Headers */,
+				958C873D17B65DBA003B74B2 /* Andor3DetInfoCtrlObj.h in Headers */,
+				958C873E17B65DBA003B74B2 /* Andor3Interface.h in Headers */,
+				958C873F17B65DBA003B74B2 /* Andor3SyncCtrlObj.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -219,6 +266,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				958C874417B65DC9003B74B2 /* Anddor3Camera.cpp in Sources */,
+				958C874517B65DC9003B74B2 /* Andor3DetInfoCtrlObj.cpp in Sources */,
+				958C874617B65DC9003B74B2 /* Andor3Interface.cpp in Sources */,
+				958C874717B65DC9003B74B2 /* Andor3SyncCtrlObj.cpp in Sources */,
+				958C874917B65DD0003B74B2 /* Makefile in Sources */,
+				958C874B17B65DDC003B74B2 /* Makefile in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
