@@ -1,0 +1,10 @@
+*~
+*bck
+*.swp
+*target*
+build/
+.DS_Store
+.AppleDouble
+*.o
+andor3_pluggin.xcodeproj/project.xcworkspace/xcuserdata/serge.xcuserdatad/WorkspaceSettings.xcsettings
+andor3_pluggin.xcodeproj/xcuserdata/
