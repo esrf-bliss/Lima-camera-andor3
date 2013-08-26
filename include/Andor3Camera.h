@@ -141,35 +141,35 @@ namespace lima
       bool andor3Error(int code) const;
       void _mapAndor3Error();
       
-      int printInfoForProp(AT_H iCamHandle, const AT_WC * iPropName, A3_TypeInfo iPropType);
+      int printInfoForProp(const AT_WC * iPropName, A3_TypeInfo iPropType);
       
-      int setInt(AT_H Hndl, const AT_WC* Feature, AT_64 Value);
-      int getInt(AT_H Hndl, const AT_WC* Feature, AT_64* Value) const;
-      int getIntMax(AT_H Hndl, const AT_WC* Feature, AT_64* MaxValue) const;
-      int getIntMin(AT_H Hndl, const AT_WC* Feature, AT_64* MinValue) const;
+      int setInt(const AT_WC* Feature, AT_64 Value);
+      int getInt(const AT_WC* Feature, AT_64* Value) const;
+      int getIntMax(const AT_WC* Feature, AT_64* MaxValue) const;
+      int getIntMin(const AT_WC* Feature, AT_64* MinValue) const;
       
-      int setFloat(AT_H Hndl, const AT_WC* Feature, double Value);
-      int getFloat(AT_H Hndl, const AT_WC* Feature, double* Value) const;
-      int getFloatMax(AT_H Hndl, const AT_WC* Feature, double* MaxValue) const;
-      int getFloatMin(AT_H Hndl, const AT_WC* Feature, double* MinValue) const;
+      int setFloat(const AT_WC* Feature, double Value);
+      int getFloat(const AT_WC* Feature, double* Value) const;
+      int getFloatMax(const AT_WC* Feature, double* MaxValue) const;
+      int getFloatMin(const AT_WC* Feature, double* MinValue) const;
       
-      int setBool(AT_H Hndl, const AT_WC* Feature, bool Value);
-      int getBool(AT_H Hndl, const AT_WC* Feature, bool* Value) const;
+      int setBool(const AT_WC* Feature, bool Value);
+      int getBool(const AT_WC* Feature, bool* Value) const;
       
-      int setEnumIndex(AT_H Hndl, const AT_WC* Feature, int Value);
-      int setEnumString(AT_H Hndl, const AT_WC* Feature, const AT_WC* String);
-      int getEnumIndex(AT_H Hndl, const AT_WC* Feature, int* Value) const;
-      int getEnumString(AT_H Hndl, const AT_WC* Feature, AT_WC* String, int StringLength) const;
+      int setEnumIndex(const AT_WC* Feature, int Value);
+      int setEnumString(const AT_WC* Feature, const AT_WC* String);
+      int getEnumIndex(const AT_WC* Feature, int* Value) const;
+      int getEnumString(const AT_WC* Feature, AT_WC* String, int StringLength) const;
       int getEnumCount(AT_H Hndl,const  AT_WC* Feature, int* Count) const;
-      int isEnumIndexAvailable(AT_H Hndl, const AT_WC* Feature, int Index, bool* Available) const;
-      int isEnumIndexImplemented(AT_H Hndl, const AT_WC* Feature, int Index, bool* Implemented) const;
-      int getEnumStringByIndex(AT_H Hndl, const AT_WC* Feature, int Index, AT_WC* String, int StringLength) const;
-      int getEnumIndexByString(AT_H Hndl, const AT_WC* Feature, AT_WC* String, int *Index) const;
+      int isEnumIndexAvailable(const AT_WC* Feature, int Index, bool* Available) const;
+      int isEnumIndexImplemented(const AT_WC* Feature, int Index, bool* Implemented) const;
+      int getEnumStringByIndex(const AT_WC* Feature, int Index, AT_WC* String, int StringLength) const;
+      int getEnumIndexByString(const AT_WC* Feature, AT_WC* String, int *Index) const;
       
-      int setString(AT_H Hndl, const AT_WC* Feature, const AT_WC* String);
-      int getString(AT_H Hndl, const AT_WC* Feature, AT_WC* String, int StringLength) const;
+      int setString(const AT_WC* Feature, const AT_WC* String);
+      int getString(const AT_WC* Feature, AT_WC* String, int StringLength) const;
       
-      int sendCommand(AT_H Hndl, const AT_WC* Feature);
+      int sendCommand(const AT_WC* Feature);
 
       
     private:
@@ -180,21 +180,23 @@ namespace lima
       _AcqThread*                 m_acq_thread;
       Cond                        m_cond;
 
-      string                      m_detector_model;
-      string                      m_detector_type;
-      string											m_detector_serial;
+      std::string                 m_detector_model;
+      std::string                 m_detector_type;
+      std::string									m_detector_serial;
 
       // -- andor3 SDK stuff
-      string                      m_bitflow_path;
+      std::string                 m_bitflow_path;
       int                         m_camera_number;
       AT_H                        m_camera_handle;
-      mutable string              m_camera_error_str;
+      mutable std::string         m_camera_error_str;
       mutable int                 m_camera_error;
       A3_Gain											m_adc_gain;
       A3_ReadOutRate							m_adc_rate;
       A3_ShutterMode							m_electronic_shutter_mode;
-      map<TrigMode, int>          m_trig_mode_maps;
-      map<int, string>            m_andor3_error_maps;
+      bool                        m_cooler;
+      double                      m_temperature_sp;
+      std::map<TrigMode, int>     m_trig_mode_maps;
+      std::map<int, std::string>  m_andor3_error_maps;
 
       static bool						sAndorSDK3Initted;
     };
