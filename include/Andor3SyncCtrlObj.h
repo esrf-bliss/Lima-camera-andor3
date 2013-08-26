@@ -19,6 +19,56 @@
  * License along with this file. If not, see <http://www.gnu.org/licenses/>.
  */
 
+// System headers :
+
+// Camera SDK headers :
+
+// LImA headers :
+#include "HwSyncCtrlObj.h"
+
+// Andor3 plugin headers :
+#include "Andor3Camera.h"
+
+namespace lima
+{
+  namespace Andor3
+  {
+    
+    
+    /*******************************************************************
+     * \class SyncCtrlObj
+     * \brief Control object providing Andor3 synchronization interface
+     *******************************************************************/
+    
+    class SyncCtrlObj : public HwSyncCtrlObj
+    {
+	    DEB_CLASS_NAMESPC(DebModCamera, "SyncCtrlObj", "Andor3");
+      
+    public:
+	    SyncCtrlObj(Camera& cam);
+	    virtual ~SyncCtrlObj();
+      
+	    virtual bool checkTrigMode(TrigMode trig_mode);
+	    virtual void setTrigMode(TrigMode  trig_mode);
+	    virtual void getTrigMode(TrigMode& trig_mode);
+      
+	    virtual void setExpTime(double  exp_time);
+	    virtual void getExpTime(double& exp_time);
+      
+	    virtual void setLatTime(double  lat_time);
+	    virtual void getLatTime(double& lat_time);
+      
+	    virtual void setNbHwFrames(int  nb_frames);
+	    virtual void getNbHwFrames(int& nb_frames);
+      
+	    virtual void getValidRanges(ValidRangesType& valid_ranges);
+      
+    private:
+	    Camera& m_cam;
+    };
+    
+  } // namespace Andor3
+} // namespace lima
 
 
 #endif  /* ANDOR3SYNCCTRLOBJ_H */

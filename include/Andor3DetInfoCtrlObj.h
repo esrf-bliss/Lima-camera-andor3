@@ -19,6 +19,54 @@
  * License along with this file. If not, see <http://www.gnu.org/licenses/>.
  */
 
+// System headers :
+
+// Camera SDK headers :
+
+// LImA headers :
+#include "HwInterface.h"
+
+// Andor3 plugin headers :
+#include "Andor3Camera.h"
+
+namespace lima
+{
+  namespace Andor3
+  {
+    
+    /*******************************************************************
+     * \class DetInfoCtrlObj
+     * \brief Control object providing Andor3 detector info interface
+     *******************************************************************/
+    
+    class DetInfoCtrlObj : public HwDetInfoCtrlObj
+    {
+	    DEB_CLASS_NAMESPC(DebModCamera, "DetInfoCtrlObj", "Andor3");
+      
+    public:
+	    DetInfoCtrlObj(Camera& cam);
+	    virtual ~DetInfoCtrlObj();
+      
+	    virtual void getMaxImageSize(Size& max_image_size);
+	    virtual void getDetectorImageSize(Size& det_image_size);
+      
+	    virtual void getDefImageType(ImageType& def_image_type);
+	    virtual void getCurrImageType(ImageType& curr_image_type);
+	    virtual void setCurrImageType(ImageType  curr_image_type);
+      
+	    virtual void getPixelSize(double& xsize, double& ysize);
+	    virtual void getDetectorType(std::string& det_type);
+	    virtual void getDetectorModel(std::string& det_model);
+      
+	    virtual void registerMaxImageSizeCallback(HwMaxImageSizeCallback& cb);
+	    virtual void unregisterMaxImageSizeCallback(HwMaxImageSizeCallback& cb);
+      
+    private:
+	    Camera& m_cam;
+    };
+    
+  } // namespace Andor3
+} // namespace lima
 
 
 #endif  /* ANDOR3DETINFOCTRLOBJ_H */

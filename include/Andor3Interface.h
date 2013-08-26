@@ -19,6 +19,55 @@
  * License along with this file. If not, see <http://www.gnu.org/licenses/>.
  */
 
+// System headers :
+
+// Camera SDK headers :
+
+// LImA headers :
+#include "HwInterface.h"
+
+// Andor3 plugin headers :
+#include "Andor3Camera.h"
+
+namespace lima
+{
+  namespace Andor3
+  {
+    class Interface;
+    
+    
+    /*******************************************************************
+     * \class Interface
+     * \brief Andor3 hardware interface
+     *******************************************************************/
+    
+    class Interface : public HwInterface
+    {
+	    DEB_CLASS_NAMESPC(DebModCamera, "Andor3Interface", "Andor3");
+      
+    public:
+	    Interface(Camera& cam);
+	    virtual ~Interface();
+      
+	    //- From HwInterface
+	    virtual void    getCapList(CapList&) const;
+	    virtual void    reset(ResetLevel reset_level);
+	    virtual void    prepareAcq();
+	    virtual void    startAcq();
+	    virtual void    stopAcq();
+	    virtual void    getStatus(StatusType& status);
+	    virtual int     getNbHwAcquiredFrames();
+      
+    private:
+	    Camera&         m_cam;
+	    DetInfoCtrlObj  m_det_info;
+	    SyncCtrlObj     m_sync;
+    };
+    
+    
+    
+  } // namespace Andor3
+} // namespace lima
 
 
 #endif  /* ANDOR3INTERFACE_H */
