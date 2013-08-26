@@ -198,6 +198,39 @@ namespace lima
 
       static bool						sAndorSDK3Initted;
     };
+    
+    // Some inline utility functions; used all-over in Andor3 plugin :
+    inline std::wstring StringToWString(const std::string & iStr)
+    {
+      wchar_t		tmpWStringBuf[1024];
+      
+      mbstowcs(tmpWStringBuf, iStr.c_str(), 1023);
+      return std::wstring(tmpWStringBuf);
+      /*std::wostringstream		theWSStream;
+       theWSStream << iStr.c_str();
+       return theWSStream.str();
+       */
+    }
+    
+    inline std::string WStringToString(const std::wstring & iStr)
+    {
+      // Should use wcstombs
+      char			tmpStringBuf[1024];
+      
+      bzero(tmpStringBuf, 1024);
+      wcstombs(tmpStringBuf, iStr.c_str(), 1023);
+      return std::string(tmpStringBuf);
+      /*    std::ostringstream			theSStream;
+       theSStream << iStr.c_str();
+       return theSStream.str();
+       */
+    }
+    
+    inline std::string atBoolToString(AT_BOOL iBool)
+    {
+      return (iBool) ? std::string("true") : std::string("false");
+    }
+
   } // namespace Andor3
 } // namespace lima
 
