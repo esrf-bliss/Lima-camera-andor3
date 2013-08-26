@@ -16,6 +16,20 @@
  * License along with this file. If not, see <http://www.gnu.org/licenses/>.
  */
 
+// System headers :
+#include <sstream>
+#include <iostream>
+#include <string>
+#include <math.h>
+
+// Camera SDK headers :
+
+// LImA headers :
+
+// Andor3 plugin headers :
+#include "Andor3Camera.h"
+
+
 /*
  Local Variables:
  c-file-style: "gnu"
