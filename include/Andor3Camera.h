@@ -61,9 +61,11 @@ namespace lima
       enum A3_ShutterMode { Rolling = 0, Global = 1 };
       // In the same order/index as "PixelReadoutRate"
       enum A3_ReadOutRate { MHz10 = 0, MHz100 = 1, MHz200 = 2, MHz280 = 3 };
+      // In the same order/index as 'BitDepth'
+      enum A3_BitDepth { b11 = 0, b16= 2 };
 
       
-      Camera(const std::string& bitflow_path,int camera_number=0);
+      Camera(const std::string& bitflow_path, int camera_number=0);
       ~Camera();
 
       void prepareAcq();
@@ -130,6 +132,8 @@ namespace lima
       void getAdcRate(A3_ReadOutRate &oRate);
       void setElectronicShutterMode(A3_ShutterMode iMode);
       void getElectronicShutterMode(A3_ShutterMode &oMode);
+      void setBitDepth(A3_BitDepth iMode);
+      void getBitDepth(A3_BitDepth &oMode);
       void setTemperatureSP(double temp);
       void getTemperatureSP(double& temp);
       void getTemperature(double& temp);
@@ -142,6 +146,8 @@ namespace lima
       void _mapAndor3Error();
       
       int printInfoForProp(const AT_WC * iPropName, A3_TypeInfo iPropType);
+      
+      static int getIntSystem(const AT_WC* Feature, AT_64* Value);
       
       int setInt(const AT_WC* Feature, AT_64 Value);
       int getInt(const AT_WC* Feature, AT_64* Value) const;
@@ -193,6 +199,7 @@ namespace lima
       A3_Gain											m_adc_gain;
       A3_ReadOutRate							m_adc_rate;
       A3_ShutterMode							m_electronic_shutter_mode;
+      A3_BitDepth                 m_bit_depth;
       bool                        m_cooler;
       double                      m_temperature_sp;
       std::map<TrigMode, int>     m_trig_mode_maps;

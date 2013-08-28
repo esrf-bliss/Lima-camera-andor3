@@ -30,9 +30,165 @@
 #include "Andor3Camera.h"
 
 
-lima::Andor3::Camera::Camera(const std::string& bitflow_path,int camera_number)
+// Defining the parameter names of the andor3 SDK :
+namespace lima {
+  namespace andor3 {
+    static const AT_WC* AccumulateCount = L"AccumulateCount";
+    static const AT_WC* AcquisitionStart = L"AcquisitionStart";
+    static const AT_WC* AcquisitionStop = L"AcquisitionStop";
+    static const AT_WC* AOIBinning = L"AOIBinning";
+    static const AT_WC* AOIHBin = L"AOIHBin";
+    static const AT_WC* AOIHeight = L"AOIHeight";
+    static const AT_WC* AOILeft = L"AOILeft";
+    static const AT_WC* AOIStride = L"AOIStride";
+    static const AT_WC* AOITop = L"AOITop";
+    static const AT_WC* AOIVBin = L"AOIVBin";
+    
+    static const AT_WC* AOIWidth = L"AOIWidth";
+    static const AT_WC* BaselineLevel = L"BaselineLevel";
+    static const AT_WC* BitDepth = L"BitDepth";
+    static const AT_WC* BytesPerPixel = L"BytesPerPixel";
+    static const AT_WC* CameraAcquiring = L"CameraAcquiring";
+    static const AT_WC* CameraDump = L"CameraDump";
+    static const AT_WC* CameraModel = L"CameraModel";
+    static const AT_WC* ControllerID = L"ControllerID";
+    static const AT_WC* CycleMode = L"CycleMode";
+    static const AT_WC* DeviceCount = L"DeviceCount";
+
+    static const AT_WC* ElectronicShutteringMode = L"ElectronicShutteringMode";
+    static const AT_WC* ExposureTime = L"ExposureTime";
+    static const AT_WC* FanSpeed = L"FanSpeed";
+    static const AT_WC* FirmwareVersion = L"FirmwareVersion";
+    static const AT_WC* FrameCount = L"FrameCount";
+    static const AT_WC* FrameRate = L"FrameRate";
+    static const AT_WC* FullAOIControl = L"FullAOIControl";
+    static const AT_WC* ImageSizeBytes = L"ImageSizeBytes";
+    static const AT_WC* LUTIndex = L"LUTIndex";
+    static const AT_WC* LUTValue = L"LUTValue";
+
+    static const AT_WC* MetadataEnable = L"MetadataEnable";
+    static const AT_WC* MetadataFrame = L"MetadataFrame";
+    static const AT_WC* MetadataTimestamp = L"MetadataTimestamp";
+    static const AT_WC* Overlap = L"Overlap";
+    static const AT_WC* PixelCorrection = L"PixelCorrection";
+    static const AT_WC* PixelEncoding = L"PixelEncoding";
+    static const AT_WC* PixelHeight = L"PixelHeight";
+    static const AT_WC* PixelReadoutRate = L"PixelReadoutRate";
+    static const AT_WC* PixelWidth = L"PixelWidth";
+    //    static const AT_WC* PreAmpGain = L"PreAmpGain"; // Deprecated
+
+    //    static const AT_WC* PreAmpGainChannel = L"PreAmpGainChannel"; // Deprecated
+    static const AT_WC* PreAmpGainControl = L"PreAmpGainControl";
+    //    static const AT_WC* PreAmpGainSelector = L"PreAmpGainSelector"; // Deprecated
+    static const AT_WC* ReadoutTime = L"ReadoutTime";
+    static const AT_WC* SensorCooling = L"SensorCooling";
+    static const AT_WC* SensorHeight = L"SensorHeight";
+    static const AT_WC* SensorTemperature = L"SensorTemperature";
+    static const AT_WC* SensorWidth = L"SensorWidth";
+    static const AT_WC* SerialNumber = L"SerialNumber";
+    static const AT_WC* SoftwareTrigger = L"SoftwareTrigger";
+
+    static const AT_WC* SoftwareVersion = L"SoftwareVersion";
+    static const AT_WC* SpuriousNoiseFilter = L"SpuriousNoiseFilter";
+    static const AT_WC* SynchronousTriggering = L"SynchronousTriggering";
+    static const AT_WC* TargetSensorTemperature = L"TargetSensorTemperature";
+    static const AT_WC* TemperatureControl = L"TemperatureControl";
+    static const AT_WC* TemperatureStatus = L"TemperatureStatus";
+    static const AT_WC* TimestampClock = L"TimestampClock";
+    static const AT_WC* TimestampClockFrequency = L"TimestampClockFrequency";
+    static const AT_WC* TimestampClockReset = L"TimestampClockReset";
+    static const AT_WC* TriggerMode = L"TriggerMode";
+  }
+}
+
+//---------------------------
+//- utility variables
+//---------------------------
+bool lima::Andor3::Camera::sAndorSDK3Initted = false;
+
+
+lima::Andor3::Camera::Camera(const std::string& bitflow_path, int camera_number) :
+m_acq_thread(NULL),
+m_cond(),
+m_detector_model("un-inited"),
+m_detector_type("un-inited"),
+m_detector_serial("un-inited"),
+m_bitflow_path(bitflow_path),
+m_camera_number(camera_number),
+m_camera_handle(AT_HANDLE_UNINITIALISED),
+m_adc_gain(Gain1_Gain4),
+m_adc_rate(MHz100),
+m_electronic_shutter_mode(Rolling),
+m_bit_depth(b16),
+m_cooler(true),
+m_temperature_sp(5.0)
 {
+  DEB_CONSTRUCTOR();
+  // Initing the maps that serves for error string generation :
+  _mapAndor3Error();
   
+  // Initialisation of the atcore library :
+  if ( ! sAndorSDK3Initted ) {
+    if ( m_bitflow_path != "" ) {
+      setenv("BITFLOW_INSTALL_DIRS", m_bitflow_path.c_str(), true);
+    }
+    else {
+      setenv("BITFLOW_INSTALL_DIRS", "/usr/local/andor/bitflow", false);
+    }
+    
+    if ( AT_SUCCESS != andor3Error(AT_InitialiseLibrary()) ) {
+      DEB_ERROR() << "Library initialization failed, check the config. path" << " : error code = " << m_camera_error_str;
+      THROW_HW_ERROR(Error) << "Library initialization failed, check the bitflow path";
+    }
+  }
+
+  // --- Get available cameras and select the choosen one.
+  AT_64 numCameras;
+  DEB_TRACE() << "Get all attached cameras";
+  if ( AT_SUCCESS != getIntSystem(andor3::DeviceCount, &numCameras) ) {
+    DEB_ERROR() << "No camera present!";
+    THROW_HW_ERROR(Error) << "No camera present!";
+  }
+  DEB_TRACE() << "Found "<< numCameras << " camera" << ((numCameras>1)? "s": "");
+  DEB_TRACE() << "Try to set current camera to number " << m_camera_number;
+  
+  if (m_camera_number < numCameras && m_camera_number >=0) {
+    // Getting the m_camera_handle but WITH some error checking :
+    if(andor3Error(AT_Open(m_camera_number, &m_camera_handle))) {
+      DEB_ERROR() << "Cannot get camera handle" << " : error code = " << m_camera_error_str;;
+      THROW_HW_ERROR(InvalidValue) << "Cannot get camera handle";
+    }
+  }
+  else {
+    DEB_ERROR() << "Invalid camera number " << m_camera_number << ", there is "<< numCameras << " available";
+    THROW_HW_ERROR(InvalidValue) << "Invalid Camera number ";
+  }
+  
+  // --- Get Camera model
+  AT_WC	model[1024];
+  if ( AT_SUCCESS != getString(andor3::CameraModel, model, 1024) ) {
+    DEB_ERROR() << "Cannot get camera model: " << m_camera_error_str;
+    THROW_HW_ERROR(Error) << "Cannot get camera model";
+  }
+  m_detector_model = WStringToString(std::wstring(model));
+
+  // @TODO This one would be better with a map converting from model to type !!!
+  m_detector_type = std::string("sCMOS");
+  
+  AT_WC	serial[1024];
+  if ( AT_SUCCESS != getString(andor3::SerialNumber, serial, 1024) ) {
+    DEB_ERROR() << "Cannot get camera serial number: " << m_camera_error_str;
+    THROW_HW_ERROR(Error) << "Cannot get camera serial number";
+  }
+  m_detector_serial = WStringToString(std::wstring(serial));
+  
+  // --- Initialise deeper parameters of the controller
+  setAdcGain(m_adc_gain);
+  setAdcRate(m_adc_rate);
+  setElectronicShutterMode(m_electronic_shutter_mode);
+  setBitDepth(m_bit_depth);
+  setCooler(m_cooler);
+  setTemperatureSP(m_temperature_sp);
 }
 
 lima::Andor3::Camera::~Camera()
@@ -235,6 +391,15 @@ lima::Andor3::Camera::setElectronicShutterMode(A3_ShutterMode iMode)
 }
 void
 lima::Andor3::Camera::getElectronicShutterMode(A3_ShutterMode &oMode)
+{
+}
+void
+lima::Andor3::Camera::setBitDepth(A3_BitDepth iMode)
+{
+}
+
+void
+lima::Andor3::Camera::getBitDepth(A3_BitDepth &oMode)
 {
 }
 
@@ -570,6 +735,13 @@ lima::Andor3::Camera::printInfoForProp(const AT_WC * iPropName, A3_TypeInfo iPro
       break;
   }
   return i_err;
+}
+
+int
+lima::Andor3::Camera::getIntSystem(const AT_WC* Feature, AT_64* Value)
+{
+  DEB_STATIC_FUNCT();
+  return (AT_SUCCESS != AT_GetInt(AT_HANDLE_SYSTEM, Feature, Value));
 }
 
 int
