@@ -113,6 +113,8 @@ m_cond(),
 m_detector_model("un-inited"),
 m_detector_type("un-inited"),
 m_detector_serial("un-inited"),
+m_detector_size(1,1),
+m_exp_time(1.0),
 m_bitflow_path(bitflow_path),
 m_camera_number(camera_number),
 m_camera_handle(AT_HANDLE_UNINITIALISED),
@@ -152,8 +154,8 @@ m_temperature_sp(5.0)
   DEB_TRACE() << "Found "<< numCameras << " camera" << ((numCameras>1)? "s": "");
   DEB_TRACE() << "Try to set current camera to number " << m_camera_number;
   
-  if (m_camera_number < numCameras && m_camera_number >=0) {
-    // Getting the m_camera_handle but WITH some error checking :
+  if ( m_camera_number < numCameras && m_camera_number >=0 ) {
+    // Getting the m_camera_handle WITH some error checking :
     if(andor3Error(AT_Open(m_camera_number, &m_camera_handle))) {
       DEB_ERROR() << "Cannot get camera handle" << " : error code = " << m_camera_error_str;;
       THROW_HW_ERROR(InvalidValue) << "Cannot get camera handle";
@@ -164,7 +166,7 @@ m_temperature_sp(5.0)
     THROW_HW_ERROR(InvalidValue) << "Invalid Camera number ";
   }
   
-  // --- Get Camera model
+  // --- Get Camera model (and all other parameters which are not changing during camera setup and usage )
   AT_WC	model[1024];
   if ( AT_SUCCESS != getString(andor3::CameraModel, model, 1024) ) {
     DEB_ERROR() << "Cannot get camera model: " << m_camera_error_str;
@@ -172,28 +174,67 @@ m_temperature_sp(5.0)
   }
   m_detector_model = WStringToString(std::wstring(model));
 
+  // --- Get Camera Type
   // @TODO This one would be better with a map converting from model to type !!!
   m_detector_type = std::string("sCMOS");
   
+  // --- Get Camera Serial number
   AT_WC	serial[1024];
   if ( AT_SUCCESS != getString(andor3::SerialNumber, serial, 1024) ) {
     DEB_ERROR() << "Cannot get camera serial number: " << m_camera_error_str;
     THROW_HW_ERROR(Error) << "Cannot get camera serial number";
   }
   m_detector_serial = WStringToString(std::wstring(serial));
+
+  // --- Get Camera maximum image size 
+  AT_64 xmax, ymax;
+  // --- Get the max image size of the detector
+  if ( AT_SUCCESS != getInt(andor3::SensorWidth, &xmax)) {
+    DEB_ERROR() << "Cannot get detector X size" << " : error code = " << m_camera_error_str;
+    THROW_HW_ERROR(Error) << "Cannot get detector X size";
+  }
+  if ( AT_SUCCESS != getInt(andor3::SensorHeight, &ymax)) {
+    DEB_ERROR() << "Cannot get detector Y size" << " : error code = " << m_camera_error_str;
+    THROW_HW_ERROR(Error) << "Cannot get detector Y size";
+  }
+  m_detector_size= Size(static_cast<int>(xmax), static_cast<int>(ymax));
   
   // --- Initialise deeper parameters of the controller
-  setAdcGain(m_adc_gain);
-  setAdcRate(m_adc_rate);
-  setElectronicShutterMode(m_electronic_shutter_mode);
-  setBitDepth(m_bit_depth);
-  setCooler(m_cooler);
-  setTemperatureSP(m_temperature_sp);
+  initialiseController();
+  
 }
 
 lima::Andor3::Camera::~Camera()
 {
+  DEB_DESTRUCTOR();
+
+  // Stop Acq thread
+  //  delete m_acq_thread;
+  //  m_acq_thread = NULL;
   
+  // Close camera
+  if (m_cooler) {
+    DEB_ERROR() <<"Please stop the cooling before shuting dowm the camera\n"
+    << "brutale heating could damage the sensor.\n"
+    << "And wait until temperature rises above 5 deg, before shuting down.";
+    
+    THROW_HW_ERROR(Error)<<"Please stop the cooling before shuting dowm the camera\n"
+    << "brutale heating could damage the sensor.\n"
+    << "And wait until temperature rises above 5 deg, before shuting down.";
+  }
+  
+  DEB_TRACE() << "Shutdown camera";
+  if ( AT_SUCCESS != andor3Error(AT_Close(m_camera_handle)) ) {
+    DEB_ERROR() << "Cannot close the camera" << " : error code = " << m_camera_error << ", " <<m_camera_error_str;
+    THROW_HW_ERROR(Error) << "Cannot close the camera";
+  }
+  m_camera_handle = AT_HANDLE_UNINITIALISED;
+
+  if ( AT_SUCCESS != andor3Error(AT_FinaliseLibrary()) ) {
+    DEB_ERROR() << "Cannot finalise Andor SDK 3 library" << " : error code = " << m_camera_error << ", " <<m_camera_error_str;
+    THROW_HW_ERROR(Error) << "Cannot finalise Andor SDK 3 library";
+  }
+
 }
 
 void
@@ -367,6 +408,30 @@ lima::Andor3::Camera::getNbHwAcquiredFrames()
 void
 lima::Andor3::Camera::initialiseController()
 {
+  DEB_MEMBER_FUNCT();
+  setAdcGain(m_adc_gain);
+  setAdcRate(m_adc_rate);
+  setElectronicShutterMode(m_electronic_shutter_mode);
+  setBitDepth(m_bit_depth);
+  setCooler(m_cooler);
+  setTemperatureSP(m_temperature_sp);
+  setExpTime(m_exp_time);
+  setTrigMode(IntTrig);
+  
+  Size sizeMax;
+  getDetectorImageSize(sizeMax);
+
+  // Setting the ROI to the max :
+  Roi aRoi = Roi(0, 0, sizeMax.getWidth(), sizeMax.getHeight());
+  DEB_TRACE() << "Set the ROI to full frame: "<< aRoi;
+  setRoi(aRoi);
+
+  // Making sure the «spurious noise filter» is OFF :
+  if ( AT_SUCCESS != setBool(andor3::SpuriousNoiseFilter, false) ) {
+    DEB_ERROR() << "Cannot set SpuriousNoiseFilter to false" << " : error code = " << m_camera_error_str;
+    THROW_HW_ERROR(Error) << "Cannot set SpuriousNoiseFilter to false";
+  }
+
 }
 
 void
@@ -414,12 +479,12 @@ void
 lima::Andor3::Camera::setTemperatureSP(double temp)
 {
   DEB_MEMBER_FUNCT();
-  if ( AT_SUCCESS != setFloat(L"TargetSensorTemperature", temp) ) {
+  if ( AT_SUCCESS != setFloat(andor3::TargetSensorTemperature, temp) ) {
     DEB_ERROR() << "Failed to set temperature set-point" <<" : error code = " << m_camera_error_str;
     THROW_HW_ERROR(Error) << "Failed to set temperature set-point";
   }
   // As advised by Andor SDK 3 doc : proof-reading after setting :
-  if ( AT_SUCCESS != getFloat(L"TargetSensorTemperature", &m_temperature_sp) ) {
+  if ( AT_SUCCESS != getFloat(andor3::TargetSensorTemperature, &m_temperature_sp) ) {
     DEB_ERROR() << "Failed to proof-read temperature set-point" <<" : error code = " << m_camera_error_str;
     THROW_HW_ERROR(Error) << "Failed to proof-read temperature set-point";
   }
@@ -447,7 +512,7 @@ void
 lima::Andor3::Camera::getTemperature(double& temp)
 {
   DEB_MEMBER_FUNCT();
-  if ( AT_SUCCESS != getFloat(L"SensorTemperature", &temp) ) {
+  if ( AT_SUCCESS != getFloat(andor3::SensorTemperature, &temp) ) {
     DEB_ERROR() << "Failed to read temperature" <<" : error code = " << m_camera_error_str;
     THROW_HW_ERROR(Error) << "Failed to read temperature";
   }
@@ -462,12 +527,12 @@ void
 lima::Andor3::Camera::setCooler(bool flag)
 {
   DEB_MEMBER_FUNCT();
-  if ( AT_SUCCESS != setBool(L"SensorCooling", flag) ) {
+  if ( AT_SUCCESS != setBool(andor3::SensorCooling, flag) ) {
     DEB_ERROR() << "Failed to set cooler" <<" : error code = " << m_camera_error_str;
     THROW_HW_ERROR(Error) << "Failed to set cooler";
   }
   // As advised by Andor SDK 3 doc : proof-reading after setting :
-  if ( AT_SUCCESS != getBool(L"SensorCooling", &m_cooler) ) {
+  if ( AT_SUCCESS != getBool(andor3::SensorCooling, &m_cooler) ) {
     DEB_ERROR() << "Failed to proof-read cooler" <<" : error code = " << m_camera_error_str;
     THROW_HW_ERROR(Error) << "Failed to proof-read cooler";
   }
@@ -501,7 +566,7 @@ lima::Andor3::Camera::getCoolingStatus(std::string& status)
   DEB_MEMBER_FUNCT();
   
   wchar_t		wcs_status_string[1024];
-  if ( AT_SUCCESS != getEnumString(L"TemperatureStatus", wcs_status_string, 1023) ) {
+  if ( AT_SUCCESS != getEnumString(andor3::TemperatureStatus, wcs_status_string, 1023) ) {
     DEB_ERROR() << "Failed to read cooling status" <<" : error code = " << m_camera_error_str;
     THROW_HW_ERROR(Error) << "Failed to cooling status";
   }

@@ -189,6 +189,8 @@ namespace lima
       std::string                 m_detector_model;
       std::string                 m_detector_type;
       std::string									m_detector_serial;
+      Size												m_detector_size;
+      double											m_exp_time;
 
       // -- andor3 SDK stuff
       std::string                 m_bitflow_path;
