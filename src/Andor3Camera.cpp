@@ -98,6 +98,7 @@ namespace lima {
     static const AT_WC* TimestampClockFrequency = L"TimestampClockFrequency";
     static const AT_WC* TimestampClockReset = L"TimestampClockReset";
     static const AT_WC* TriggerMode = L"TriggerMode";
+
   }
 }
 
@@ -106,10 +107,38 @@ namespace lima {
 //---------------------------
 bool lima::Andor3::Camera::sAndorSDK3Initted = false;
 
+//---------------------------
+//- utility thread
+//---------------------------
+namespace lima {
+  namespace Andor3 {
+    class Camera::_AcqThread : public Thread
+    {
+      DEB_CLASS_NAMESPC(DebModCamera, "Camera", "_AcqThread");
+    public:
+      _AcqThread(Camera &aCam);
+      virtual ~_AcqThread();
+      
+    protected:
+      virtual void threadFunction();
+      
+    private:
+      Camera&    m_cam;
+    };
+  }
+}
+
 
 lima::Andor3::Camera::Camera(const std::string& bitflow_path, int camera_number) :
+m_buffer_ctrl_obj(),
 m_acq_thread(NULL),
 m_cond(),
+m_acq_thread_waiting(true),
+m_acq_thread_running(false),
+m_acq_thread_should_quit(false),
+m_nb_frames_to_collect(1),
+m_image_index(0),
+m_buffer_ringing(false),
 m_detector_model("un-inited"),
 m_detector_type("un-inited"),
 m_detector_serial("un-inited"),
@@ -237,9 +266,125 @@ lima::Andor3::Camera::~Camera()
 
 }
 
+
+// This method is called just before the acquisition is started (by startAcq).
+// It is responsible for setting botht the internals of the object and the
+// internals of the camera's SDK for the planned acquisition sequence.
 void
 lima::Andor3::Camera::prepareAcq()
 {
+  DEB_MEMBER_FUNCT();
+  
+  // Setting the next image index to 0 (since we are starting at 0):
+  m_image_index = 0;
+  
+  // Retrieving useful information from the camera :
+  AT_64			the_image_size;
+  int				the_pixel_encoding;
+  
+  DEB_TRACE() << "Getting the basic information from the camera : image size (in bytes) and pixel encoding.";
+  getInt(andor3::ImageSizeBytes, &the_image_size);
+  getEnumIndex(andor3::PixelEncoding, &the_pixel_encoding);
+  
+  DEB_TRACE() << "The image size in bytes is " << the_image_size
+  << ", and the pixel encoding index is " << the_pixel_encoding;
+  
+  // Since LIMA knows only an integer number of bytes per pixel
+  // Make sure that the BytesPerPixel is 2 ...
+  int					the_bit_depth;
+  getEnumIndex(andor3::BitDepth, &the_bit_depth);
+  DEB_TRACE() << "The bith depth (index) of the image is " << the_bit_depth;
+  
+  
+  if ( b11 == the_bit_depth ) {
+    DEB_TRACE() << "Since we are in 11bpp, we impose Mono12 pixel encoding.";
+    // We are reading 11/12bpp images,
+    // Make sure that we are not in the 12b/packed mode (1.5 byte per pixe, not handled by LIMA).
+    setEnumString(andor3::PixelEncoding, L"Mono12");
+  }
+  
+  // Releasing the previously used buffers :
+  
+  // Getting the SoftBufferCtlMgr to allocate the proper frame buffers :
+  AT_64       the_width, the_height, the_stride;
+  double			the_byte_p_px;
+  
+  // Indeed it seems LIMA is not having the difference between width and stride.
+  // So we have to compute the width provided to LIMA from the stride and the
+  // byte per pixel settings.
+
+  getInt(andor3::AOIWidth, &the_width);
+  getInt(andor3::AOIHeight, &the_height);
+  getInt(andor3::AOIStride, &the_stride);
+  getFloat(andor3::BytesPerPixel, &the_byte_p_px);
+  DEB_TRACE() << "Image size parameters are : width " << the_width
+  << ", height " << the_height
+  << ", stride " << the_stride
+  << " and finaly byte per pixel " << the_byte_p_px;
+  
+  the_width = the_stride>>1; // Dividing by 2, we are for sure in a mode with 2.0 byte per pixel
+  DEB_TRACE() << "To ensure that the LIMA image width corresponds to the stride, set it to "
+  << the_width;
+  lima::Size	the_frame_size(static_cast<int>(the_width), static_cast<int>(the_height)); // Including the full row (that is Stride, not only width)
+  FrameDim		the_frame_dim;  // Adding the information from the image/pixel format/depth
+  the_frame_dim.setSize(the_frame_size);
+
+  if ( 2.0 != the_byte_p_px ) {
+    THROW_HW_ERROR(Error) << "Andor3 SDK : managed to get a setting where there is not exactly 2 Bytes per pixel ! (currently " << the_byte_p_px << "B/px)";
+  }
+  
+  // Setting the other information of the frame :
+  switch (the_bit_depth) {
+    case b11:
+      the_frame_dim.setImageType(Bpp12);
+      break;
+    case b16:
+      the_frame_dim.setImageType(Bpp16);
+      break;
+    default:
+      //! TODO : again trouble (signal to user), we don't know how to do that.
+      break;
+  }
+
+  int 				the_max_frames;
+  int					the_alloc_frames;
+  
+  the_alloc_frames = (0 == m_nb_frames_to_collect) ? 128 : static_cast<int>(m_nb_frames_to_collect);
+  
+  m_buffer_ctrl_obj.setFrameDim(the_frame_dim);
+  m_buffer_ctrl_obj.getMaxNbBuffers(the_max_frames);
+  DEB_TRACE() << "Given above parameters, maximum numbe of frames in memory is "
+  << the_max_frames;
+  if (( the_max_frames < the_alloc_frames ) || ( 0 == m_nb_frames_to_collect )) {
+    // If not enough memory or continuous acquisition we go into ring buffer mode :
+    the_alloc_frames = the_max_frames;
+    m_buffer_ringing = true;
+    DEB_TRACE() << "Setting ring mode, since we are either in continuous acquisition or not enough memory";
+  }
+  else {
+    // Otherwise we allocate exactly th number of buffers necessary :
+    the_alloc_frames = static_cast<int>(m_nb_frames_to_collect);
+    m_buffer_ringing = false;
+    DEB_TRACE() << "Setting the buffer single use mode";
+  }
+  
+  StdBufferCbMgr& the_buffer = m_buffer_ctrl_obj.getBuffer();
+  DEB_TRACE() << "Getting StdBufferCbMgr to allocate the buffers that we want to have";
+  the_buffer.allocBuffers(the_alloc_frames, 1, the_frame_dim);
+  int				the_frame_mem_size = the_frame_dim.getMemSize();
+  
+  // Handing the frame buffers to the SDK :
+  // As proposed by the SDK, we make sure that we start from an empty queue :
+  DEB_TRACE() << "Flushing the queue of the framegrabber";
+  AT_Flush(m_camera_handle);
+  
+  // Then queue all the buffers allocated by StdBufferCbMgr
+  DEB_TRACE() << "Pushing all the frame buffers to the frame grabber SDK";
+  for ( int i=0; the_alloc_frames != i; ++i) {
+    void*		the_buffer_ptr = the_buffer.getFrameBufferPtr(i);
+    AT_QueueBuffer(m_camera_handle, static_cast<AT_U8*>(the_buffer_ptr), the_frame_mem_size);
+  }
+  DEB_TRACE() << "Finished queueing " << the_alloc_frames << " frame buffers to andor's SDK3";
 }
 
 void
@@ -432,6 +577,9 @@ lima::Andor3::Camera::initialiseController()
     THROW_HW_ERROR(Error) << "Cannot set SpuriousNoiseFilter to false";
   }
 
+  if ( NULL == m_acq_thread ) {
+    m_acq_thread = new _AcqThread(*this);
+  }
 }
 
 void
@@ -1003,6 +1151,38 @@ lima::Andor3::Camera::sendCommand(const AT_WC* Feature)
 {
   DEB_MEMBER_FUNCT();
   return andor3Error(AT_Command(m_camera_handle, Feature));
+}
+
+//-----------------------------------------------------
+// Taking care of the imptrlementation of the acquisition thread (_AcqThread / m_acq_thread)
+//-----------------------------------------------------
+lima::Andor3::Camera::_AcqThread::_AcqThread(Camera &aCam) :
+m_cam(aCam)
+{
+  // This seems to be useless since :
+  // Linux supports PTHREAD_SCOPE_SYSTEM, but not PTHREAD_SCOPE_PROCESS.
+  // (http://man7.org/linux/man-pages/man3/pthread_attr_setscope.3.html 2013-04-19) ?
+  //  pthread_attr_setscope(&m_thread_attr, PTHREAD_SCOPE_PROCESS);
+}
+
+
+// Signaling to the m_acq_thread that it should quit, then waiting for it to do it.
+lima::Andor3::Camera::_AcqThread::~_AcqThread()
+{
+  AutoMutex aLock(m_cam.m_cond.mutex());
+  m_cam.m_acq_thread_should_quit = true;
+  m_cam.m_cond.broadcast();
+  aLock.unlock();
+  
+  join();
+}
+
+
+// Either waiting to be signaled, or looping with the SDK to retrieve frame buffers
+void
+lima::Andor3::Camera::_AcqThread::threadFunction()
+{
+  
 }
 
 /*

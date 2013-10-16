@@ -51,7 +51,7 @@ namespace lima
       DEB_CLASS_NAMESPC(DebModCamera, "Camera", "Andor3");
     public:
       
-      enum Status { Ready, Acquisition, Fault };
+      enum Status { Ready, Exposure, Readout, Latency, Fault };
       enum A3_TypeInfo { Unknown, Int, Float, Bool, Enum, String };
 
       //! @TODO : later on should do a map (string to int and vice-versa) from parsed enum info for the next 3 :
@@ -62,14 +62,17 @@ namespace lima
       // In the same order/index as "PixelReadoutRate"
       enum A3_ReadOutRate { MHz10 = 0, MHz100 = 1, MHz200 = 2, MHz280 = 3 };
       // In the same order/index as 'BitDepth'
-      enum A3_BitDepth { b11 = 0, b16= 2 };
+      enum A3_BitDepth { b11 = 0, b16= 1 };
 
       
       Camera(const std::string& bitflow_path, int camera_number=0);
       ~Camera();
 
+      // Preparing the camera's SDK to acquire frames
       void prepareAcq();
+      // Launches the SDK's acquisition and the m_acq_thread to retrieve frame buffers as they are ready
       void startAcq();
+      // Stops the acquisition, as soon as the m_acq_thread is retrieving frame buffers.
       void stopAcq();
 
       // -- detector info object
@@ -140,7 +143,13 @@ namespace lima
       void setCooler(bool flag);
       void getCooler(bool& flag);
       void getCoolingStatus(std::string& status);
+
+    private:
+      // -- some internals :
+      // Stopping an acquisition, iForce : without waiting the end of frame buffer retrieval by m_acq_thread
+      void _stopAcq(bool iForce);
       
+    private:
       // -- andor3 Lower level functions
       bool andor3Error(int code) const;
       void _mapAndor3Error();
@@ -183,9 +192,21 @@ namespace lima
       friend class _AcqThread;
 
       // -- Members
-      _AcqThread*                 m_acq_thread;
-      Cond                        m_cond;
+      // LIMA / Acquisition (thread) related :
+      SoftBufferCtrlObj						m_buffer_ctrl_obj;
+      // Pure thread and signals :
+      _AcqThread*                 m_acq_thread;						// The thread retieving frame buffers from the SDK
+      Cond                        m_cond;									// Waiting conditions for inter thread signaling
+      volatile bool								m_acq_thread_waiting;   // The m_acq_thread is waiting (main uses it to tell it to stop waiting)
+      volatile bool								m_acq_thread_running;		// The m_acq_thread is running (main uses it to accept stopAcq)
+      volatile bool								m_acq_thread_should_quit; // The main thread signals to m_acq_thread that it should quit.
 
+      // A bit more general :
+      size_t											m_nb_frames_to_collect; // The number of frames to collect in current sequence
+      size_t											m_image_index;					// The index in the current sequence of the next image to retrieve
+      bool												m_buffer_ringing;
+
+      // LIMA / Not directly acquisition related :
       std::string                 m_detector_model;
       std::string                 m_detector_type;
       std::string									m_detector_serial;
