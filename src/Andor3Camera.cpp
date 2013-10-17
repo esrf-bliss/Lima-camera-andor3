@@ -271,9 +271,23 @@ lima::Andor3::Camera::~Camera()
 }
 
 
-// This method is called just before the acquisition is started (by startAcq).
-// It is responsible for setting botht the internals of the object and the
-// internals of the camera's SDK for the planned acquisition sequence.
+/*! 
+ @brief Preparing the object and memory for an acquisition sequence
+ 
+ This method is called just before the acquisition is started (by startAcq).
+ It is responsible for setting both the internals of the object and the
+ internals of the camera's SDK for the planned acquisition sequence.
+ Most of the work consists in the setting of the frame buffers.
+ */
+/*!
+ Maybe later : write a specific SoftBufferAllocMgr or SoftBufferCtrlObj
+ subclass that better handles :
+   * the stride of the image
+   * the image size, the best being to get the value from the SDK
+      itself though ImageSizeBytes
+   * possibility to handle the metadata (in particular the 
+      frame timestamp generated on the FPGA clock)
+ */
 void
 lima::Andor3::Camera::prepareAcq()
 {
@@ -391,166 +405,226 @@ lima::Andor3::Camera::prepareAcq()
   DEB_TRACE() << "Finished queueing " << the_alloc_frames << " frame buffers to andor's SDK3";
 }
 
+
+/*! 
+ @brief Launching an acquisition sequence, including the frame retrieving thread.
+ 
+ This method is called at the launch of the acquisition sequence, after the
+ prepareAcq method but before any frame can be shot.
+ 
+ This method is responsible to perform the following actions :
+   * Tell the SDK to launch the acquisition sequence
+   * Signal to the m_acq_thread that it should resume running
+       because some frames will soon be available to retrieve
+ */
 void
 lima::Andor3::Camera::startAcq()
 {
+  DEB_MEMBER_FUNCT();
+  DEB_TRACE() << "Starting the acquisition by the camera";
+  sendCommand(andor3::AcquisitionStart);
+  
+  DEB_TRACE() << "Resuming the action of the acquisition thread";
+  AutoMutex    the_lock(m_cond.mutex());
+  m_acq_thread_waiting = false;
+  m_cond.broadcast();
+  
+  DEB_TRACE() << "Done, the acquisition is now started and the frame retrieving should take place in parallel in a second thread";
 }
 
 void
 lima::Andor3::Camera::stopAcq()
 {
+  _stopAcq(false);
 }
 
 // -- detector info object
 void
 lima::Andor3::Camera::getImageType(ImageType& type)
 {
+  DEB_MEMBER_FUNCT();
 }
 
 void
 lima::Andor3::Camera::setImageType(ImageType type)
 {
+  DEB_MEMBER_FUNCT();
 }
 
 void
 lima::Andor3::Camera::getDetectorType(std::string& type)
 {
+  DEB_MEMBER_FUNCT();
 }
 
 void
 lima::Andor3::Camera::getDetectorModel(std::string& model)
 {
+  DEB_MEMBER_FUNCT();
 }
 
 void
 lima::Andor3::Camera::getDetectorImageSize(Size& size)
 {
+  DEB_MEMBER_FUNCT();
 }
 
 // -- Buffer control object
 lima::HwBufferCtrlObj*
 lima::Andor3::Camera::getBufferCtrlObj()
 {
+  DEB_MEMBER_FUNCT();
 }
 
 //-- Synch control object
 void
 lima::Andor3::Camera::setTrigMode(TrigMode  mode)
 {
+  DEB_MEMBER_FUNCT();
 }
 
 void
 lima::Andor3::Camera::getTrigMode(TrigMode& mode)
 {
+  DEB_MEMBER_FUNCT();
 }
 
 void
 lima::Andor3::Camera::setExpTime(double  exp_time)
 {
+  DEB_MEMBER_FUNCT();
 }
 
 void
 lima::Andor3::Camera::getExpTime(double& exp_time)
 {
+  DEB_MEMBER_FUNCT();
 }
 
 void
 lima::Andor3::Camera::setLatTime(double  lat_time)
 {
+  DEB_MEMBER_FUNCT();
 }
 void
 lima::Andor3::Camera::getLatTime(double& lat_time)
 {
+  DEB_MEMBER_FUNCT();
 }
 
 void
 lima::Andor3::Camera::getExposureTimeRange(double& min_expo, double& max_expo) const
 {
+  DEB_MEMBER_FUNCT();
 }
 void
 lima::Andor3::Camera::getLatTimeRange(double& min_lat, double& max_lat) const
 {
+  DEB_MEMBER_FUNCT();
 }
 
 void
 lima::Andor3::Camera::setNbFrames(int  nb_frames)
 {
+  DEB_MEMBER_FUNCT();
 }
 void
 lima::Andor3::Camera::getNbFrames(int& nb_frames)
 {
+  DEB_MEMBER_FUNCT();
 }
 void
 lima::Andor3::Camera::getNbHwAcquiredFrames(int &nb_acq_frames)
 {
+  DEB_MEMBER_FUNCT();
 }
 
 void
 lima::Andor3::Camera::checkRoi(const Roi& set_roi, Roi& hw_roi)
 {
+  DEB_MEMBER_FUNCT();
 }
 void
 lima::Andor3::Camera::setRoi(const Roi& set_roi)
 {
+  DEB_MEMBER_FUNCT();
 }
 void
 lima::Andor3::Camera::getRoi(Roi& hw_roi)
 {
+  DEB_MEMBER_FUNCT();
 }
 
 bool
 lima::Andor3::Camera::isBinningAvailable()
 {
+  DEB_MEMBER_FUNCT();
 }
+
 void
 lima::Andor3::Camera::checkBin(Bin&)
 {
+  DEB_MEMBER_FUNCT();
 }
 void
 lima::Andor3::Camera::setBin(const Bin&)
 {
+  DEB_MEMBER_FUNCT();
 }
+
 void
 lima::Andor3::Camera::getBin(Bin&)
 {
+  DEB_MEMBER_FUNCT();
 }
 
 void
 lima::Andor3::Camera::setShutterMode(ShutterMode mode)
 {
+  DEB_MEMBER_FUNCT();
 }
+
 void
 lima::Andor3::Camera::getShutterMode(ShutterMode& mode)
 {
+  DEB_MEMBER_FUNCT();
 }
 
 void
 lima::Andor3::Camera::setShutter(bool flag)
 {
+  DEB_MEMBER_FUNCT();
 }
+
 void
 lima::Andor3::Camera::getShutter(bool& flag)
 {
+  DEB_MEMBER_FUNCT();
 }
 
 void
 lima::Andor3::Camera::getPixelSize(double& sizex, double& sizey)
 {
+  DEB_MEMBER_FUNCT();
 }
 
 void
 lima::Andor3::Camera::getStatus(Camera::Status& status)
 {
+  DEB_MEMBER_FUNCT();
 }
 
 // --- Acquisition interface
 void
 lima::Andor3::Camera::reset()
 {
+  DEB_MEMBER_FUNCT();
 }
+
 int
 lima::Andor3::Camera::getNbHwAcquiredFrames()
 {
+  DEB_MEMBER_FUNCT();
 }
 
 // -- andor3 specific, LIMA don't worry about it !
@@ -589,35 +663,101 @@ lima::Andor3::Camera::initialiseController()
 void
 lima::Andor3::Camera::setAdcGain(A3_Gain iGain)
 {
+  DEB_MEMBER_FUNCT();
+  int the_gain;
+  setEnumIndex(andor3::PreAmpGainControl, iGain);
+  getEnumIndex(andor3::PreAmpGainControl, &the_gain);
+  m_adc_gain = static_cast<A3_Gain>(the_gain);
+  if ( m_adc_rate != iGain ) {
+    DEB_ERROR() << "Prood-reading the ADC readout gain :"
+    << "\n\tGot " << m_adc_gain << "back,"
+    << "\n\twhile requesting " << iGain;
+  }
 }
+
 void
 lima::Andor3::Camera::getAdcGain(A3_Gain &oGain)
 {
+  DEB_MEMBER_FUNCT();
+//  int the_gain;
+//  getEnumIndex(andor3::PreAmpGainControl, &the_gain);
+//  oGain = static_cast<A3_Gain>(the_gain);
+  oGain = m_adc_gain;
 }
+
 void
 lima::Andor3::Camera::setAdcRate(A3_ReadOutRate iRate)
 {
+  DEB_MEMBER_FUNCT();
+  int the_rate;
+  setEnumIndex(andor3::PixelReadoutRate, iRate);
+  getEnumIndex(andor3::PixelReadoutRate, &the_rate);
+  m_adc_rate = static_cast<A3_ReadOutRate>(the_rate);
+  if ( m_adc_rate != iRate ) {
+    DEB_ERROR() << "Prood-reading the ADC readout rate :"
+    << "\n\tGot " << m_adc_rate << "back,"
+    << "\n\twhile requesting " << iRate;
+  }
 }
+
 void
 lima::Andor3::Camera::getAdcRate(A3_ReadOutRate &oRate)
 {
+  DEB_MEMBER_FUNCT();
+//  int the_rate;
+//  getEnumIndex(andor3::PixelReadoutRate, &the_rate);
+//  oRate = static_cast<A3_ReadOutRate>(the_rate);
+  oRate = m_adc_rate;
 }
+
 void
 lima::Andor3::Camera::setElectronicShutterMode(A3_ShutterMode iMode)
 {
+  DEB_MEMBER_FUNCT();
+  int the_mode;
+  setEnumIndex(andor3::ElectronicShutteringMode, iMode);
+  getEnumIndex(andor3::ElectronicShutteringMode, &the_mode);
+  m_electronic_shutter_mode = static_cast<A3_ShutterMode>(the_mode);
+  if ( m_electronic_shutter_mode != iMode ) {
+    DEB_ERROR() << "Prood-reading the electronic shutter mode :"
+    << "\n\tGot " << m_electronic_shutter_mode << "back,"
+    << "\n\twhile requesting " << iMode;
+  }
 }
+
 void
 lima::Andor3::Camera::getElectronicShutterMode(A3_ShutterMode &oMode)
 {
+  DEB_MEMBER_FUNCT();
+//  int the_mode;
+//  getEnumIndex(andor3::ElectronicShutteringMode, &the_mode);
+//  oMode = static_cast<A3_ShutterMode>(the_mode);
+  oMode = m_electronic_shutter_mode;
 }
+
 void
 lima::Andor3::Camera::setBitDepth(A3_BitDepth iMode)
 {
+  DEB_MEMBER_FUNCT();
+  int the_mode;
+  setEnumIndex(andor3::PixelEncoding, static_cast<int>(iMode));
+  getEnumIndex(andor3::PixelEncoding, &the_mode);
+  m_bit_depth = static_cast<A3_BitDepth>(the_mode);
+  if ( m_bit_depth != iMode ) {
+    DEB_ERROR() << "Prood-reading the image bit-depth :"
+    << "\n\tGot " << m_bit_depth << "back,"
+    << "\n\twhile requesting " << iMode;
+  }
 }
 
 void
 lima::Andor3::Camera::getBitDepth(A3_BitDepth &oMode)
 {
+  DEB_MEMBER_FUNCT();
+//  int the_mode;
+//  getEnumIndex(andor3::PixelEncoding, &the_mode);
+//  oMode = static_cast<A3_BitDepth>(the_mode);
+  oMode = m_bit_depth;
 }
 
 
@@ -631,14 +771,13 @@ void
 lima::Andor3::Camera::setTemperatureSP(double temp)
 {
   DEB_MEMBER_FUNCT();
-  if ( AT_SUCCESS != setFloat(andor3::TargetSensorTemperature, temp) ) {
-    DEB_ERROR() << "Failed to set temperature set-point" <<" : error code = " << m_camera_error_str;
-    THROW_HW_ERROR(Error) << "Failed to set temperature set-point";
-  }
-  // As advised by Andor SDK 3 doc : proof-reading after setting :
-  if ( AT_SUCCESS != getFloat(andor3::TargetSensorTemperature, &m_temperature_sp) ) {
-    DEB_ERROR() << "Failed to proof-read temperature set-point" <<" : error code = " << m_camera_error_str;
-    THROW_HW_ERROR(Error) << "Failed to proof-read temperature set-point";
+  setFloat(andor3::TargetSensorTemperature, temp);
+  getFloat(andor3::TargetSensorTemperature, &m_temperature_sp);
+  if ( abs(m_temperature_sp - temp) > 0.1) {
+    DEB_ERROR() << "Proof-reading temperature set-point : "
+    << "\n\tproof-read = " << m_temperature_sp
+    << "\n\twhile asked to be = " << temp;
+    THROW_HW_ERROR(Error) << "Failed on setting temperature set-point";
   }
 }
 
@@ -664,10 +803,7 @@ void
 lima::Andor3::Camera::getTemperature(double& temp)
 {
   DEB_MEMBER_FUNCT();
-  if ( AT_SUCCESS != getFloat(andor3::SensorTemperature, &temp) ) {
-    DEB_ERROR() << "Failed to read temperature" <<" : error code = " << m_camera_error_str;
-    THROW_HW_ERROR(Error) << "Failed to read temperature";
-  }
+  getFloat(andor3::SensorTemperature, &temp);
 }
 
 //-----------------------------------------------------
@@ -679,16 +815,8 @@ void
 lima::Andor3::Camera::setCooler(bool flag)
 {
   DEB_MEMBER_FUNCT();
-  if ( AT_SUCCESS != setBool(andor3::SensorCooling, flag) ) {
-    DEB_ERROR() << "Failed to set cooler" <<" : error code = " << m_camera_error_str;
-    THROW_HW_ERROR(Error) << "Failed to set cooler";
-  }
-  // As advised by Andor SDK 3 doc : proof-reading after setting :
-  if ( AT_SUCCESS != getBool(andor3::SensorCooling, &m_cooler) ) {
-    DEB_ERROR() << "Failed to proof-read cooler" <<" : error code = " << m_camera_error_str;
-    THROW_HW_ERROR(Error) << "Failed to proof-read cooler";
-  }
-  // And finally check that it corresponds to the requested action :
+  setBool(andor3::SensorCooling, flag);
+  getBool(andor3::SensorCooling, &m_cooler);
   if ( flag != m_cooler ) {
     DEB_ERROR() << "Failed to properly set the cooler : requeste " << flag << ", but got " << m_cooler;
     THROW_HW_ERROR(Error) << "Failed to properly set the cooler";
@@ -708,21 +836,28 @@ lima::Andor3::Camera::getCooler(bool& flag)
 }
 
 //-----------------------------------------------------
-// @brief	Gets cooling status
-// @param	status status as a string
+// @brief	Gets cooling/temperature status
+// @param	status : status as a string
 //
 //-----------------------------------------------------
 void
 lima::Andor3::Camera::getCoolingStatus(std::string& status)
 {
   DEB_MEMBER_FUNCT();
-  
-  wchar_t		wcs_status_string[1024];
-  if ( AT_SUCCESS != getEnumString(andor3::TemperatureStatus, wcs_status_string, 1023) ) {
-    DEB_ERROR() << "Failed to read cooling status" <<" : error code = " << m_camera_error_str;
-    THROW_HW_ERROR(Error) << "Failed to cooling status";
-  }
+  wchar_t		wcs_status_string[32];
+  getEnumString(andor3::TemperatureControl, wcs_status_string, 31);
   status = WStringToString(wcs_status_string);
+}
+
+/*!
+ @brief asking the full acquisition to stop
+ @param iImmadiate : if true, the stop should be immediate, without waiting for inflight buffer to be retrieved by LIMA.
+ */
+
+void
+_stopAcq(bool iImmediate)
+{
+  
 }
 
 //-----------------------------------------------------

@@ -63,7 +63,15 @@ namespace lima
       enum A3_ReadOutRate { MHz10 = 0, MHz100 = 1, MHz200 = 2, MHz280 = 3 };
       // In the same order/index as 'BitDepth'
       enum A3_BitDepth { b11 = 0, b16= 1 };
-
+/*
+      // In the order of the menu, the status of the cooling unit :
+      enum A3_TemperatureStatus {	Cooler_Off=0,
+        Stabilised = 1,
+        Cooling = 2,
+        Drift = 3,
+        Not_Stabilised = 4,
+        T_Fault = 5 };
+ */
       
       Camera(const std::string& bitflow_path, int camera_number=0);
       ~Camera();
@@ -147,7 +155,7 @@ namespace lima
     private:
       // -- some internals :
       // Stopping an acquisition, iForce : without waiting the end of frame buffer retrieval by m_acq_thread
-      void _stopAcq(bool iForce);
+      void _stopAcq(bool iImmediate);
       
     private:
       // -- andor3 Lower level functions
@@ -196,7 +204,7 @@ namespace lima
       SoftBufferCtrlObj						m_buffer_ctrl_obj;
       // Pure thread and signals :
       _AcqThread*                 m_acq_thread;						// The thread retieving frame buffers from the SDK
-      Cond                        m_cond;									// Waiting conditions for inter thread signaling
+      Cond                        m_cond;									// Waiting condition for inter thread signaling
       volatile bool								m_acq_thread_waiting;   // The m_acq_thread is waiting (main uses it to tell it to stop waiting)
       volatile bool								m_acq_thread_running;		// The m_acq_thread is running (main uses it to accept stopAcq)
       volatile bool								m_acq_thread_should_quit; // The main thread signals to m_acq_thread that it should quit.
