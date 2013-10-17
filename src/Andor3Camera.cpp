@@ -155,6 +155,7 @@ m_adc_gain(Gain1_Gain4),
 m_adc_rate(MHz100),
 m_electronic_shutter_mode(Rolling),
 m_bit_depth(b16),
+m_trig_mode(Internal),
 m_cooler(true),
 m_temperature_sp(5.0)
 {
@@ -424,6 +425,8 @@ lima::Andor3::Camera::startAcq()
   DEB_TRACE() << "Starting the acquisition by the camera";
   sendCommand(andor3::AcquisitionStart);
   
+#warning currently not taking care properly of the Software trigger mode !!!
+  
   DEB_TRACE() << "Resuming the action of the acquisition thread";
   AutoMutex    the_lock(m_cond.mutex());
   m_acq_thread_waiting = false;
@@ -443,30 +446,82 @@ void
 lima::Andor3::Camera::getImageType(ImageType& type)
 {
   DEB_MEMBER_FUNCT();
+  A3_BitDepth			the_bit_depth;
+  getBitDepth(the_bit_depth);
+  
+  switch (the_bit_depth) {
+    case b11:
+      type = Bpp12;
+      break;
+      
+    case b16:
+      type = Bpp16;
+      break;
+
+    default:
+      type = Bpp16;
+      THROW_HW_ERROR(Error) << "Unknown image type for the SDK " << type
+      << "\n\tReturning 16b since all output is made on this pixel depth";
+      break;
+  }
 }
 
 void
 lima::Andor3::Camera::setImageType(ImageType type)
 {
   DEB_MEMBER_FUNCT();
+  A3_BitDepth			the_bit_depth;
+  switch (type) {
+    case Bpp8:
+    case Bpp8S:
+    case Bpp10:
+    case Bpp10S:
+    case Bpp12:
+    case Bpp12S:
+      the_bit_depth = b11;
+      break;
+    case Bpp14:
+    case Bpp14S:
+    case Bpp16:
+    case Bpp16S:
+      the_bit_depth = b16;
+      break;
+    case Bpp32:
+    case Bpp32S:
+      the_bit_depth = b16;
+      THROW_HW_ERROR(Error) << "Unsupported type " << type
+      << ", setting to the maximum : " << the_bit_depth << ".";
+    default:
+      the_bit_depth = b16;
+      THROW_HW_ERROR(Error) << "Unknown type " << type
+      << ", setting to the maximum : " << the_bit_depth << ".";
+      break;
+  }
+  setBitDepth(the_bit_depth);
 }
 
 void
 lima::Andor3::Camera::getDetectorType(std::string& type)
 {
   DEB_MEMBER_FUNCT();
+  type = m_detector_type;
 }
 
 void
 lima::Andor3::Camera::getDetectorModel(std::string& model)
 {
   DEB_MEMBER_FUNCT();
+  model = m_detector_model;
 }
 
+/*!
+ @brief get the max image size of the detector (the chip)
+ */
 void
 lima::Andor3::Camera::getDetectorImageSize(Size& size)
 {
   DEB_MEMBER_FUNCT();
+  size = m_detector_size;
 }
 
 // -- Buffer control object
@@ -474,6 +529,7 @@ lima::HwBufferCtrlObj*
 lima::Andor3::Camera::getBufferCtrlObj()
 {
   DEB_MEMBER_FUNCT();
+  return &m_buffer_ctrl_obj;
 }
 
 //-- Synch control object
@@ -481,137 +537,409 @@ void
 lima::Andor3::Camera::setTrigMode(TrigMode  mode)
 {
   DEB_MEMBER_FUNCT();
+  A3_TriggerMode		the_trigger_mode;
+  switch (mode) {
+    case 	IntTrig:
+      the_trigger_mode = Internal;
+      break;
+    case IntTrigMult:
+      the_trigger_mode = Software;
+      break;
+    case ExtTrigSingle:
+      the_trigger_mode = ExternalStart;
+      break;
+    case ExtTrigMult:
+      the_trigger_mode = External;
+      break;
+    case ExtGate:
+      the_trigger_mode = ExternalExposure;
+      break;
+      
+    case ExtStartStop:
+    case ExtTrigReadout:
+    default:
+      the_trigger_mode = Internal;
+      THROW_HW_ERROR(Error) << "The triggering mode " << mode
+      << " is NOT implemented in this SDK";
+      break;
+  }
+  setTriggerMode(the_trigger_mode);
 }
 
 void
 lima::Andor3::Camera::getTrigMode(TrigMode& mode)
 {
   DEB_MEMBER_FUNCT();
+  A3_TriggerMode		the_trigger_mode;
+  getTriggerMode(the_trigger_mode);
+  
+  switch (the_trigger_mode) {
+    case Internal:
+      mode = IntTrig;
+      break;
+    case Software:
+      mode = IntTrigMult;
+      break;
+    case ExternalStart:
+      mode = ExtTrigSingle;
+      break;
+    case External:
+      mode = ExtTrigMult;
+      break;
+    case ExternalExposure:
+      mode = ExtGate;
+      break;
+    default:
+      mode = IntTrig;
+      THROW_HW_ERROR(Error) << "The triggering mode of the SDK " << the_trigger_mode
+      << " does not correspond to any mode of LIMA, returning " << mode;
+      break;
+  }
 }
 
 void
 lima::Andor3::Camera::setExpTime(double  exp_time)
 {
   DEB_MEMBER_FUNCT();
+  setFloat(andor3::ExposureTime, exp_time);
 }
 
 void
 lima::Andor3::Camera::getExpTime(double& exp_time)
 {
   DEB_MEMBER_FUNCT();
+  double		the_exp_time;
+  getFloat(andor3::ExposureTime, &the_exp_time);
+  exp_time = the_exp_time;
 }
 
 void
 lima::Andor3::Camera::setLatTime(double  lat_time)
 {
   DEB_MEMBER_FUNCT();
+  double			the_exp_time;
+  double			the_rate;
+  //  double			the_readout_time;
+  
+  getFloat(andor3::ExposureTime, &the_exp_time);
+//  getFloat(andor3::ReadoutTime, &the_readout_time);
+//  lat_time = ( lat_time > the_readout_time ) ? lat_time : the_readout_time;
+//  if ( lat_time < the_readout_time ) {
+//    lat_time = the_readout_time;
+//    THROW_HW_ERROR(Error) << "You have requested a latency "
+//  }
+  the_rate = 1.0 / (the_exp_time + lat_time);
+  setFloat(andor3::FrameRate, the_rate);
 }
+
 void
 lima::Andor3::Camera::getLatTime(double& lat_time)
 {
   DEB_MEMBER_FUNCT();
+  double			the_exp_time;
+  double			the_rate;
+
+  getFloat(andor3::ExposureTime, &the_exp_time);
+  getFloat(andor3::FrameRate, &the_rate);
+  
+  lat_time = (1.0 / the_rate) - the_exp_time;
 }
 
 void
 lima::Andor3::Camera::getExposureTimeRange(double& min_expo, double& max_expo) const
 {
   DEB_MEMBER_FUNCT();
+  double			the_min, the_max;
+  
+  getFloatMin(andor3::ExposureTime, &the_min);
+  getFloatMax(andor3::ExposureTime, &the_max);
+  
+  min_expo = the_min;
+  max_expo = the_max;
 }
+
 void
 lima::Andor3::Camera::getLatTimeRange(double& min_lat, double& max_lat) const
 {
   DEB_MEMBER_FUNCT();
+  double			the_exp_time;
+  double			the_rate_min, the_rate_max;
+
+  getFloat(andor3::ExposureTime, &the_exp_time);
+  getFloatMin(andor3::FrameRate, &the_rate_min);
+  getFloatMax(andor3::FrameRate, &the_rate_max);
+
+  min_lat = (1.0 / the_rate_max) - the_exp_time;
+  max_lat = (1.0 / the_rate_min) - the_exp_time;
 }
 
 void
 lima::Andor3::Camera::setNbFrames(int  nb_frames)
 {
   DEB_MEMBER_FUNCT();
+  DEB_PARAM() << DEB_VAR1(nb_frames);
+  m_nb_frames_to_collect = static_cast<size_t>(nb_frames);
 }
+
 void
 lima::Andor3::Camera::getNbFrames(int& nb_frames)
 {
   DEB_MEMBER_FUNCT();
+  nb_frames = static_cast<int>(m_nb_frames_to_collect);
+  DEB_RETURN() << DEB_VAR1(nb_frames);
 }
+
 void
 lima::Andor3::Camera::getNbHwAcquiredFrames(int &nb_acq_frames)
 {
   DEB_MEMBER_FUNCT();
+  nb_acq_frames = static_cast<int>(m_image_index);
 }
 
 void
 lima::Andor3::Camera::checkRoi(const Roi& set_roi, Roi& hw_roi)
 {
   DEB_MEMBER_FUNCT();
+  DEB_PARAM() << DEB_VAR1(set_roi);
+  bool 			the_fullaoi_control;
+  Bin				the_binning;
+  
+  getBin(the_binning);
+  getBool(andor3::FullAOIControl, &the_fullaoi_control);
+
+  int				the_left, the_width, the_top, the_height;
+  int				the_bin_nb = the_binning.getX();
+  
+  the_left = set_roi.getTopLeft().x;
+  the_width = set_roi.getSize().getWidth();
+  the_top = set_roi.getTopLeft().y;
+  the_height = set_roi.getSize().getHeight();
+  
+  // First : check that we are smaller than the maximum AOI for the current binning
+  the_left = ( the_left > 0 ) ? the_left : 0;
+  the_left = ( the_left < m_detector_size.getWidth() ) ? the_left : (m_detector_size.getWidth()-the_bin_nb);
+  the_top = ( the_top > 0 ) ? the_top : 0;
+  the_top = ( the_top < m_detector_size.getHeight() ) ? the_top : (m_detector_size.getHeight()-the_bin_nb);
+  
+  the_width = ( the_width > 1 ) ? the_width : 1;
+  the_width = ( (the_left + the_width*the_bin_nb) < m_detector_size.getWidth() ) ? the_width : ( (m_detector_size.getWidth() - the_left)/the_bin_nb);
+  the_height = ( the_height > 1 ) ? the_height : 1;
+  the_height = ( (the_top + the_height*the_bin_nb) < m_detector_size.getHeight() ) ? the_height : ((m_detector_size.getHeight() - the_top)/the_bin_nb);
+  
+  if ( ! the_fullaoi_control ) {
+    THROW_HW_ERROR(Error) << "Though it is feasible, we currently do not support hardware ROI"
+    << " for devices not having the FullAOIControl set";
+    //    hw_roi...;
+  }
+
+  hw_roi = Roi(the_left, the_top, the_width, the_height);
 }
+
 void
 lima::Andor3::Camera::setRoi(const Roi& set_roi)
 {
   DEB_MEMBER_FUNCT();
+  Bin			the_binning;
+  AT_64		the_left, the_width, the_top, the_height;
+
+  getBin(the_binning);
+  the_left = static_cast<AT_64>(set_roi.getTopLeft().x);
+  the_width = static_cast<AT_64>(set_roi.getSize().getWidth());
+  the_top = static_cast<AT_64>(set_roi.getTopLeft().y);
+  the_height = static_cast<AT_64>(set_roi.getSize().getHeight());
+  
+  // Performing the settings in the order prescribed by the SDK's documentation:
+  // Binning, width, left, heigh, top :
+  setBin(the_binning);
+  setInt(andor3::AOIWidth, the_width);
+  setInt(andor3::AOILeft, the_left);
+  setInt(andor3::AOIHeight, the_height);
+  setInt(andor3::AOITop, the_top);
 }
+
 void
 lima::Andor3::Camera::getRoi(Roi& hw_roi)
 {
   DEB_MEMBER_FUNCT();
+  
+  AT_64		the_left, the_width, the_top, the_height;
+  getInt(andor3::AOIWidth, &the_width);
+  getInt(andor3::AOILeft, &the_left);
+  getInt(andor3::AOIHeight, &the_height);
+  getInt(andor3::AOITop, &the_top);
+
+  hw_roi = Roi(static_cast<int>(the_left), static_cast<int>(the_top), static_cast<int>(the_width), static_cast<int>(the_height));
 }
 
 bool
 lima::Andor3::Camera::isBinningAvailable()
 {
   DEB_MEMBER_FUNCT();
+  bool 			the_fullaoi_control;
+  getBool(andor3::FullAOIControl, &the_fullaoi_control);
+
+  return the_fullaoi_control;
+#warning Indeed ROI is also available when the_fullaoi_control is false, only that checkRoi dos not handle it so far.
 }
 
 void
-lima::Andor3::Camera::checkBin(Bin&)
+lima::Andor3::Camera::checkBin(Bin& ioBin)
 {
   DEB_MEMBER_FUNCT();
+  int			the_bin_x, the_bin_y;
+  
+  the_bin_x = ioBin.getX();
+  the_bin_y = ioBin.getY();
+  
+  if ( the_bin_x != the_bin_y) {
+    if ( the_bin_x < the_bin_y)
+      the_bin_y = the_bin_x;
+    else
+      the_bin_x = the_bin_y;
+    THROW_HW_ERROR(NotSupported) << "For andor SDK v3 the binning should be a square power of two, ie. 1x1, 2x2, 4x4 or 8x8, while you tried to set " << the_bin_x << "x" << the_bin_y;
+  }
+  
+  if ( 1 == the_bin_x ) {
+    ioBin = Bin(1, 1);
+    return;
+  }
+  if ( 2 == the_bin_x ) {
+    ioBin = Bin(2, 2);
+    return;
+  }
+  if ( 4 > the_bin_x ) {
+    ioBin = Bin(2, 2);
+    THROW_HW_ERROR(NotSupported) << "You have asked for a " << the_bin_x << "x" << the_bin_y << " binning which is not available."
+    << "\n\tProviding you with the next smaller binning available : 2x2";
+    return;
+  }
+  if ( 4 == the_bin_x ) {
+    ioBin = Bin(4, 4);
+    return;
+  }
+  if ( 8 > the_bin_x ) {
+    ioBin = Bin(4, 4);
+    THROW_HW_ERROR(NotSupported) << "You have asked for a " << the_bin_x << "x" << the_bin_y << " binning which is not available."
+    << "\n\tProviding you with the next smaller binning available : 4x4";
+    return;
+  }
+  if ( 8 == the_bin_x ) {
+    ioBin = Bin(8, 8);
+    return;
+  }
+  ioBin = Bin(8, 8);
+  THROW_HW_ERROR(NotSupported) << "You have asked for a " << the_bin_x << "x" << the_bin_y << " binning which is not available (too big)."
+  << "\n\tProviding you with the next smaller binning available : 8x8";
+  return;
 }
 void
-lima::Andor3::Camera::setBin(const Bin&)
+lima::Andor3::Camera::setBin(const Bin& iBin)
 {
   DEB_MEMBER_FUNCT();
+  
+  A3_Binning		the_bin;
+  switch (iBin.getX()) {
+    case 1:
+      the_bin = B1x1;
+      break;
+    case 2:
+      the_bin = B2x2;
+      break;
+    case 4:
+      the_bin = B4x4;
+      break;
+    case 8:
+      the_bin = B8x8;
+      break;
+      
+    default:
+      the_bin = B1x1;
+      break;
+  }
+  setEnumIndex(andor3::AOIBinning, static_cast<int>(the_bin));
 }
 
 void
-lima::Andor3::Camera::getBin(Bin&)
+lima::Andor3::Camera::getBin(Bin& oBin)
 {
   DEB_MEMBER_FUNCT();
+  A3_Binning		the_bin;
+  int						the_bin_int;
+  getEnumIndex(andor3::AOIBinning, &the_bin_int);
+  the_bin = static_cast<A3_Binning>(the_bin_int);
+  switch (the_bin) {
+    case B1x1:
+      oBin = Bin(1, 1);
+      break;
+    case B2x2:
+      oBin = Bin(2, 2);
+      break;
+    case B4x4:
+      oBin = Bin(4, 4);
+      break;
+    case B8x8:
+      oBin = Bin(8, 8);
+      break;
+      
+    default:
+      oBin = Bin(1, 1);
+      THROW_HW_ERROR(NotSupported) << "Unknown binning returned by andor SDK3" << the_bin_int;
+      break;
+  }
 }
 
 void
 lima::Andor3::Camera::setShutterMode(ShutterMode mode)
 {
   DEB_MEMBER_FUNCT();
+  DEB_PARAM() << DEB_VAR1(mode);
 }
 
 void
 lima::Andor3::Camera::getShutterMode(ShutterMode& mode)
 {
   DEB_MEMBER_FUNCT();
+  mode = ShutterManual;
 }
 
-void
-lima::Andor3::Camera::setShutter(bool flag)
-{
-  DEB_MEMBER_FUNCT();
-}
-
-void
-lima::Andor3::Camera::getShutter(bool& flag)
-{
-  DEB_MEMBER_FUNCT();
-}
-
+//void
+//lima::Andor3::Camera::setShutter(bool flag)
+//{
+//  DEB_MEMBER_FUNCT();
+//}
+//
+//void
+//lima::Andor3::Camera::getShutter(bool& flag)
+//{
+//  DEB_MEMBER_FUNCT();
+//}
+//
 void
 lima::Andor3::Camera::getPixelSize(double& sizex, double& sizey)
 {
   DEB_MEMBER_FUNCT();
+  sizex = sizey = 6.5; // in micron ?
 }
 
 void
 lima::Andor3::Camera::getStatus(Camera::Status& status)
 {
+#warning Complete crap at the moment !!!
   DEB_MEMBER_FUNCT();
+  bool		the_acq;
+  
+  getBool(andor3::CameraAcquiring, &the_acq);
+  if ( ! the_acq ) {
+    status = Ready;
+    return;
+  }
+  if ( m_image_index < m_nb_frames_to_collect ) {
+    status = Exposure;
+  }
+  else {
+    status = Readout;
+  }
+  return;
 }
 
 // --- Acquisition interface
@@ -619,12 +947,15 @@ void
 lima::Andor3::Camera::reset()
 {
   DEB_MEMBER_FUNCT();
+  _stopAcq(false); // We wait for the current frame buffer retrieval to be finished.
+  initialiseController();
 }
 
 int
 lima::Andor3::Camera::getNbHwAcquiredFrames()
 {
   DEB_MEMBER_FUNCT();
+  return m_image_index;
 }
 
 // -- andor3 specific, LIMA don't worry about it !
@@ -639,13 +970,16 @@ lima::Andor3::Camera::initialiseController()
   setCooler(m_cooler);
   setTemperatureSP(m_temperature_sp);
   setExpTime(m_exp_time);
-  setTrigMode(IntTrig);
+  setTriggerMode(m_trig_mode);
   
-  Size sizeMax;
-  getDetectorImageSize(sizeMax);
+  AT_64			the_chip_width, the_chip_height;
+  getInt(andor3::SensorWidth, &the_chip_width);
+  getInt(andor3::SensorHeight, &the_chip_height);
+  
+  m_detector_size = Size(static_cast<int>(the_chip_width), static_cast<int>(the_chip_height));
 
   // Setting the ROI to the max :
-  Roi aRoi = Roi(0, 0, sizeMax.getWidth(), sizeMax.getHeight());
+  Roi aRoi = Roi(0, 0, m_detector_size.getWidth(), m_detector_size.getHeight());
   DEB_TRACE() << "Set the ROI to full frame: "<< aRoi;
   setRoi(aRoi);
 
@@ -668,7 +1002,7 @@ lima::Andor3::Camera::setAdcGain(A3_Gain iGain)
   setEnumIndex(andor3::PreAmpGainControl, iGain);
   getEnumIndex(andor3::PreAmpGainControl, &the_gain);
   m_adc_gain = static_cast<A3_Gain>(the_gain);
-  if ( m_adc_rate != iGain ) {
+  if ( m_adc_gain != iGain ) {
     DEB_ERROR() << "Prood-reading the ADC readout gain :"
     << "\n\tGot " << m_adc_gain << "back,"
     << "\n\twhile requesting " << iGain;
@@ -761,6 +1095,36 @@ lima::Andor3::Camera::getBitDepth(A3_BitDepth &oMode)
 }
 
 
+
+/*!
+ @brief Setting the trigger mode of the camera through the SDK settings.
+ @param iMode : the mode to select
+ */
+void
+lima::Andor3::Camera::setTriggerMode(A3_TriggerMode iMode)
+{
+  DEB_MEMBER_FUNCT();
+  int the_mode;
+  setEnumIndex(andor3::TriggerMode, static_cast<int>(iMode));
+  getEnumIndex(andor3::TriggerMode, &the_mode);
+  m_trig_mode = static_cast<A3_TriggerMode>(the_mode);
+  if ( m_trig_mode != iMode ) {
+    DEB_ERROR() << "Prood-reading the trigger mode :"
+    << "\n\tGot " << m_trig_mode << "back,"
+    << "\n\twhile requesting " << iMode;
+  }
+}
+
+/*!
+ @brief Getting the triggering mode the camera is in
+ @param oMode : the mode selected upon return
+ */
+void
+lima::Andor3::Camera::getTriggerMode(A3_TriggerMode &oMode)
+{
+  DEB_MEMBER_FUNCT();
+  oMode = m_trig_mode;
+}
 
 //-----------------------------------------------------
 // @brief	set the temperature set-point // DONE

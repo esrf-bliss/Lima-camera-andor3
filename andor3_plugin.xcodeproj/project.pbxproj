@@ -24,6 +24,10 @@
 		956C320F1523BB6B00F0632C /* andor3.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = andor3.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		956C32141523BB6C00F0632C /* andor3Proj.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = andor3Proj.xcconfig; sourceTree = "<group>"; };
 		956C32151523BB6C00F0632C /* andor3Target.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = andor3Target.xcconfig; sourceTree = "<group>"; };
+		95848CF5180D9D96004B7C8A /* imxpad */ = {isa = PBXFileReference; lastKnownFileType = folder; name = imxpad; path = ../imxpad; sourceTree = "<group>"; };
+		95848CF6180D9EEB004B7C8A /* xh */ = {isa = PBXFileReference; lastKnownFileType = folder; name = xh; path = ../xh; sourceTree = "<group>"; };
+		95848CF7180D9F09004B7C8A /* pointgrey */ = {isa = PBXFileReference; lastKnownFileType = folder; name = pointgrey; path = ../pointgrey; sourceTree = "<group>"; };
+		95848CF8180D9F34004B7C8A /* dexela */ = {isa = PBXFileReference; lastKnownFileType = folder; name = dexela; path = ../dexela; sourceTree = "<group>"; };
 		958C873817B65DBA003B74B2 /* Andor3Camera.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Andor3Camera.h; sourceTree = "<group>"; };
 		958C873917B65DBA003B74B2 /* Andor3DetInfoCtrlObj.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Andor3DetInfoCtrlObj.h; sourceTree = "<group>"; };
 		958C873A17B65DBA003B74B2 /* Andor3Interface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Andor3Interface.h; sourceTree = "<group>"; };
@@ -86,21 +90,25 @@
 		956B30DD152621ED00FB4D2D /* Other Cameras */ = {
 			isa = PBXGroup;
 			children = (
-				95D5EA4715262449008221ED /* pco */,
 				95D5EA221526233B008221ED /* adsc */,
 				95D5EA231526233B008221ED /* andor */,
 				95D5EA241526233B008221ED /* basler */,
+				95848CF8180D9F34004B7C8A /* dexela */,
 				95D5EA251526233B008221ED /* frelon */,
+				95848CF5180D9D96004B7C8A /* imxpad */,
 				95D5EA261526233B008221ED /* marccd */,
 				95D5EA271526233B008221ED /* maxipix */,
 				95D5EA37152623AF008221ED /* mythen */,
 				95D5EA39152623AF008221ED /* perkinelmer */,
 				95D5EA3D152623EC008221ED /* photonicscience */,
+				95D5EA4715262449008221ED /* pco */,
 				95D5EA3E152623EC008221ED /* pilatus */,
+				95848CF7180D9F09004B7C8A /* pointgrey */,
 				95D5EA3F152623EC008221ED /* prosilica */,
 				95D5EA40152623EC008221ED /* roperscientific */,
 				95D5EA341526238C008221ED /* simulator */,
 				95D5EA351526238C008221ED /* ueye */,
+				95848CF6180D9EEB004B7C8A /* xh */,
 				95D5EA361526238C008221ED /* xpad */,
 			);
 			name = "Other Cameras";

@@ -63,6 +63,11 @@ namespace lima
       enum A3_ReadOutRate { MHz10 = 0, MHz100 = 1, MHz200 = 2, MHz280 = 3 };
       // In the same order/index as 'BitDepth'
       enum A3_BitDepth { b11 = 0, b16= 1 };
+      // The camera trigger mode (in the enum order) :
+      enum A3_TriggerMode { Internal = 0, ExternalLevelTransition = 1, ExternalStart = 2, ExternalExposure = 3, Software = 4, Advanced = 5, External = 6
+      };
+      // The binning system of andor3 :
+      enum A3_Binning { B1x1=0, B2x2=1, B4x4=2, B8x8=3};
 /*
       // In the order of the menu, the status of the cooling unit :
       enum A3_TemperatureStatus {	Cooler_Off=0,
@@ -116,15 +121,15 @@ namespace lima
       void getRoi(Roi& hw_roi);
       
       bool isBinningAvailable();
-      void checkBin(Bin&);
-      void setBin(const Bin&);
-      void getBin(Bin&);
+      void checkBin(Bin& ioBin);
+      void setBin(const Bin& iBin);
+      void getBin(Bin& oBin);
       
       void setShutterMode(ShutterMode mode);
       void getShutterMode(ShutterMode& mode);
       
-      void setShutter(bool flag);
-      void getShutter(bool& flag);
+//      void setShutter(bool flag);
+//      void getShutter(bool& flag);
       
       void getPixelSize(double& sizex, double& sizey);
 
@@ -145,6 +150,8 @@ namespace lima
       void getElectronicShutterMode(A3_ShutterMode &oMode);
       void setBitDepth(A3_BitDepth iMode);
       void getBitDepth(A3_BitDepth &oMode);
+      void setTriggerMode(A3_TriggerMode iMode);
+      void getTriggerMode(A3_TriggerMode &oMode);
       void setTemperatureSP(double temp);
       void getTemperatureSP(double& temp);
       void getTemperature(double& temp);
@@ -231,9 +238,10 @@ namespace lima
       A3_ReadOutRate							m_adc_rate;
       A3_ShutterMode							m_electronic_shutter_mode;
       A3_BitDepth                 m_bit_depth;
+      A3_TriggerMode							m_trig_mode;
       bool                        m_cooler;
       double                      m_temperature_sp;
-      std::map<TrigMode, int>     m_trig_mode_maps;
+      // std::map<TrigMode, int>     m_trig_mode_maps;
       std::map<int, std::string>  m_andor3_error_maps;
 
       static bool						sAndorSDK3Initted;
