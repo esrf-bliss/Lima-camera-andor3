@@ -65,7 +65,8 @@ namespace lima {
     static const AT_WC* ImageSizeBytes = L"ImageSizeBytes";
     static const AT_WC* LUTIndex = L"LUTIndex";
     static const AT_WC* LUTValue = L"LUTValue";
-
+    static const AT_WC* MaxInterfaceTransferRate = L"MaxInterfaceTransferRate";
+    
     static const AT_WC* MetadataEnable = L"MetadataEnable";
     static const AT_WC* MetadataFrame = L"MetadataFrame";
     static const AT_WC* MetadataTimestamp = L"MetadataTimestamp";
@@ -81,11 +82,14 @@ namespace lima {
     static const AT_WC* PreAmpGainControl = L"PreAmpGainControl";
     //    static const AT_WC* PreAmpGainSelector = L"PreAmpGainSelector"; // Deprecated
     static const AT_WC* ReadoutTime = L"ReadoutTime";
+    static const AT_WC* RowNExposureEndEvent = L"RowNExposureEndEvent";
+    static const AT_WC* RowNExposureStartEvent = L"RowNExposureStartEvent";
     static const AT_WC* SensorCooling = L"SensorCooling";
     static const AT_WC* SensorHeight = L"SensorHeight";
     static const AT_WC* SensorTemperature = L"SensorTemperature";
     static const AT_WC* SensorWidth = L"SensorWidth";
     static const AT_WC* SerialNumber = L"SerialNumber";
+    static const AT_WC* SimplePreAmpGainControl = L"SimplePreAmpGainControl";
     static const AT_WC* SoftwareTrigger = L"SoftwareTrigger";
 
     static const AT_WC* SoftwareVersion = L"SoftwareVersion";
