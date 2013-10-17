@@ -128,9 +128,6 @@ namespace lima
       void setShutterMode(ShutterMode mode);
       void getShutterMode(ShutterMode& mode);
       
-//      void setShutter(bool flag);
-//      void getShutter(bool& flag);
-      
       void getPixelSize(double& sizex, double& sizey);
 
       void getStatus(Camera::Status& status);

@@ -902,18 +902,6 @@ lima::Andor3::Camera::getShutterMode(ShutterMode& mode)
   mode = ShutterManual;
 }
 
-//void
-//lima::Andor3::Camera::setShutter(bool flag)
-//{
-//  DEB_MEMBER_FUNCT();
-//}
-//
-//void
-//lima::Andor3::Camera::getShutter(bool& flag)
-//{
-//  DEB_MEMBER_FUNCT();
-//}
-//
 void
 lima::Andor3::Camera::getPixelSize(double& sizex, double& sizey)
 {
@@ -1219,8 +1207,31 @@ lima::Andor3::Camera::getCoolingStatus(std::string& status)
  */
 
 void
-_stopAcq(bool iImmediate)
+lima::Andor3::Camera::_stopAcq(bool iImmediate)
 {
+  DEB_MEMBER_FUNCT();
+  
+  AutoMutex		the_lock(m_cond.mutex());
+  bool				the_camera_acq;
+  
+  getBool(andor3::CameraAcquiring, &the_camera_acq);
+  if ( the_camera_acq ) {
+    while ( (! iImmediate) && (m_acq_thread_running) ) { // We are still actively retrieving frame buffers
+      m_acq_thread_waiting = true; // Asking to stop as soon as not in charge
+      m_cond.wait();
+    }
+    the_lock.unlock();
+
+    // If we were not sked for immediate leaving, let the acquisition thread end it :
+    if ( ! iImmediate ) {
+      return;
+    }
+    
+    DEB_TRACE() << "We should now STOP the acquisition";
+    sendCommand(andor3::AcquisitionStop);
+    
+    return;
+  }
   
 }
 
