@@ -140,22 +140,22 @@ namespace lima
       // -- andor3 specific, LIMA don't worry about it !
       void initialiseController();
 
-      void setAdcGain(A3_Gain iGain);
+      void setAdcGain(A3_Gain iGain);					// à exporter (avec le get)
       void getAdcGain(A3_Gain &oGain);
-      void setAdcRate(A3_ReadOutRate iRate);
+      void setAdcRate(A3_ReadOutRate iRate);  // à exporter (avec le get)
       void getAdcRate(A3_ReadOutRate &oRate);
-      void setElectronicShutterMode(A3_ShutterMode iMode);
+      void setElectronicShutterMode(A3_ShutterMode iMode);  // à exporter (avec le get)
       void getElectronicShutterMode(A3_ShutterMode &oMode);
       void setBitDepth(A3_BitDepth iMode);
       void getBitDepth(A3_BitDepth &oMode);
       void setTriggerMode(A3_TriggerMode iMode);
       void getTriggerMode(A3_TriggerMode &oMode);
-      void setTemperatureSP(double temp);
+      void setTemperatureSP(double temp);  // à exporter (avec le get)
       void getTemperatureSP(double& temp);
-      void getTemperature(double& temp);
-      void setCooler(bool flag);
+      void getTemperature(double& temp);   // à exporter (read-only)
+      void setCooler(bool flag);					 // à exporter (avec le get)
       void getCooler(bool& flag);
-      void getCoolingStatus(std::string& status);
+      void getCoolingStatus(std::string& status);  // à exporter (read-only)
 
     private:
       // -- some internals :
