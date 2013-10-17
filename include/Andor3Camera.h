@@ -100,6 +100,7 @@ namespace lima
       HwBufferCtrlObj* getBufferCtrlObj();
       
       //-- Synch control object
+      bool checkTrigMode(TrigMode mode);
       void setTrigMode(TrigMode  mode);
       void getTrigMode(TrigMode& mode);
       

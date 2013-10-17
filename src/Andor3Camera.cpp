@@ -534,6 +534,24 @@ lima::Andor3::Camera::getBufferCtrlObj()
 }
 
 //-- Synch control object
+bool
+lima::Andor3::Camera::checkTrigMode(TrigMode mode)
+{
+  switch (mode) {
+    case IntTrig:
+    case IntTrigMult:
+    case ExtTrigSingle:
+    case ExtTrigMult:
+    case ExtGate:
+      return true;
+      break;
+      
+    default:
+      return false;
+      break;
+  }
+}
+
 void
 lima::Andor3::Camera::setTrigMode(TrigMode  mode)
 {
