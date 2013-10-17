@@ -28,6 +28,8 @@
 
 // Andor3 plugin headers :
 #include "Andor3Camera.h"
+#include "Andor3DetInfoCtrlObj.h"
+#include "Andor3SyncCtrlObj.h"
 
 namespace lima
 {
@@ -60,8 +62,12 @@ namespace lima
       
     private:
 	    Camera&         m_cam;
-	    DetInfoCtrlObj  m_det_info;
-	    SyncCtrlObj     m_sync;
+      CapList         m_cap_list;
+	    DetInfoCtrlObj  *m_det_info;
+	    SyncCtrlObj     *m_sync;
+#warning To be implemented :
+      //      RoiCtrlObj			*m_roi;
+      //      BinCtrlObj			*m_bin;
     };
     
     
