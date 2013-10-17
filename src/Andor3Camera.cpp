@@ -693,7 +693,7 @@ void
 lima::Andor3::Camera::getNbHwAcquiredFrames(int &nb_acq_frames)
 {
   DEB_MEMBER_FUNCT();
-  nb_acq_frames = static_cast<int>(m_image_index);
+  nb_acq_frames = getNbHwAcquiredFrames();
 }
 
 void
