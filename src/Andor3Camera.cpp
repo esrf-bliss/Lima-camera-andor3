@@ -243,8 +243,9 @@ lima::Andor3::Camera::~Camera()
   DEB_DESTRUCTOR();
 
   // Stop Acq thread
-  //  delete m_acq_thread;
-  //  m_acq_thread = NULL;
+  _stopAcq(true);
+  delete m_acq_thread;
+  m_acq_thread = NULL;
   
   // Close camera
   if (m_cooler) {
@@ -979,6 +980,7 @@ lima::Andor3::Camera::initialiseController()
 
   if ( NULL == m_acq_thread ) {
     m_acq_thread = new _AcqThread(*this);
+    m_acq_thread->start();
   }
 }
 
