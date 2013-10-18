@@ -25,6 +25,8 @@ namespace Andor3
 
   public:
 
+// SIP is not working with the namespace, we have to give the enums and use them directly in here, even the one coming from other parts of LIMA :
+
     enum Status { Ready, Exposure, Readout, Latency, Fault };
     enum A3_TypeInfo { Unknown, Int, Float, Bool, Enum, String };
 
@@ -80,10 +82,12 @@ namespace Andor3
 
     void getPixelSize(double& sizex /Out/, double& sizey /Out/);
 
-    void getStatus(Camera::Status& status /Out/);
+    void getStatus(Status& status /Out/);
 
     void reset();
-    int getNbHwAcquiredFrames();
+// For python (and hence SIP) this one has same signature as void getNbHwAcquiredFrames(int &nb_acq_frames /Out/ );
+//  -> Keeping the more "traditional" void getNbHwAcquiredFrames(int &nb_acq_frames /Out/ );
+//   int getNbHwAcquiredFrames();
 
 // -- andor3 specific, LIMA don't worry about it !
    void initialiseController();

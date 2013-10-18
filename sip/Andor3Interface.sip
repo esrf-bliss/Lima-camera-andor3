@@ -27,9 +27,9 @@ namespace Andor3
     virtual ~Interface();
 
     //- From HwInterface
-    virtual void    getCapList(CapList& /Out/ ) const;
-// Ou ?
-//     virtual void	getCapList(std::vector<HwCap> &cap_list /Out/) const;
+// SIP is not knowing what is CapList ... We have to use the native type rather than the typedef :
+//    virtual void    getCapList(CapList& /Out/ ) const;
+    virtual void    getCapList(std::vector<HwCap> &cap_list /Out/) const;
     virtual void    reset(ResetLevel reset_level /In/ );
     virtual void    prepareAcq();
     virtual void    startAcq();
