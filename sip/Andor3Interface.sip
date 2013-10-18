@@ -15,3 +15,27 @@
  * You should have received a copy of the GNU General Public
  * License along with this file. If not, see <http://www.gnu.org/licenses/>.
  */
+namespace Andor3
+{
+  class Interface : HwInterface
+  {
+%TypeHeaderCode
+#include <Andor3Interface.h>
+%End
+  public:
+    Interface(Andor3::Camera& cam /In/ );
+    virtual ~Interface();
+
+    //- From HwInterface
+    virtual void    getCapList(CapList& /Out/ ) const;
+// Ou ?
+//     virtual void	getCapList(std::vector<HwCap> &cap_list /Out/) const;
+    virtual void    reset(ResetLevel reset_level /In/ );
+    virtual void    prepareAcq();
+    virtual void    startAcq();
+    virtual void    stopAcq();
+    virtual void    getStatus(StatusType& status /Out/ );
+    virtual int     getNbHwAcquiredFrames();
+
+  };
+};
