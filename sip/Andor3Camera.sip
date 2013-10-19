@@ -17,7 +17,7 @@
  */
 namespace Andor3
 {
-  class Camera
+  class Camera /NoDefaultCtors/
   {
 %TypeHeaderCode
 #include <Andor3Camera.h>
