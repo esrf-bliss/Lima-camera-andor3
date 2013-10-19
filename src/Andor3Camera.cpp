@@ -423,10 +423,19 @@ void
 lima::Andor3::Camera::startAcq()
 {
   DEB_MEMBER_FUNCT();
-  DEB_TRACE() << "Starting the acquisition by the camera";
-  sendCommand(andor3::AcquisitionStart);
+  DEB_TRACE() << "Starting the acquisition by the camera (or triggering when in software trigger mode)";
+
+  if ( 0 == m_image_index ) {
+    // Setting the start timestamp of the buffer :
+    m_buffer_ctrl_obj.getBuffer().setStartTimestamp(Timestamp::now());
+    // Sending the start command to the SDK :
+    sendCommand(andor3::AcquisitionStart);
+  }
   
-#warning currently not taking care properly of the Software trigger mode !!!
+  if ( Software == m_trig_mode ) {
+    // If we are in software trigger mode, the call to startAcq serves as the trigger :
+    sendCommand(andor3::SoftwareTrigger);
+  }
   
   DEB_TRACE() << "Resuming the action of the acquisition thread";
   AutoMutex    the_lock(m_cond.mutex());
@@ -434,6 +443,7 @@ lima::Andor3::Camera::startAcq()
   m_cond.broadcast();
   
   DEB_TRACE() << "Done, the acquisition is now started and the frame retrieving should take place in parallel in a second thread";
+
 }
 
 void
