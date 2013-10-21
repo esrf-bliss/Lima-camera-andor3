@@ -405,6 +405,10 @@ lima::Andor3::Camera::prepareAcq()
     AT_QueueBuffer(m_camera_handle, static_cast<AT_U8*>(the_buffer_ptr), the_frame_mem_size);
   }
   DEB_TRACE() << "Finished queueing " << the_alloc_frames << " frame buffers to andor's SDK3";
+  // Seems to me that the «0 == m_nb_frames_to_collect» case corresponds to the continuous case
+  // So next line is not making sense (and hence commented out) :
+  // #warning Setting properly the continuous vs. fixed acquisition mode of the camera
+
 }
 
 
@@ -1726,7 +1730,62 @@ lima::Andor3::Camera::_AcqThread::~_AcqThread()
 void
 lima::Andor3::Camera::_AcqThread::threadFunction()
 {
-  
+  DEB_MEMBER_FUNCT();
+  AutoMutex					the_lock(m_cam.m_cond.mutex());
+  StdBufferCbMgr		&the_buffer = m_cam.m_buffer_ctrl_obj.getBuffer();
+
+  while (! m_cam.m_acq_thread_should_quit ) {
+    // We are looping until being «signaled» that we shoul quit.
+    while ( m_cam.m_acq_thread_waiting && ! m_cam.m_acq_thread_should_quit ) {
+      // Lets wait a signal telling that maybe something has to be done …
+      DEB_TRACE() << "[andor3 acquisition thread]Wait";
+      m_cam.m_acq_thread_running = false; // Making sure the main class nows nothing goes on
+      m_cam.m_cond.broadcast();
+      m_cam.m_cond.wait();
+    }
+    // The main thread asked to get out of wait mode (setting m_cam.m_acq_thread_waiting to false)
+    DEB_TRACE() << "Set running by main thread setting m_cam.m_acq_thread_waiting to false";
+    m_cam.m_acq_thread_running = true;
+    if ( m_cam.m_acq_thread_should_quit ) {
+      // Should return ASAP, so that the thread could be «joined».
+      return;
+    }
+
+    m_cam.m_cond.broadcast();
+    the_lock.unlock();
+    
+    bool		the_acq_goon = true;
+    while ( the_acq_goon && ((0 == m_cam.m_nb_frames_to_collect) || (m_cam.m_nb_frames_to_collect != m_cam.m_image_index)) ) {
+      unsigned char  		*the_returned_image;
+      int								the_returned_image_size;
+      unsigned int			the_wait_timeout = AT_INFINITE;
+      int               the_wait_queue_res;
+      
+
+      the_wait_queue_res = AT_WaitBuffer(m_cam.m_camera_handle, &the_returned_image, &the_returned_image_size, the_wait_timeout);
+      
+      if ( AT_SUCCESS == the_wait_queue_res ) {
+        // We managed to get an image buffer returned :
+        HwFrameInfoType		the_frame_info;
+
+        the_frame_info.acq_frame_nb = static_cast<int>(m_cam.m_image_index);
+        the_acq_goon = the_buffer.newFrameReady(the_frame_info);
+        DEB_TRACE() << "image " << m_cam.m_image_index <<" published with newFrameReady()" ;
+        
+        ++m_cam.m_image_index;
+      }
+      else {
+        DEB_ERROR() << "Problem in retrieving the frame indexed " << m_cam.m_image_index <<"!\n"
+        << "\tAT_WaitBuffer returned an error " << the_wait_queue_res << "\n"
+        << "\t" << m_cam.m_andor3_error_maps[the_wait_queue_res] << "\n"
+        << "\t!!! returning to WAIT mode !!!";
+        the_acq_goon = false;
+      }
+    }
+    // Returning to the waiting mode :
+    the_lock.lock();
+    m_cam.m_acq_thread_waiting = true;
+  }
 }
 
 /*
