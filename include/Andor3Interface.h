@@ -60,6 +60,11 @@ namespace lima
 	    virtual void    getStatus(StatusType& status);
 	    virtual int     getNbHwAcquiredFrames();
       
+      // Giving the possibility to get directly the camera object :
+      Camera& getCamera()
+      { return m_cam; }
+        
+      
     private:
 	    Camera&         m_cam;
       CapList         m_cap_list;
