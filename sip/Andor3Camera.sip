@@ -37,6 +37,8 @@ namespace Andor3
     enum A3_TriggerMode { Internal = 0, ExternalLevelTransition = 1, ExternalStart = 2, ExternalExposure = 3, Software = 4, Advanced = 5, External = 6 };
     enum A3_Binning { B1x1=0, B2x2=1, B4x4=2, B8x8=3};
 
+    Camera(const std::string& bitflow_path, int camera_number=0);
+    ~Camera();
 
     void prepareAcq();
     void startAcq();
