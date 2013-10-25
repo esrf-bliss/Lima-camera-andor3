@@ -1024,10 +1024,15 @@ lima::Andor3::Camera::initialiseController()
   DEB_TRACE() << "Set the ROI to full frame: "<< aRoi;
   setRoi(aRoi);
 
-  // Making sure the «spurious noise filter» is OFF :
-  if ( AT_SUCCESS != setBool(andor3::SpuriousNoiseFilter, false) ) {
-    DEB_ERROR() << "Cannot set SpuriousNoiseFilter to false" << " : error code = " << m_camera_error_str;
-    THROW_HW_ERROR(Error) << "Cannot set SpuriousNoiseFilter to false";
+  if ( m_real_camera ) {
+    // Making sure the «spurious noise filter» is OFF :
+    if ( AT_SUCCESS != setBool(andor3::SpuriousNoiseFilter, false) ) {
+      DEB_ERROR() << "Cannot set SpuriousNoiseFilter to false" << " : error code = " << m_camera_error_str;
+      THROW_HW_ERROR(Error) << "Cannot set SpuriousNoiseFilter to false";
+    }
+  }
+  else {
+    DEB_TRACE() << "Since the camera is SIMULATED, it is not possible to set it noise filter (" << "SpuriousNoiseFilter" << ") to OFF.";
   }
 
   if ( NULL == m_acq_thread ) {
