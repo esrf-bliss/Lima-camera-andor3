@@ -143,6 +143,7 @@ m_acq_thread_should_quit(false),
 m_nb_frames_to_collect(1),
 m_image_index(0),
 m_buffer_ringing(false),
+m_real_camera(false),
 m_detector_model("un-inited"),
 m_detector_type("un-inited"),
 m_detector_serial("un-inited"),
@@ -207,6 +208,14 @@ m_temperature_sp(5.0)
     THROW_HW_ERROR(Error) << "Cannot get camera model";
   }
   m_detector_model = WStringToString(std::wstring(model));
+  
+  if ( m_detector_model != "SIMCAM CMOS" ) {
+    m_real_camera = true;
+  }
+  else {
+    m_real_camera = false;
+    DEB_TRACE() << "The camera is indeed the SIMULATED camera, all exception for invalid parameter name will be ignored!!!";
+  }
 
   // --- Get Camera Type
   // @TODO This one would be better with a map converting from model to type !!!
@@ -738,7 +747,12 @@ lima::Andor3::Camera::checkRoi(const Roi& set_roi, Roi& hw_roi)
   Bin				the_binning;
   
   getBin(the_binning);
-  getBool(andor3::FullAOIControl, &the_fullaoi_control);
+  if ( m_real_camera ) {
+    getBool(andor3::FullAOIControl, &the_fullaoi_control);
+  }
+  else {
+    the_fullaoi_control = false;
+  }
 
   int				the_left, the_width, the_top, the_height;
   int				the_bin_nb = the_binning.getX();
@@ -809,8 +823,14 @@ lima::Andor3::Camera::isBinningAvailable()
 {
   DEB_MEMBER_FUNCT();
   bool 			the_fullaoi_control;
-  getBool(andor3::FullAOIControl, &the_fullaoi_control);
-
+  
+  if ( m_real_camera ) {
+    getBool(andor3::FullAOIControl, &the_fullaoi_control);
+  }
+  else {
+    the_fullaoi_control = false;
+  }
+  
   return the_fullaoi_control;
 #warning Indeed ROI is also available when the_fullaoi_control is false, only that checkRoi dos not handle it so far.
 }
@@ -1020,14 +1040,19 @@ void
 lima::Andor3::Camera::setAdcGain(A3_Gain iGain)
 {
   DEB_MEMBER_FUNCT();
-  int the_gain;
-  setEnumIndex(andor3::PreAmpGainControl, iGain);
-  getEnumIndex(andor3::PreAmpGainControl, &the_gain);
-  m_adc_gain = static_cast<A3_Gain>(the_gain);
-  if ( m_adc_gain != iGain ) {
-    DEB_ERROR() << "Prood-reading the ADC readout gain :"
-    << "\n\tGot " << m_adc_gain << "back,"
-    << "\n\twhile requesting " << iGain;
+  if ( m_real_camera ) {
+    int the_gain;
+    setEnumIndex(andor3::PreAmpGainControl, iGain);
+    getEnumIndex(andor3::PreAmpGainControl, &the_gain);
+    m_adc_gain = static_cast<A3_Gain>(the_gain);
+    if ( m_adc_gain != iGain ) {
+      DEB_ERROR() << "Proof-reading the ADC readout gain :"
+      << "\n\tGot " << m_adc_gain << "back,"
+      << "\n\twhile requesting " << iGain;
+    }
+  }
+  else {
+    DEB_TRACE() << "Setting the gain is not possible for the SIMCAM. Skipping this request (value requested was : " << iGain << ").";
   }
 }
 
@@ -1045,14 +1070,23 @@ void
 lima::Andor3::Camera::setAdcRate(A3_ReadOutRate iRate)
 {
   DEB_MEMBER_FUNCT();
-  int the_rate;
-  setEnumIndex(andor3::PixelReadoutRate, iRate);
-  getEnumIndex(andor3::PixelReadoutRate, &the_rate);
-  m_adc_rate = static_cast<A3_ReadOutRate>(the_rate);
-  if ( m_adc_rate != iRate ) {
-    DEB_ERROR() << "Prood-reading the ADC readout rate :"
-    << "\n\tGot " << m_adc_rate << "back,"
-    << "\n\twhile requesting " << iRate;
+  if ( m_real_camera ) {
+    int the_rate;
+    setEnumIndex(andor3::PixelReadoutRate, iRate);
+    getEnumIndex(andor3::PixelReadoutRate, &the_rate);
+    m_adc_rate = static_cast<A3_ReadOutRate>(the_rate);
+    if ( m_adc_rate != iRate ) {
+      DEB_ERROR() << "Prood-reading the ADC readout rate :"
+      << "\n\tGot " << m_adc_rate << "back,"
+      << "\n\twhile requesting " << iRate;
+    }
+  }
+  else {
+    int the_rate;
+    setEnumIndex(andor3::PixelReadoutRate, 0);
+    getEnumIndex(andor3::PixelReadoutRate, &the_rate);
+    m_adc_rate = static_cast<A3_ReadOutRate>(the_rate);
+    DEB_TRACE() << "The SIMCAM has only one rate setting (550MHz), making sure that's what we are doing now";
   }
 }
 
@@ -1126,14 +1160,23 @@ void
 lima::Andor3::Camera::setTriggerMode(A3_TriggerMode iMode)
 {
   DEB_MEMBER_FUNCT();
-  int the_mode;
-  setEnumIndex(andor3::TriggerMode, static_cast<int>(iMode));
-  getEnumIndex(andor3::TriggerMode, &the_mode);
-  m_trig_mode = static_cast<A3_TriggerMode>(the_mode);
-  if ( m_trig_mode != iMode ) {
-    DEB_ERROR() << "Prood-reading the trigger mode :"
-    << "\n\tGot " << m_trig_mode << "back,"
-    << "\n\twhile requesting " << iMode;
+  if ( m_real_camera ) {
+    int the_mode;
+    setEnumIndex(andor3::TriggerMode, static_cast<int>(iMode));
+    getEnumIndex(andor3::TriggerMode, &the_mode);
+    m_trig_mode = static_cast<A3_TriggerMode>(the_mode);
+    if ( m_trig_mode != iMode ) {
+      DEB_ERROR() << "Prood-reading the trigger mode :"
+      << "\n\tGot " << m_trig_mode << "back,"
+      << "\n\twhile requesting " << iMode;
+    }
+  }
+  else { // Simulated camera -> setting it forcibly to «Advanced»
+    int the_mode;
+    setEnumIndex(andor3::TriggerMode, 5);
+    getEnumIndex(andor3::TriggerMode, &the_mode);
+    m_trig_mode = static_cast<A3_TriggerMode>(the_mode);
+    DEB_TRACE() << "The SIMCAM has only one trigger-mode setting (Advanced), making sure that's what we are doing now";
   }
 }
 
@@ -1230,9 +1273,14 @@ void
 lima::Andor3::Camera::getCoolingStatus(std::string& status)
 {
   DEB_MEMBER_FUNCT();
-  wchar_t		wcs_status_string[32];
-  getEnumString(andor3::TemperatureControl, wcs_status_string, 31);
-  status = WStringToString(wcs_status_string);
+  if ( m_real_camera ) {
+    wchar_t		wcs_status_string[32];
+    getEnumString(andor3::TemperatureStatus, wcs_status_string, 31);
+    status = WStringToString(wcs_status_string);
+  }
+  else {
+    DEB_TRACE() << "This has no signification on SIMCAM";
+  }
 }
 
 /*!

@@ -64,8 +64,7 @@ namespace lima
       // In the same order/index as 'BitDepth'
       enum A3_BitDepth { b11 = 0, b16= 1 };
       // The camera trigger mode (in the enum order) :
-      enum A3_TriggerMode { Internal = 0, ExternalLevelTransition = 1, ExternalStart = 2, ExternalExposure = 3, Software = 4, Advanced = 5, External = 6
-      };
+      enum A3_TriggerMode { Internal = 0, ExternalLevelTransition = 1, ExternalStart = 2, ExternalExposure = 3, Software = 4, Advanced = 5, External = 6 };
       // The binning system of andor3 :
       enum A3_Binning { B1x1=0, B2x2=1, B4x4=2, B8x8=3};
 /*
@@ -220,6 +219,7 @@ namespace lima
       bool												m_buffer_ringing;
 
       // LIMA / Not directly acquisition related :
+      bool												m_real_camera;					// Set to false for CameraModel == "SIMCAM CMOS"
       std::string                 m_detector_model;
       std::string                 m_detector_type;
       std::string									m_detector_serial;
