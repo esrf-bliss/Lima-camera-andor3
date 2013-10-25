@@ -52,7 +52,7 @@ namespace lima
 	    virtual ~Interface();
       
 	    //- From HwInterface
-	    virtual void    getCapList(CapList&) const;
+	    virtual void    getCapList(CapList& o_cap_list) const;
 	    virtual void    reset(ResetLevel reset_level);
 	    virtual void    prepareAcq();
 	    virtual void    startAcq();

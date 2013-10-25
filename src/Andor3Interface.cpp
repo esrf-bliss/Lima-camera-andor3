@@ -73,6 +73,14 @@ lima::Andor3::Interface::~Interface()
 }
 
 void
+lima::Andor3::Interface::getCapList(HwInterface::CapList &o_cap_list) const
+{
+  o_cap_list = m_cap_list;
+}
+
+
+
+void
 lima::Andor3::Interface::reset(ResetLevel reset_level)
 {
   DEB_MEMBER_FUNCT();
