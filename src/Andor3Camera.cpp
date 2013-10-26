@@ -392,7 +392,7 @@ lima::Andor3::Camera::prepareAcq()
   << the_max_frames;
   if (( the_max_frames < the_alloc_frames ) || ( 0 == m_nb_frames_to_collect )) {
     // If not enough memory or continuous acquisition we go into ring buffer mode :
-    the_alloc_frames = the_max_frames;
+    the_alloc_frames = ( the_max_frames < the_alloc_frames ) ? the_max_frames : the_alloc_frames ;
     m_buffer_ringing = true;
     DEB_TRACE() << "Setting ring mode, since we are either in continuous acquisition or not enough memory";
   }
@@ -1423,6 +1423,13 @@ lima::Andor3::Camera::_stopAcq(bool iImmediate)
   
   getBool(andor3::CameraAcquiring, &the_camera_acq);
   
+  if ( iImmediate ) {
+    DEB_TRACE() << "Sendign a FORCEFULL AcquistionStop, whatever is the current status be cause you asked for immediate stop";
+    sendCommand(andor3::AcquisitionStop);
+    _setStatus(Ready, false);
+    return;
+  }
+
   if ( the_camera_acq || (Ready != m_status) ) {
     while ( (! iImmediate) && (m_acq_thread_running) ) { // We are still actively retrieving frame buffers
       m_acq_thread_waiting = true; // Asking to stop as soon as not in charge
@@ -1430,18 +1437,16 @@ lima::Andor3::Camera::_stopAcq(bool iImmediate)
     }
     the_lock.unlock();
 
-    // If we were not sked for immediate leaving, let the acquisition thread end it :
-    if ( ! iImmediate ) {
-      return;
-    }
+    // If we were not asked for immediate leaving, let the acquisition thread end it :
+    //    if ( ! iImmediate ) {
+    //      return;
+    //    }
     
     DEB_TRACE() << "We should now STOP the acquisition";
     sendCommand(andor3::AcquisitionStop);
     _setStatus(Ready, false);
-    
-    return;
   }
-  
+  return;
 }
 
 
@@ -1972,6 +1977,11 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
         DEB_TRACE() << "image " << m_cam.m_image_index <<" published with newFrameReady()" ;
         
         ++m_cam.m_image_index;
+	if ( m_cam.m_buffer_ringing ) {
+	  DEB_TRACE() << "As we are unsing a rin-buffer : re-queueing the acquired image on the buffer queue.";
+	  AT_QueueBuffer(m_cam.m_camera_handle, the_returned_image, the_returned_image_size);
+	  DEB_TRACE() << "There is NO guarantee that LIMA will be done with this buffer BEFORE andor SDK3 is changing its content !!!";
+	}
       }
       else {
         DEB_ERROR() << "Problem in retrieving the frame indexed " << m_cam.m_image_index <<"!\n"
