@@ -1081,7 +1081,7 @@ lima::Andor3::Camera::setAdcRate(A3_ReadOutRate iRate)
     getEnumIndex(andor3::PixelReadoutRate, &the_rate);
     m_adc_rate = static_cast<A3_ReadOutRate>(the_rate);
     if ( m_adc_rate != iRate ) {
-      DEB_ERROR() << "Prood-reading the ADC readout rate :"
+      DEB_ERROR() << "Proof-reading the ADC readout rate :"
       << "\n\tGot " << m_adc_rate << "back,"
       << "\n\twhile requesting " << iRate;
     }
@@ -1114,7 +1114,7 @@ lima::Andor3::Camera::setElectronicShutterMode(A3_ShutterMode iMode)
   getEnumIndex(andor3::ElectronicShutteringMode, &the_mode);
   m_electronic_shutter_mode = static_cast<A3_ShutterMode>(the_mode);
   if ( m_electronic_shutter_mode != iMode ) {
-    DEB_ERROR() << "Prood-reading the electronic shutter mode :"
+    DEB_ERROR() << "Proof-reading the electronic shutter mode :"
     << "\n\tGot " << m_electronic_shutter_mode << "back,"
     << "\n\twhile requesting " << iMode;
   }
@@ -1135,13 +1135,26 @@ lima::Andor3::Camera::setBitDepth(A3_BitDepth iMode)
 {
   DEB_MEMBER_FUNCT();
   int the_mode;
-  setEnumIndex(andor3::PixelEncoding, static_cast<int>(iMode));
-  getEnumIndex(andor3::PixelEncoding, &the_mode);
+  setEnumIndex(andor3::BitDepth, static_cast<int>(iMode));
+  getEnumIndex(andor3::BitDepth, &the_mode);
   m_bit_depth = static_cast<A3_BitDepth>(the_mode);
   if ( m_bit_depth != iMode ) {
-    DEB_ERROR() << "Prood-reading the image bit-depth :"
+    DEB_ERROR() << "Proof-reading the image bit-depth :"
     << "\n\tGot " << m_bit_depth << "back,"
     << "\n\twhile requesting " << iMode;
+  }
+  
+  // Making sure that the pixel encoding is a predictable one, depending on the bit-depth.
+  switch (m_bit_depth) {
+    case b11:
+      setEnumString(andor3::PixelEncoding, L"Mono12");
+      break;
+      
+    case b16:
+      setEnumString(andor3::PixelEncoding, L"Mono12");
+      break;
+    default:
+      break;
   }
 }
 
@@ -1171,7 +1184,7 @@ lima::Andor3::Camera::setTriggerMode(A3_TriggerMode iMode)
     getEnumIndex(andor3::TriggerMode, &the_mode);
     m_trig_mode = static_cast<A3_TriggerMode>(the_mode);
     if ( m_trig_mode != iMode ) {
-      DEB_ERROR() << "Prood-reading the trigger mode :"
+      DEB_ERROR() << "Proof-reading the trigger mode :"
       << "\n\tGot " << m_trig_mode << "back,"
       << "\n\twhile requesting " << iMode;
     }
