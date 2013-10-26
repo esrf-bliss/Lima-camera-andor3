@@ -427,6 +427,26 @@ lima::Andor3::Camera::prepareAcq()
   // So next line is not making sense (and hence commented out) :
   // #warning Setting properly the continuous vs. fixed acquisition mode of the camera
 
+  if ( 0 == m_nb_frames_to_collect ) {
+    // We are in continuous acquisition mode : set the camera appropriately
+    DEB_TRACE() << "m_nb_frames_to_collect=0 : this means we want continuous acquisition. Trying to set teh camera accrodingly";
+    setEnumString(andor3::CycleMode, L"Continuous");
+  }
+  else {
+    AT_64        the_frame_count = static_cast<AT_64>(m_nb_frames_to_collect);
+    DEB_TRACE() << "m_nb_frames_to_collect=" << m_nb_frames_to_collect << " : setting the camera in fixed number of frame mode";
+    setEnumString(andor3::CycleMode, L"Fixed");
+    DEB_TRACE() << "Then setting the number of frame appropriatly";
+    setInt(andor3::FrameCount, the_frame_count);
+    getInt(andor3::FrameCount, &the_frame_count);
+    DEB_TRACE() << "Now proof-reading the number of frames to collect : " << the_frame_count << " (was requested :" << m_nb_frames_to_collect << ")";
+    if ( the_frame_count != m_nb_frames_to_collect ) {
+      DEB_ERROR() << "Got erreo !!! Required to collect : " << m_nb_frames_to_collect << " frames, but the SDK is thinking it should collect " << the_frame_count << " frames!!!";
+    }
+  }
+  AT_WC          the_string[256];
+  getEnumString(andor3::CycleMode, the_string, 255); 
+  DEB_TRACE() << "At the end of prepareAcq, the CycleMode is " << WStringToString(std::wstring(the_string));
 }
 
 
