@@ -725,11 +725,12 @@ lima::Andor3::Camera::getLatTimeRange(double& min_lat, double& max_lat) const
 }
 
 void
-lima::Andor3::Camera::setNbFrames(int  nb_frames)
+lima::Andor3::Camera::setNbFrames(int nb_frames)
 {
   DEB_MEMBER_FUNCT();
   DEB_PARAM() << DEB_VAR1(nb_frames);
   m_nb_frames_to_collect = static_cast<size_t>(nb_frames);
+  DEB_TRACE() << "Setting the number of frames to collect to " << m_nb_frames_to_collect;
 }
 
 void
@@ -1937,7 +1938,7 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
       int               the_wait_queue_res;
       
 
-      DEB_TRACE() << "[andor3 acquisition thread] Waiting for buffer index " << m_cam.m_image_index << "(AT_WaitBuffer)";
+      DEB_TRACE() << "[andor3 acquisition thread] Waiting for buffer index " << m_cam.m_image_index << " (AT_WaitBuffer)";
       the_wait_queue_res = AT_WaitBuffer(m_cam.m_camera_handle, &the_returned_image, &the_returned_image_size, the_wait_timeout);
       DEB_TRACE() << "[andor3 acquisition thread] DONE waiting for buffer index " << m_cam.m_image_index;
       
@@ -1962,6 +1963,8 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
       }
       DEB_TRACE() << "[andor3 acquisition thread] End of the iteration, next iteration will be for image index " << m_cam.m_image_index;
     }
+    DEB_TRACE() << "[andor3 acquisition thread] Finished looping !";
+    m_cam._setStatus(Ready, false);
     // Returning to the waiting mode :
     the_lock.lock();
     m_cam.m_acq_thread_waiting = true;
