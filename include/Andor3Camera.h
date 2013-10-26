@@ -166,6 +166,8 @@ namespace lima
       // -- some internals :
       // Stopping an acquisition, iForce : without waiting the end of frame buffer retrieval by m_acq_thread
       void _stopAcq(bool iImmediate);
+      // Setting the status in a thread safe manner :
+      void _setStatus(Camera::Status iStatus, bool iForce);
       
     private:
       // -- andor3 Lower level functions
@@ -222,8 +224,9 @@ namespace lima
       // A bit more general :
       size_t											m_nb_frames_to_collect; // The number of frames to collect in current sequence
       size_t											m_image_index;					// The index in the current sequence of the next image to retrieve
-      bool												m_buffer_ringing;
-
+      bool												m_buffer_ringing;				// Should the buffer be considered as a ring buffer rather than a single use buffer.
+      Status											m_status;								// The current status of the camera
+      
       // LIMA / Not directly acquisition related :
       bool												m_real_camera;					// Set to false for CameraModel == "SIMCAM CMOS"
       std::string                 m_detector_model;
