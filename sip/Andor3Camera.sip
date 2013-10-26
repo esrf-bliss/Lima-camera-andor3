@@ -96,14 +96,20 @@ namespace Andor3
 
    void setAdcGain(A3_Gain iGain /In/ );
    void getAdcGain(A3_Gain &oGain /Out/ );
+   void getAdcGainString(std::string &oGainString /Out/ ) const;
    void setAdcRate(A3_ReadOutRate iRate /In/ );
    void getAdcRate(A3_ReadOutRate &oRate /Out/ );
+   void getAdcRateString(std::string &oRateString /Out/ ) const;
    void setElectronicShutterMode(A3_ShutterMode iMode /In/ );
    void getElectronicShutterMode(A3_ShutterMode &oMode /Out/ );
+   void getElectronicShutterModeString(std::string &oModeString /Out/) const;
    void setBitDepth(A3_BitDepth iMode /In/ );
    void getBitDepth(A3_BitDepth &oMode /Out/ );
+   void getBitDepthString(std::string &oDepthString /Out/ ) const;
+   void getPxEncoding(std::string &oPxEncoding /Out/ ) const;
    void setTriggerMode(A3_TriggerMode iMode /In/ );
    void getTriggerMode(A3_TriggerMode &oMode /Out/ );
+   void getTriggerModeString(std::string &oModeString /Out/ ) const;
    void setTemperatureSP(double temp /In/ );
    void getTemperatureSP(double& temp /Out/ );
    void getTemperature(double& temp /Out/ );

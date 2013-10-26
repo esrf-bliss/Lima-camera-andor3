@@ -141,14 +141,20 @@ namespace lima
 
       void setAdcGain(A3_Gain iGain);					// à exporter (avec le get)
       void getAdcGain(A3_Gain &oGain);
+      void getAdcGainString(std::string &oGainString) const;
       void setAdcRate(A3_ReadOutRate iRate);  // à exporter (avec le get)
       void getAdcRate(A3_ReadOutRate &oRate);
+      void getAdcRateString(std::string &oRateString) const;
       void setElectronicShutterMode(A3_ShutterMode iMode);  // à exporter (avec le get)
       void getElectronicShutterMode(A3_ShutterMode &oMode);
+      void getElectronicShutterModeString(std::string &oModeString) const;
       void setBitDepth(A3_BitDepth iMode);
       void getBitDepth(A3_BitDepth &oMode);
+      void getBitDepthString(std::string &oDepthString) const;
+      void getPxEncoding(std::string &oPxEncoding) const;
       void setTriggerMode(A3_TriggerMode iMode);
       void getTriggerMode(A3_TriggerMode &oMode);
+      void getTriggerModeString(std::string &oModeString) const;
       void setTemperatureSP(double temp);  // à exporter (avec le get)
       void getTemperatureSP(double& temp);
       void getTemperature(double& temp);   // à exporter (read-only)

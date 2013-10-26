@@ -1072,6 +1072,15 @@ lima::Andor3::Camera::getAdcGain(A3_Gain &oGain)
 }
 
 void
+lima::Andor3::Camera::getAdcGainString(std::string &oGainString) const
+{
+  AT_WC		the_string[256];
+  getEnumStringByIndex(andor3::PreAmpGainControl, m_adc_gain, the_string, 255);
+  oGainString = WStringToString(std::wstring(the_string));
+}
+
+
+void
 lima::Andor3::Camera::setAdcRate(A3_ReadOutRate iRate)
 {
   DEB_MEMBER_FUNCT();
@@ -1106,6 +1115,14 @@ lima::Andor3::Camera::getAdcRate(A3_ReadOutRate &oRate)
 }
 
 void
+lima::Andor3::Camera::getAdcRateString(std::string &oRateString) const
+{
+  AT_WC		the_string[256];
+  getEnumStringByIndex(andor3::PixelReadoutRate, m_adc_rate, the_string, 255);
+  oRateString = WStringToString(std::wstring(the_string));
+}
+
+void
 lima::Andor3::Camera::setElectronicShutterMode(A3_ShutterMode iMode)
 {
   DEB_MEMBER_FUNCT();
@@ -1128,6 +1145,14 @@ lima::Andor3::Camera::getElectronicShutterMode(A3_ShutterMode &oMode)
 //  getEnumIndex(andor3::ElectronicShutteringMode, &the_mode);
 //  oMode = static_cast<A3_ShutterMode>(the_mode);
   oMode = m_electronic_shutter_mode;
+}
+
+void
+lima::Andor3::Camera::getElectronicShutterModeString(std::string &oModeString) const
+{
+  AT_WC		the_string[256];
+  getEnumStringByIndex(andor3::ElectronicShutteringMode, m_electronic_shutter_mode, the_string, 255);
+  oModeString = WStringToString(std::wstring(the_string));
 }
 
 void
@@ -1168,6 +1193,21 @@ lima::Andor3::Camera::getBitDepth(A3_BitDepth &oMode)
   oMode = m_bit_depth;
 }
 
+void
+lima::Andor3::Camera::getBitDepthString(std::string &oDepthString) const
+{
+  AT_WC		the_string[256];
+  getEnumStringByIndex(andor3::BitDepth, m_bit_depth, the_string, 255);
+  oDepthString = WStringToString(std::wstring(the_string));
+}
+
+void
+lima::Andor3::Camera::getPxEncoding(std::string &oPxEncoding) const
+{
+  AT_WC		the_string[256];
+  getEnumString(andor3::PixelEncoding, the_string, 255);
+  oPxEncoding = WStringToString(std::wstring(the_string));
+}
 
 
 /*!
@@ -1208,6 +1248,15 @@ lima::Andor3::Camera::getTriggerMode(A3_TriggerMode &oMode)
   DEB_MEMBER_FUNCT();
   oMode = m_trig_mode;
 }
+
+void
+lima::Andor3::Camera::getTriggerModeString(std::string &oModeString) const
+{
+  AT_WC		the_string[256];
+  getEnumStringByIndex(andor3::TriggerMode, m_trig_mode, the_string, 255);
+  oModeString = WStringToString(std::wstring(the_string));
+}
+
 
 //-----------------------------------------------------
 // @brief	set the temperature set-point // DONE
