@@ -1004,12 +1004,16 @@ void
 lima::Andor3::Camera::initialiseController()
 {
   DEB_MEMBER_FUNCT();
+  A3_BitDepth			the_bd = m_bit_depth;
+  A3_Gain 				the_gain = m_adc_gain;
+  A3_ReadOutRate	the_rate = m_adc_rate;
+  
   // Carefully crafting the order, since some are affecting others...
   setElectronicShutterMode(m_electronic_shutter_mode);
   setTriggerMode(m_trig_mode);
-  setAdcGain(m_adc_gain);
-  setAdcRate(m_adc_rate);
-  setBitDepth(m_bit_depth);
+  setAdcGain(the_gain);
+  setAdcRate(the_rate);
+  setBitDepth(the_bd);
   setCooler(m_cooler);
   setTemperatureSP(m_temperature_sp);
   setExpTime(m_exp_time);
@@ -1060,6 +1064,15 @@ lima::Andor3::Camera::setAdcGain(A3_Gain iGain)
   else {
     DEB_TRACE() << "Setting the gain is not possible for the SIMCAM. Skipping this request (value requested was : " << iGain << ").";
   }
+  // This can automatically update the PixelEncoding and BitDepth to values corresponding to the gain
+  // Hence we proof-read the new values and update the cache accordingly :
+  int			the_bit_depth; // Pixel encoding will be reset appropriately in the setBitDepth method
+  //  int			the_px_encoding;
+  
+  getEnumIndex(andor3::BitDepth, &the_bit_depth);
+  //  getEnumIndex(andor3::PixelEncoding, &the_px_encoding);
+
+  setBitDepth(static_cast<A3_BitDepth>(the_bit_depth));
 }
 
 void
