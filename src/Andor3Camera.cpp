@@ -320,12 +320,16 @@ lima::Andor3::Camera::prepareAcq()
   
   // Since LIMA knows only an integer number of bytes per pixel
   // Make sure that the BytesPerPixel is 2 ...
-  int					the_bit_depth;
-  getEnumIndex(andor3::BitDepth, &the_bit_depth);
-  DEB_TRACE() << "The bith depth (index) of the image is " << the_bit_depth;
+  AT_WC								the_bit_depth_wc[256];
+  std::string					the_bit_depth;
+  int									the_bit_depth_index;
   
+  getEnumString(andor3::BitDepth, the_bit_depth_wc, 255);
+  the_bit_depth = WStringToString(std::wstring(the_bit_depth_wc));
+  getEnumIndex(andor3::BitDepth, &the_bit_depth_index);
+  DEB_TRACE() << "The bit depth of the image is " << the_bit_depth << " (index : " << the_bit_depth_index << ").";
   
-  if ( b11 == the_bit_depth ) {
+  if ( b11 == the_bit_depth_index ) {
     DEB_TRACE() << "Since we are in 11bpp, we impose Mono12 pixel encoding.";
     // We are reading 11/12bpp images,
     // Make sure that we are not in the 12b/packed mode (1.5 byte per pixe, not handled by LIMA).
@@ -363,7 +367,7 @@ lima::Andor3::Camera::prepareAcq()
   }
   
   // Setting the other information of the frame :
-  switch (the_bit_depth) {
+  switch (the_bit_depth_index) {
     case b11:
       the_frame_dim.setImageType(Bpp12);
       break;
@@ -379,6 +383,7 @@ lima::Andor3::Camera::prepareAcq()
   int					the_alloc_frames;
   
   the_alloc_frames = (0 == m_nb_frames_to_collect) ? 128 : static_cast<int>(m_nb_frames_to_collect);
+  DEB_TRACE() << "The number of frames to be collected is set to : " << the_alloc_frames << ", before testing the memory available";
   
   m_buffer_ctrl_obj.setFrameDim(the_frame_dim);
   m_buffer_ctrl_obj.getMaxNbBuffers(the_max_frames);
@@ -396,6 +401,8 @@ lima::Andor3::Camera::prepareAcq()
     m_buffer_ringing = false;
     DEB_TRACE() << "Setting the buffer single use mode";
   }
+
+  DEB_TRACE() << "After testing available memory (and continuous acquisition), the mode is " << m_buffer_ringing << " and the number of frame to be allocated is : " << the_alloc_frames;
   
   StdBufferCbMgr& the_buffer = m_buffer_ctrl_obj.getBuffer();
   DEB_TRACE() << "Getting StdBufferCbMgr to allocate the buffers that we want to have";
@@ -412,6 +419,7 @@ lima::Andor3::Camera::prepareAcq()
   for ( int i=0; the_alloc_frames != i; ++i) {
     void*		the_buffer_ptr = the_buffer.getFrameBufferPtr(i);
     AT_QueueBuffer(m_camera_handle, static_cast<AT_U8*>(the_buffer_ptr), the_frame_mem_size);
+    DEB_TRACE() << "Queueing the frame buffer " << i;
   }
   DEB_TRACE() << "Finished queueing " << the_alloc_frames << " frame buffers to andor's SDK3";
   // Seems to me that the «0 == m_nb_frames_to_collect» case corresponds to the continuous case
