@@ -1052,7 +1052,7 @@ lima::Andor3::Camera::setAdcGain(A3_Gain iGain)
     m_adc_gain = static_cast<A3_Gain>(the_gain);
     if ( m_adc_gain != iGain ) {
       DEB_ERROR() << "Proof-reading the ADC readout gain :"
-      << "\n\tGot " << m_adc_gain << "back,"
+      << "\n\tGot " << m_adc_gain << " back,"
       << "\n\twhile requesting " << iGain;
     }
   }
@@ -1091,7 +1091,7 @@ lima::Andor3::Camera::setAdcRate(A3_ReadOutRate iRate)
     m_adc_rate = static_cast<A3_ReadOutRate>(the_rate);
     if ( m_adc_rate != iRate ) {
       DEB_ERROR() << "Proof-reading the ADC readout rate :"
-      << "\n\tGot " << m_adc_rate << "back,"
+      << "\n\tGot " << m_adc_rate << " back,"
       << "\n\twhile requesting " << iRate;
     }
   }
@@ -1132,9 +1132,16 @@ lima::Andor3::Camera::setElectronicShutterMode(A3_ShutterMode iMode)
   m_electronic_shutter_mode = static_cast<A3_ShutterMode>(the_mode);
   if ( m_electronic_shutter_mode != iMode ) {
     DEB_ERROR() << "Proof-reading the electronic shutter mode :"
-    << "\n\tGot " << m_electronic_shutter_mode << "back,"
+    << "\n\tGot " << m_electronic_shutter_mode << " back,"
     << "\n\twhile requesting " << iMode;
   }
+  // Setting the trigger mode might change the ADCGain and ADCRate :
+  int		the_gain, the_rate;
+  
+  getEnumIndex(andor3::PreAmpGainControl, &the_gain);
+  getEnumIndex(andor3::PixelReadoutRate, &the_rate);
+  setAdcGain(static_cast<A3_Gain>(the_gain));
+  setAdcRate(static_cast<A3_ReadOutRate>(the_rate));
 }
 
 void
@@ -1165,7 +1172,7 @@ lima::Andor3::Camera::setBitDepth(A3_BitDepth iMode)
   m_bit_depth = static_cast<A3_BitDepth>(the_mode);
   if ( m_bit_depth != iMode ) {
     DEB_ERROR() << "Proof-reading the image bit-depth :"
-    << "\n\tGot " << m_bit_depth << "back,"
+    << "\n\tGot " << m_bit_depth << " back,"
     << "\n\twhile requesting " << iMode;
   }
   
@@ -1225,7 +1232,7 @@ lima::Andor3::Camera::setTriggerMode(A3_TriggerMode iMode)
     m_trig_mode = static_cast<A3_TriggerMode>(the_mode);
     if ( m_trig_mode != iMode ) {
       DEB_ERROR() << "Proof-reading the trigger mode :"
-      << "\n\tGot " << m_trig_mode << "back,"
+      << "\n\tGot " << m_trig_mode << " back,"
       << "\n\twhile requesting " << iMode;
     }
   }
