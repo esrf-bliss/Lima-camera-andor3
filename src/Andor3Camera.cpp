@@ -1004,14 +1004,15 @@ void
 lima::Andor3::Camera::initialiseController()
 {
   DEB_MEMBER_FUNCT();
+  // Carefully crafting the order, since some are affecting others...
+  setElectronicShutterMode(m_electronic_shutter_mode);
+  setTriggerMode(m_trig_mode);
   setAdcGain(m_adc_gain);
   setAdcRate(m_adc_rate);
-  setElectronicShutterMode(m_electronic_shutter_mode);
   setBitDepth(m_bit_depth);
   setCooler(m_cooler);
   setTemperatureSP(m_temperature_sp);
   setExpTime(m_exp_time);
-  setTriggerMode(m_trig_mode);
   
   AT_64			the_chip_width, the_chip_height;
   getInt(andor3::SensorWidth, &the_chip_width);
