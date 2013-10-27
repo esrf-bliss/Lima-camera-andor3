@@ -262,10 +262,23 @@ lima::Andor3::Camera::~Camera()
     DEB_ERROR() <<"Please stop the cooling before shuting dowm the camera\n"
     << "brutale heating could damage the sensor.\n"
     << "And wait until temperature rises above 5 deg, before shuting down.";
+
+    DEB_ALWAYS() << "The cooler of the camera is ON!!!\n"
+    << "we are now waiting the camera to warm-up slowly, "
+    << "setting the temperature to 10C and waiting for it "
+    << "to rise above 5C before conitnuing the shutdown.";
+    setTemperatureSP(10.0);
+    double			the_sensor_temperature;
     
-    THROW_HW_ERROR(Error)<<"Please stop the cooling before shuting dowm the camera\n"
-    << "brutale heating could damage the sensor.\n"
-    << "And wait until temperature rises above 5 deg, before shuting down.";
+    getTemperature(the_sensor_temperature);
+    while ( the_sensor_temperature < 5.1 ) {
+      sleep(1);
+    }
+    setCooler(false);
+    
+    //    THROW_HW_ERROR(Error)<<"Please stop the cooling before shuting dowm the camera\n"
+    //    << "brutale heating could damage the sensor.\n"
+    //    << "And wait until temperature rises above 5 deg, before shuting down.";
   }
   
   DEB_TRACE() << "Shutdown camera";
