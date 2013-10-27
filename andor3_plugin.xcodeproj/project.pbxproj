@@ -15,6 +15,10 @@
 		958C874517B65DC9003B74B2 /* Andor3DetInfoCtrlObj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 958C874117B65DC9003B74B2 /* Andor3DetInfoCtrlObj.cpp */; };
 		958C874617B65DC9003B74B2 /* Andor3Interface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 958C874217B65DC9003B74B2 /* Andor3Interface.cpp */; };
 		958C874717B65DC9003B74B2 /* Andor3SyncCtrlObj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 958C874317B65DC9003B74B2 /* Andor3SyncCtrlObj.cpp */; };
+		95E42AF6181DBB3D0090742A /* Andor3BinCtrlObj.h in Headers */ = {isa = PBXBuildFile; fileRef = 95E42AF4181DBB3D0090742A /* Andor3BinCtrlObj.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		95E42AF7181DBB3D0090742A /* Andor3RoiCtrlObj.h in Headers */ = {isa = PBXBuildFile; fileRef = 95E42AF5181DBB3D0090742A /* Andor3RoiCtrlObj.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		95E42AFA181DBB4D0090742A /* Andor3BinCtrlObj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 95E42AF8181DBB4D0090742A /* Andor3BinCtrlObj.cpp */; };
+		95E42AFB181DBB4D0090742A /* Andor3RoiCtrlObj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 95E42AF9181DBB4D0090742A /* Andor3RoiCtrlObj.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -63,6 +67,10 @@
 		95D5EA4A1526245D008221ED /* sip */ = {isa = PBXFileReference; lastKnownFileType = folder; name = sip; path = ../pco/sip; sourceTree = "<group>"; };
 		95D5EA4B1526245D008221ED /* src */ = {isa = PBXFileReference; lastKnownFileType = folder; name = src; path = ../pco/src; sourceTree = "<group>"; };
 		95D5EA4C1526245D008221ED /* VERSION */ = {isa = PBXFileReference; lastKnownFileType = text; name = VERSION; path = ../pco/VERSION; sourceTree = "<group>"; };
+		95E42AF4181DBB3D0090742A /* Andor3BinCtrlObj.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Andor3BinCtrlObj.h; sourceTree = "<group>"; };
+		95E42AF5181DBB3D0090742A /* Andor3RoiCtrlObj.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Andor3RoiCtrlObj.h; sourceTree = "<group>"; };
+		95E42AF8181DBB4D0090742A /* Andor3BinCtrlObj.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Andor3BinCtrlObj.cpp; sourceTree = "<group>"; };
+		95E42AF9181DBB4D0090742A /* Andor3RoiCtrlObj.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Andor3RoiCtrlObj.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -83,6 +91,8 @@
 				958C873917B65DBA003B74B2 /* Andor3DetInfoCtrlObj.h */,
 				958C873A17B65DBA003B74B2 /* Andor3Interface.h */,
 				958C873B17B65DBA003B74B2 /* Andor3SyncCtrlObj.h */,
+				95E42AF5181DBB3D0090742A /* Andor3RoiCtrlObj.h */,
+				95E42AF4181DBB3D0090742A /* Andor3BinCtrlObj.h */,
 			);
 			path = include;
 			sourceTree = "<group>";
@@ -155,6 +165,8 @@
 				958C874117B65DC9003B74B2 /* Andor3DetInfoCtrlObj.cpp */,
 				958C874217B65DC9003B74B2 /* Andor3Interface.cpp */,
 				958C874317B65DC9003B74B2 /* Andor3SyncCtrlObj.cpp */,
+				95E42AF9181DBB4D0090742A /* Andor3RoiCtrlObj.cpp */,
+				95E42AF8181DBB4D0090742A /* Andor3BinCtrlObj.cpp */,
 			);
 			path = src;
 			sourceTree = "<group>";
@@ -218,6 +230,8 @@
 				958C873D17B65DBA003B74B2 /* Andor3DetInfoCtrlObj.h in Headers */,
 				958C873E17B65DBA003B74B2 /* Andor3Interface.h in Headers */,
 				958C873F17B65DBA003B74B2 /* Andor3SyncCtrlObj.h in Headers */,
+				95E42AF6181DBB3D0090742A /* Andor3BinCtrlObj.h in Headers */,
+				95E42AF7181DBB3D0090742A /* Andor3RoiCtrlObj.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -276,6 +290,8 @@
 				958C874517B65DC9003B74B2 /* Andor3DetInfoCtrlObj.cpp in Sources */,
 				958C874617B65DC9003B74B2 /* Andor3Interface.cpp in Sources */,
 				958C874717B65DC9003B74B2 /* Andor3SyncCtrlObj.cpp in Sources */,
+				95E42AFA181DBB4D0090742A /* Andor3BinCtrlObj.cpp in Sources */,
+				95E42AFB181DBB4D0090742A /* Andor3RoiCtrlObj.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
