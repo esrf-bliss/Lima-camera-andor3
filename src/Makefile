@@ -17,7 +17,7 @@
 
 
 
-andor3-objs = Andor3Camera.o Andor3Interface.o Andor3DetInfoCtrlObj.o Andor3SyncCtrlObj.o
+andor3-objs = Andor3Camera.o Andor3Interface.o Andor3DetInfoCtrlObj.o Andor3SyncCtrlObj.o Andor3RoiCtrlObj.o Andor3BinCtrlObj.o
 
 SRCS = $(andor3-objs:.o=.cpp) 
 
