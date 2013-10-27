@@ -1444,6 +1444,9 @@ lima::Andor3::Camera::_stopAcq(bool iImmediate)
     
     DEB_TRACE() << "We should now STOP the acquisition";
     sendCommand(andor3::AcquisitionStop);
+    DEB_TRACE() << "And now flushing the buffer queue";
+    AT_Flush(m_camera_handle);
+    DEB_TRACE() << "Finally setting the status to Ready";
     _setStatus(Ready, false);
   }
   return;
@@ -1977,11 +1980,11 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
         DEB_TRACE() << "image " << m_cam.m_image_index <<" published with newFrameReady()" ;
         
         ++m_cam.m_image_index;
-	if ( m_cam.m_buffer_ringing ) {
-	  DEB_TRACE() << "As we are unsing a rin-buffer : re-queueing the acquired image on the buffer queue.";
-	  AT_QueueBuffer(m_cam.m_camera_handle, the_returned_image, the_returned_image_size);
-	  DEB_TRACE() << "There is NO guarantee that LIMA will be done with this buffer BEFORE andor SDK3 is changing its content !!!";
-	}
+        if ( m_cam.m_buffer_ringing ) {
+          DEB_TRACE() << "As we are unsing a rin-buffer : re-queueing the acquired image on the buffer queue.";
+          AT_QueueBuffer(m_cam.m_camera_handle, the_returned_image, the_returned_image_size);
+          DEB_TRACE() << "There is NO guarantee that LIMA will be done with this buffer BEFORE andor SDK3 is changing its content !!!";
+        }
       }
       else {
         DEB_ERROR() << "Problem in retrieving the frame indexed " << m_cam.m_image_index <<"!\n"
@@ -1992,6 +1995,15 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
         m_cam._setStatus(Fault, false);
       }
       DEB_TRACE() << "[andor3 acquisition thread] End of the iteration, next iteration will be for image index " << m_cam.m_image_index;
+      
+      // Testing if we were asked to stop the acquisition thread :
+      the_lock.lock();
+      the_acq_goon = !m_cam.m_acq_thread_waiting && !m_cam.m_acq_thread_should_quit;
+      the_lock.unlock();
+      if ( ! the_acq_goon ) {
+        DEB_TRACE() << "In the middle of acquisition, got the request to stop the frame retrieving activity : m_acq_thread_waiting is " << m_cam.m_acq_thread_waiting << " and m_acq_thread_should_quit is " << m_cam.m_acq_thread_should_quit;
+      }
+      
     }
     DEB_TRACE() << "[andor3 acquisition thread] Finished looping !";
     m_cam._setStatus(Ready, false);
