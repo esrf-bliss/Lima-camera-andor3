@@ -50,17 +50,15 @@ m_cap_list() // ,
   
   m_det_info = new DetInfoCtrlObj(m_cam);
   m_sync = new SyncCtrlObj(m_cam);
-#warning To be implemented !!!
-  //  m_roi = new RoiCtrlObj(m_cam);
-  //  m_bin = new BinCtrlObj(m_cam);
+  m_roi = new RoiCtrlObj(m_cam);
+  m_bin = new BinCtrlObj(m_cam);
   
   // Taking care of the content of the CapList, once for all :
   m_cap_list.push_back(HwCap(m_det_info));
   m_cap_list.push_back(m_cam.getBufferCtrlObj());
   m_cap_list.push_back(m_sync);
-  
-  //  m_cap_list.push_back(HwCap(m_roi));
-  //  m_cap_list.push_back(HwCap(m_bin));
+  m_cap_list.push_back(HwCap(m_roi));
+  m_cap_list.push_back(HwCap(m_bin));
 
 }
 
@@ -70,6 +68,11 @@ m_cap_list() // ,
 lima::Andor3::Interface::~Interface()
 {
   DEB_DESTRUCTOR();
+  
+  delete m_det_info;
+  delete m_sync;
+  delete m_roi;
+  delete m_bin;
 }
 
 void

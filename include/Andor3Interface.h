@@ -30,6 +30,8 @@
 #include "Andor3Camera.h"
 #include "Andor3DetInfoCtrlObj.h"
 #include "Andor3SyncCtrlObj.h"
+#include "Andor3RoiCtrlObj.h"
+#include "Andor3BinCtrlObj.h"
 
 namespace lima
 {
@@ -70,9 +72,8 @@ namespace lima
       CapList         m_cap_list;
 	    DetInfoCtrlObj  *m_det_info;
 	    SyncCtrlObj     *m_sync;
-#warning To be implemented :
-      //      RoiCtrlObj			*m_roi;
-      //      BinCtrlObj			*m_bin;
+      RoiCtrlObj			*m_roi;
+      BinCtrlObj			*m_bin;
     };
     
     
