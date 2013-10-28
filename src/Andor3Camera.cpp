@@ -818,16 +818,17 @@ lima::Andor3::Camera::checkRoi(const Roi& set_roi, Roi& hw_roi)
   the_phys_set_roi = set_roi.getUnbinned(Bin(the_bin_nb, the_bin_nb));
   the_phys_test_roi = Roi(Point(0, 0), m_detector_size);
   
+  DEB_TRACE() << "Requested ROI is : " << set_roi << ", corresponding to " << the_phys_set_roi << " in term of physical pixel";
   // First : check that we are smaller than the maximum AOI for the current binning
   if ( ! the_phys_test_roi.containsRoi(the_phys_set_roi) ) {
     the_phys_set_roi = the_phys_test_roi;
     the_phys_hw_roi = the_phys_test_roi;
   }
-  
+
+  DEB_TRACE() << "After testing if this is included in the max area of the detector, got " << the_phys_set_roi << " in term of physical pixel";
   if ( ! the_fullaoi_control ) {
     
     DEB_TRACE() << "Testing a roi while the camera has only limited support for ROI (FullAOIControl==false)";
-    DEB_TRACE() << "Requested ROI is : " << set_roi << ", corresponding to " << the_phys_set_roi << " in term of physical pixel";
     DEB_TRACE() << "We will now scan the possible camera ROIs, selecting the smallest one that include the requested one (lower number of lines)";
     
     // If there is no FullAOIControll, then we should resort to one of the proposition of § 3.5 of the SDK manual (page 42) :
