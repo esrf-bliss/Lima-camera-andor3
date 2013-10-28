@@ -78,6 +78,7 @@ lima::Andor3::Interface::~Interface()
 void
 lima::Andor3::Interface::getCapList(HwInterface::CapList &o_cap_list) const
 {
+  DEB_MEMBER_FUNCT();
   o_cap_list = m_cap_list;
 }
 
@@ -91,6 +92,7 @@ lima::Andor3::Interface::reset(ResetLevel reset_level)
 
   stopAcq();
 #warning Should make sure that within finite time the camera returns to status Ready !!!
+  // Should be done now...
 }
 
 void
