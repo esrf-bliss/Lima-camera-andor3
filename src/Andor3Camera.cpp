@@ -794,6 +794,12 @@ lima::Andor3::Camera::checkRoi(const Roi& set_roi, Roi& hw_roi)
   bool 			the_fullaoi_control;
   Bin				the_binning;
   
+  // For andor3 SDK : the height and width are in super-pixels (eg. width is the number of data point by line at acquisition)
+  // Conversely the top and left are set in physical pixels
+  
+  // For LIMA : the binning is set BEFORE the ROI, hence part of the roi might be in super-pixel as units
+  // Currently, from the documentaiton and source code I will consider that both top/left and size are un super-pixels.
+  
   getBin(the_binning);
   if ( m_real_camera ) {
     getBool(andor3::FullAOIControl, &the_fullaoi_control);
@@ -801,33 +807,94 @@ lima::Andor3::Camera::checkRoi(const Roi& set_roi, Roi& hw_roi)
   else {
     the_fullaoi_control = false;
   }
-
-  int				the_left, the_width, the_top, the_height;
-  int				the_bin_nb = the_binning.getX();
   
-  the_left = set_roi.getTopLeft().x;
-  the_width = set_roi.getSize().getWidth();
-  the_top = set_roi.getTopLeft().y;
-  the_height = set_roi.getSize().getHeight();
+  // From now on, we are performing all tests in physical pixels (and we will convert back to super pixel just before returning).
+  int				the_bin_nb = the_binning.getX();
+  Roi				the_phys_set_roi;
+  Roi				the_phys_test_roi;
+  Roi				the_phys_hw_roi;
+  
+  //  the_phys_set_roi = Roi(set_roi.getTopLeft()*the_bin_nb, set_roi.getSize()*the_bin_nb);
+  the_phys_set_roi = set_roi.getUnbinned(Bin(the_bin_nb, the_bin_nb));
+  the_phys_test_roi = Roi(Point(0, 0), m_detector_size);
   
   // First : check that we are smaller than the maximum AOI for the current binning
-  the_left = ( the_left > 0 ) ? the_left : 0;
-  the_left = ( the_left < m_detector_size.getWidth() ) ? the_left : (m_detector_size.getWidth()-the_bin_nb);
-  the_top = ( the_top > 0 ) ? the_top : 0;
-  the_top = ( the_top < m_detector_size.getHeight() ) ? the_top : (m_detector_size.getHeight()-the_bin_nb);
-  
-  the_width = ( the_width > 1 ) ? the_width : 1;
-  the_width = ( (the_left + the_width*the_bin_nb) < m_detector_size.getWidth() ) ? the_width : ( (m_detector_size.getWidth() - the_left)/the_bin_nb);
-  the_height = ( the_height > 1 ) ? the_height : 1;
-  the_height = ( (the_top + the_height*the_bin_nb) < m_detector_size.getHeight() ) ? the_height : ((m_detector_size.getHeight() - the_top)/the_bin_nb);
+  if ( ! the_phys_test_roi.containsRoi(the_phys_set_roi) ) {
+    the_phys_set_roi = the_phys_test_roi;
+    the_phys_hw_roi = the_phys_test_roi;
+  }
   
   if ( ! the_fullaoi_control ) {
-    THROW_HW_ERROR(Error) << "Though it is feasible, we currently do not support hardware ROI"
-    << " for devices not having the FullAOIControl set";
+    
+    DEB_TRACE() << "Testing a roi while the camera has only limited support for ROI (FullAOIControl==false)";
+    DEB_TRACE() << "Requested ROI is : " << set_roi << ", corresponding to " << the_phys_set_roi << " in term of physical pixel";
+    DEB_TRACE() << "We will now scan the possible camera ROIs, selecting the smallest one that include the requested one (lower number of lines)";
+    
+    // If there is no FullAOIControll, then we should resort to one of the proposition of § 3.5 of the SDK manual (page 42) :
+    struct andor3_roi {
+      int width;
+      int height;
+      int top;
+      int left_12b;
+      int left_16b;
+      int center_12b;
+      int center_16b;
+    };
+
+    // The idea is to select the ROI that enables the fastest possible frame rate but without cropping the requested ROI
+    // For the rest of the algorithm the available rois are ordered by decreasing number of lines (most important aspect in
+    //  frame rate), then the decrease in the number width.
+    struct andor3_roi		the_rois[] = {
+      {2592, 2160,    1,    1,    1, 1297, 1297},
+      {2544, 2160,    1,   17,   25, 1289, 1297},
+      {2064, 2048,   57,  257,  265, 1289, 1297},
+      {1776, 1760,  201,  401,  409, 1289, 1297},
+      {1920, 1080,  537,  337,  337, 1297, 1297},
+      {1392, 1040,  561,  593,  601, 1289, 1297},
+      { 528,  512,  825, 1025, 1033, 1289, 1297},
+      {2592,  304,  929,    1,    1, 1297, 1297},
+      { 240,  256,  953, 1169, 1177, 1289, 1297},
+      { 144,  128, 1017, 1217, 1225, 1289, 1297},
+      NULL
+    };
+    
+    // Trying to take the smallest enclosing possible ROI (depending on the bit-depth of the image) :
+    struct andor3_roi		*the_here_roi;
+    if ( b11 == m_bit_depth ) {
+      the_here_roi = the_rois;
+      while ( the_here_roi ) {
+        the_phys_test_roi = Roi(Point(the_here_roi->left_12b, the_here_roi->top), Size(the_here_roi->width, the_here_roi->height));
+        if ( the_phys_test_roi.containsRoi(the_phys_set_roi)) {
+          the_phys_hw_roi = the_phys_test_roi;
+        }
+        else {
+          break;
+        }
+        ++the_here_roi;
+      }
+    }
+    else { // b16 == m_bit_depth
+      the_here_roi = the_rois;
+      while ( the_here_roi ) {
+        the_phys_test_roi = Roi(Point(the_here_roi->left_16b, the_here_roi->top), Size(the_here_roi->width, the_here_roi->height));
+        if ( the_phys_test_roi.containsRoi(the_phys_set_roi)) {
+          the_phys_hw_roi = the_phys_test_roi;
+        }
+        else {
+          break;
+        }
+        ++the_here_roi;
+      }
+    }
+    
+    DEB_TRACE() << "The selected hardware ROI is now : " << the_phys_set_roi << " in term of physical pixel";
+//    THROW_HW_ERROR(Error) << "Though it is feasible, we currently do not support hardware ROI"
+//    << " for devices not having the FullAOIControl set";
     //    hw_roi...;
   }
 
-  hw_roi = Roi(the_left, the_top, the_width, the_height);
+  hw_roi = the_phys_hw_roi.getBinned(Bin(the_bin_nb, the_bin_nb));
+  //  hw_roi = Roi(the_left, the_top, the_width, the_height);
 }
 
 void
