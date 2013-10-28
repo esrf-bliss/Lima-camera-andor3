@@ -933,59 +933,77 @@ lima::Andor3::Camera::checkBin(Bin& ioBin)
   << "\n\tProviding you with the next smaller binning available : 8x8";
   return;
 }
+
 void
 lima::Andor3::Camera::setBin(const Bin& iBin)
 {
   DEB_MEMBER_FUNCT();
   
-  A3_Binning		the_bin;
-  switch (iBin.getX()) {
-    case 1:
-      the_bin = B1x1;
-      break;
-    case 2:
-      the_bin = B2x2;
-      break;
-    case 4:
-      the_bin = B4x4;
-      break;
-    case 8:
-      the_bin = B8x8;
-      break;
-      
-    default:
-      the_bin = B1x1;
-      break;
+  if ( m_real_camera ) {
+    A3_Binning		the_bin;
+    switch (iBin.getX()) {
+      case 1:
+        the_bin = B1x1;
+        break;
+      case 2:
+        the_bin = B2x2;
+        break;
+      case 4:
+        the_bin = B4x4;
+        break;
+      case 8:
+        the_bin = B8x8;
+        break;
+        
+      default:
+        the_bin = B1x1;
+        break;
+    }
+    setEnumIndex(andor3::AOIBinning, static_cast<int>(the_bin));
   }
-  setEnumIndex(andor3::AOIBinning, static_cast<int>(the_bin));
+  else { // We are using a SIMCAM : setting through AOIHBin and AOIVBin :
+    AT_64			the_x_bin, the_y_bin;
+    the_x_bin = static_cast<AT_64>(iBin.getX());
+    the_y_bin = static_cast<AT_64>(iBin.getY());
+    setInt(andor3::AOIHBin, the_x_bin);
+    setInt(andor3::AOIVBin, the_y_bin);
+  }
 }
 
 void
 lima::Andor3::Camera::getBin(Bin& oBin)
 {
   DEB_MEMBER_FUNCT();
-  A3_Binning		the_bin;
-  int						the_bin_int;
-  getEnumIndex(andor3::AOIBinning, &the_bin_int);
-  the_bin = static_cast<A3_Binning>(the_bin_int);
-  switch (the_bin) {
-    case B1x1:
-      oBin = Bin(1, 1);
-      break;
-    case B2x2:
-      oBin = Bin(2, 2);
-      break;
-    case B4x4:
-      oBin = Bin(4, 4);
-      break;
-    case B8x8:
-      oBin = Bin(8, 8);
-      break;
-      
-    default:
-      oBin = Bin(1, 1);
-      THROW_HW_ERROR(NotSupported) << "Unknown binning returned by andor SDK3" << the_bin_int;
-      break;
+  if ( m_real_camera ) {
+    A3_Binning		the_bin;
+    int						the_bin_int;
+    getEnumIndex(andor3::AOIBinning, &the_bin_int);
+    the_bin = static_cast<A3_Binning>(the_bin_int);
+    switch (the_bin) {
+      case B1x1:
+        oBin = Bin(1, 1);
+        break;
+      case B2x2:
+        oBin = Bin(2, 2);
+        break;
+      case B4x4:
+        oBin = Bin(4, 4);
+        break;
+      case B8x8:
+        oBin = Bin(8, 8);
+        break;
+        
+      default:
+        oBin = Bin(1, 1);
+        THROW_HW_ERROR(NotSupported) << "Unknown binning returned by andor SDK3" << the_bin_int;
+        break;
+    }
+  }
+  else { // Taking care of the SIMCAM case :
+    AT_64			the_x_bin, the_y_bin;
+    getInt(andor3::AOIHBin, &the_x_bin);
+    getInt(andor3::AOIVBin, &the_y_bin);
+    oBin = Size(static_cast<int>(the_x_bin), static_cast<int>(the_y_bin));
   }
 }
 
