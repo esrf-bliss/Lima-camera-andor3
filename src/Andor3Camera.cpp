@@ -836,7 +836,7 @@ lima::Andor3::Camera::checkRoi(const Roi& set_roi, Roi& hw_roi)
   // First : check that we are smaller than the maximum AOI for the current binning
   if ( ! the_phys_test_roi.containsRoi(the_phys_set_roi) ) {
     the_phys_set_roi = the_phys_test_roi;
-    the_phys_hw_roi = the_phys_test_roi;
+    // the_phys_hw_roi = the_phys_test_roi; // Taken care of later :
   }
 
   DEB_TRACE() << "After testing if this is included in the max area of the detector, got " << the_phys_set_roi << " in term of physical pixel";
