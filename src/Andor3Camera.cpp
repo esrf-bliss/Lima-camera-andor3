@@ -921,11 +921,13 @@ lima::Andor3::Camera::setRoi(const Roi& set_roi)
   DEB_MEMBER_FUNCT();
   Bin			the_binning;
   AT_64		the_left, the_width, the_top, the_height;
+  AT_64		the_bin_nb;
 
   getBin(the_binning);
-  the_left = static_cast<AT_64>(set_roi.getTopLeft().x);
+  the_bin_nb = the_binning.getX();
+  the_left = static_cast<AT_64>(set_roi.getTopLeft().x) * the_bin_nb;
   the_width = static_cast<AT_64>(set_roi.getSize().getWidth());
-  the_top = static_cast<AT_64>(set_roi.getTopLeft().y);
+  the_top = static_cast<AT_64>(set_roi.getTopLeft().y) * the_bin_nb;
   the_height = static_cast<AT_64>(set_roi.getSize().getHeight());
   
   // Performing the settings in the order prescribed by the SDK's documentation:
@@ -1528,6 +1530,29 @@ lima::Andor3::Camera::getCoolingStatus(std::string& status)
     DEB_TRACE() << "This has no signification on SIMCAM";
   }
 }
+
+void
+lima::Andor3::Camera::getFrameRate(double &o_frame_rate)
+{
+  DEB_MEMBER_FUNCT();
+  double			the_fr;
+  getFloat(andor3::FrameRate, &the_fr);
+  o_frame_rate = the_fr;
+}
+
+void
+lima::Andor3::Camera::getFrameRateRange(double& o_min_fr, double& o_max_fr)
+{
+  DEB_MEMBER_FUNCT();
+  double			the_min, the_max;
+  
+  getFloatMin(andor3::FrameRate, &the_min);
+  getFloatMax(andor3::FrameRate, &the_max);
+  
+  o_min_fr = the_min;
+  o_max_fr = the_max;
+}
+
 
 /*!
  @brief asking the full acquisition to stop

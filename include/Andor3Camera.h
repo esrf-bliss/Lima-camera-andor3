@@ -161,6 +161,9 @@ namespace lima
       void setCooler(bool flag);					 // à exporter (avec le get)
       void getCooler(bool& flag);
       void getCoolingStatus(std::string& status);  // à exporter (read-only)
+      
+      void getFrameRate(double &o_frame_rate);
+      void getFrameRateRange(double& o_min_lat, double& o_max_lat);
 
     private:
       // -- some internals :

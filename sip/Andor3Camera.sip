@@ -116,6 +116,9 @@ namespace Andor3
    void setCooler(bool flag /In/ );
    void getCooler(bool& flag /Out/ );
    void getCoolingStatus(std::string& status /Out/ );
+
+   void getFrameRate(double &o_frame_rate /Out/ );
+   void getFrameRateRange(double& o_min_lat /Out/, double& o_max_lat /Out/);
   };
 
 };
