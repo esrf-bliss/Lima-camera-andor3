@@ -840,7 +840,10 @@ lima::Andor3::Camera::checkRoi(const Roi& set_roi, Roi& hw_roi)
   }
 
   DEB_TRACE() << "After testing if this is included in the max area of the detector, got " << the_phys_set_roi << " in term of physical pixel";
-  if ( ! the_fullaoi_control ) {
+  if ( the_fullaoi_control ) { // If full control : accept the requested ROI.
+    the_phys_hw_roi = the_phys_set_roi;
+  }
+  else {
     
     DEB_TRACE() << "Testing a roi while the camera has only limited support for ROI (FullAOIControl==false)";
     DEB_TRACE() << "We will now scan the possible camera ROIs, selecting the smallest one that include the requested one (lower number of lines)";
