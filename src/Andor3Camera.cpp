@@ -216,6 +216,7 @@ m_temperature_sp(5.0)
   else {
     m_real_camera = false;
     DEB_TRACE() << "The camera is indeed the SIMULATED camera, all exception for invalid parameter name will be ignored!!!";
+    DEB_ALWAYS() << "BE VERY CAREFULL : The andor SDK3 camera that you are connected to is a SIMULATED CAMERA !!!";
   }
 
   // --- Get Camera Type
@@ -322,6 +323,10 @@ void
 lima::Andor3::Camera::prepareAcq()
 {
   DEB_MEMBER_FUNCT();
+  
+  if ( ! m_real_camera ) {
+    DEB_ALWAYS() << "BE VERY CAREFULL : The andor SDK3 camera that you are connected to is a SIMULATED CAMERA !!!";
+  }
   
   // Setting the next image index to 0 (since we are starting at 0):
   m_image_index = 0;
@@ -483,6 +488,11 @@ void
 lima::Andor3::Camera::startAcq()
 {
   DEB_MEMBER_FUNCT();
+  
+  if ( ! m_real_camera ) {
+    DEB_ALWAYS() << "BE VERY CAREFULL : The andor SDK3 camera that you are connected to is a SIMULATED CAMERA !!!";
+  }
+
   DEB_TRACE() << "Starting the acquisition by the camera (or triggering when in software trigger mode)";
 
   if ( 0 == m_image_index ) {
@@ -509,6 +519,10 @@ lima::Andor3::Camera::startAcq()
 void
 lima::Andor3::Camera::stopAcq()
 {
+  DEB_MEMBER_FUNCT();
+  if ( ! m_real_camera ) {
+    DEB_ALWAYS() << "BE VERY CAREFULL : The andor SDK3 camera that you are connected to is a SIMULATED CAMERA !!!";
+  }
   _stopAcq(false);
 }
 
@@ -1522,6 +1536,10 @@ lima::Andor3::Camera::_stopAcq(bool iImmediate)
 {
   DEB_MEMBER_FUNCT();
   
+  if ( ! m_real_camera ) {
+    DEB_ALWAYS() << "BE VERY CAREFULL : The andor SDK3 camera that you are connected to is a SIMULATED CAMERA !!!";
+  }
+
   AutoMutex		the_lock(m_cond.mutex());
   bool				the_camera_acq;
   
