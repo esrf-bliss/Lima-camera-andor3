@@ -1576,6 +1576,7 @@ lima::Andor3::Camera::_stopAcq(bool iImmediate)
   if ( iImmediate ) {
     DEB_TRACE() << "Sending a FORCEFULL AcquistionStop, whatever is the current status be cause you asked for immediate stop";
     sendCommand(andor3::AcquisitionStop);
+    DEB_TRACE() << "Sent a AcquisitionStop in stopAcq immediate == TRUE";
     // Deblocking the acquisition thread (in case it is waiting)
     m_acq_thread_waiting = true; // Asking to stop as soon as not in charge
     // This is dangerous: causes the lock inside the lock ?
@@ -1602,6 +1603,7 @@ lima::Andor3::Camera::_stopAcq(bool iImmediate)
     
     DEB_TRACE() << "We should now STOP the acquisition";
     sendCommand(andor3::AcquisitionStop);
+    DEB_TRACE() << "Sent a AcquisitionStop in stopAcq immediate == FALSE";
     DEB_TRACE() << "And now flushing the buffer queue";
     AT_Flush(m_camera_handle);
     DEB_TRACE() << "Finally setting the status to Ready";
@@ -2171,6 +2173,8 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
       
     }
     DEB_TRACE() << "[andor3 acquisition thread] Finished looping !";
+    m_cam.sendCommand(andor3::AcquisitionStop);
+    DEB_TRACE() << "[andor3 acquisition thread] Sent stop to the andor SDK3";
     m_cam._setStatus(Ready, false);
     // Returning to the waiting mode :
     the_lock.lock();
