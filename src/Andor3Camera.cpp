@@ -2105,7 +2105,7 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
     while ( m_cam.m_acq_thread_waiting && ! m_cam.m_acq_thread_should_quit ) {
       // Lets wait a signal telling that maybe something has to be done …
       DEB_TRACE() << "[andor3 acquisition thread] Setting the m_acq_thread_running to false (since we are waiting)";
-      m_cam.m_acq_thread_running = false; // Making sure the main class nows nothing goes on
+      m_cam.m_acq_thread_running = false; // Making sure the main class/thread knows nothing goes on
       m_cam.m_cond.broadcast();
       DEB_TRACE() << "[andor3 acquisition thread] Waiting acquisition start";
       m_cam.m_cond.wait();
