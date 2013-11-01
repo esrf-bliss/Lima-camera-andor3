@@ -13,9 +13,6 @@ sys.path.insert(1, "/usr/local")
 from Lima import Core,Andor3
 import time
 
-## Core.DebParams.setTypeFlags( Core.DebParams.getTypeFlags() | Core.DebTypeTrace )
-Core.DebParams.setTypeFlagsNameList(['Fatal', 'Error', 'Warning', 'Trace', 'Funct'])
-
 cam = Andor3.Camera("/usr/local/andor/bitflow", 0)
 cam_int = Andor3.Interface(cam)
 cam_ctr = Core.CtControl(cam_int)
@@ -23,27 +20,35 @@ cam_ctr = Core.CtControl(cam_int)
 # cam.setNbFrames(3)
 ## Taking care of the saving :
 cam_sav = cam_ctr.saving()
-cam_sav.setFormat(Core.CtSaving.NXS)
 cam_sav.setDirectory("/mnt/local-spool")
 cam_sav.setPrefix("testing_A_")
-cam_sav.setSuffix(".nxs")
 cam_sav.setSavingMode(Core.CtSaving.AutoFrame)
-cam_sav.getParameters()
+
+## Nexus :
+cam_sav.setFormat(Core.CtSaving.NXS)
+cam_sav.setSuffix(".nxs")
 
 ## TIFF :
 cam_sav.setFormat(Core.CtSaving.TIFFFormat)
 cam_sav.setSuffix(".tiff")
+
+cam_sav.getParameters()
+
 
 ## Proper way of doing that is :
 cam_ctr.acquisition().setAcqExpoTime(.001)
 cam_ctr.acquisition().setLatencyTime(.001)
 cam_ctr.acquisition().setAcqNbFrames(10)
 cam_ctr.image().setMode(Core.CtImage.HardOnly)
-cam_ctr.image().setMode(Core.CtImage.HardAndSoft)
+##cam_ctr.image().setMode(Core.CtImage.HardAndSoft)
 cam_ctr.image().setRoi(Core.Roi(409, 201, 1776, 1760))  ### left, top, width, height 
+
+## Core.DebParams.setTypeFlags( Core.DebParams.getTypeFlags() | Core.DebTypeTrace )
+Core.DebParams.setTypeFlagsNameList(['Fatal', 'Error', 'Warning', 'Trace', 'Funct'])
+
 cam_ctr.prepareAcq()
 cam_ctr.startAcq()
-time.sleep(3)
+time.sleep(1)
 cam_ctr.stopAcq()
 
 
