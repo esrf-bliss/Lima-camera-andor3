@@ -9,7 +9,7 @@
 LD_LIBRARY_PATH=/usr/local/Lima/lib ipython
 
 import sys,time
-sys.path.insert(1, "/usr/local")
+sys.path.insert(1, "/usr/local/Lima")
 from Lima import Core,Andor3
 import time
 
@@ -23,6 +23,8 @@ cam_sav = cam_ctr.saving()
 cam_sav.setDirectory("/mnt/local-spool")
 cam_sav.setPrefix("testing_A_")
 cam_sav.setSavingMode(Core.CtSaving.AutoFrame)
+
+## cam_sav.setSavingMode(Core.CtSaving.Manual)
 
 ## Nexus :
 cam_sav.setFormat(Core.CtSaving.NXS)
@@ -45,6 +47,10 @@ cam_ctr.image().setRoi(Core.Roi(409, 201, 1776, 1760))  ### left, top, width, he
 
 ## Core.DebParams.setTypeFlags( Core.DebParams.getTypeFlags() | Core.DebTypeTrace )
 Core.DebParams.setTypeFlagsNameList(['Fatal', 'Error', 'Warning', 'Trace', 'Funct'])
+
+cam_ctr.video().startLive()
+time.sleep(3)
+cam_ctr.video().stopLive()
 
 cam_ctr.prepareAcq()
 cam_ctr.startAcq()
