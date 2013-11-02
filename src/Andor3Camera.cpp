@@ -1576,7 +1576,7 @@ lima::Andor3::Camera::_stopAcq(bool iImmediate)
   if ( iImmediate ) {
     DEB_TRACE() << "Sending a FORCEFULL AcquistionStop, whatever is the current status be cause you asked for immediate stop";
     sendCommand(andor3::AcquisitionStop);
-    DEB_TRACE() << "Sent a AcquisitionStop in stopAcq immediate == TRUE";
+    DEB_TRACE() << "Sent an AcquisitionStop in stopAcq immediate == TRUE";
     // Deblocking the acquisition thread (in case it is waiting)
     m_acq_thread_waiting = true; // Asking to stop as soon as not in charge
     // This is dangerous: causes the lock inside the lock ?
@@ -1588,12 +1588,20 @@ lima::Andor3::Camera::_stopAcq(bool iImmediate)
     return;
   }
 
-  if ( the_camera_acq || (Ready != m_status) ) {
+  DEB_TRACE() << "Requested a stop, but waiting the opportunity in the acquisition thread";
+  //  if ( the_camera_acq || (Ready != m_status) ) {
+  if ( ! m_acq_thread_waiting ) {
+#warning The current implementation looses the acquired frames that were not transfered yet, in the case of a stopAcq.
     while ( (! iImmediate) && (m_acq_thread_running) ) { // We are still actively retrieving frame buffers
+      //  the_lock.unlock();
+      //  the_lock.lock();
       m_acq_thread_waiting = true; // Asking to stop as soon as not in charge
       m_cond.broadcast();
+      DEB_TRACE() << "Setting ourselves to wait a signal";
       m_cond.wait();
+      DEB_TRACE() << "We just received a signal that it is usefull to check again if the acquisition thread is in a stoppable state";
     }
+    DEB_TRACE() << "We finally got the signal that the currently exposed frame is now grabbed... We can go on for the acquisition stop";
     the_lock.unlock();
 
     // If we were not asked for immediate leaving, let the acquisition thread end it :
@@ -1603,11 +1611,13 @@ lima::Andor3::Camera::_stopAcq(bool iImmediate)
     
     DEB_TRACE() << "We should now STOP the acquisition";
     sendCommand(andor3::AcquisitionStop);
-    DEB_TRACE() << "Sent a AcquisitionStop in stopAcq immediate == FALSE";
-    DEB_TRACE() << "And now flushing the buffer queue";
+    DEB_TRACE() << "Sent a AcquisitionStop in stopAcq immediate == FALSE." << "\n\t\tAnd now flushing the buffer queue since no more acquisition is in flight";
     AT_Flush(m_camera_handle);
     DEB_TRACE() << "Finally setting the status to Ready";
     _setStatus(Ready, false);
+  }
+  else {
+    DEB_TRACE() << "One more stopAcq, while the acquisition is either allready stopped or about to be stopped... Skip the current one";
   }
   return;
 }
@@ -1622,10 +1632,13 @@ void
 lima::Andor3::Camera::_setStatus(Status iStatus, bool iForce)
 {
   DEB_MEMBER_FUNCT();
+  DEB_TRACE() << "in _setStatus, about to ask for the lock to mutex";
   AutoMutex aLock(m_cond.mutex());
+  DEB_TRACE() << "grabbed the lock";
   if( iForce || (Camera::Fault != m_status) )
     m_status = iStatus;
   m_cond.broadcast();
+  DEB_TRACE() << "_setStatus broadcasting and releasing soon the mutex lock.";
 }
 
 
@@ -2111,7 +2124,7 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
       m_cam.m_cond.wait();
     }
     // The main thread asked to get out of wait mode (setting m_cam.m_acq_thread_waiting to false)
-    DEB_TRACE() << "[andor3 acquisition thread] Set running by main thread setting m_cam.m_acq_thread_waiting to false (or m_cam.m_acq_thread_should_quit to true)";
+    DEB_ALWAYS() << "[andor3 acquisition thread] Set running by main thread setting m_cam.m_acq_thread_waiting to false (or m_cam.m_acq_thread_should_quit to true)";
     m_cam.m_acq_thread_running = true;
     
     if ( m_cam.m_acq_thread_should_quit ) {
@@ -2133,20 +2146,36 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
       int               the_wait_queue_res;
       
 
-      DEB_TRACE() << "[andor3 acquisition thread] Waiting for buffer index " << m_cam.m_image_index << " (AT_WaitBuffer)";
+      DEB_ALWAYS() << "[andor3 acquisition thread] Waiting for buffer index " << m_cam.m_image_index << " (AT_WaitBuffer)";
       the_wait_queue_res = AT_WaitBuffer(m_cam.m_camera_handle, &the_returned_image, &the_returned_image_size, the_wait_timeout);
-      DEB_TRACE() << "[andor3 acquisition thread] DONE waiting for buffer index " << m_cam.m_image_index;
+      DEB_ALWAYS() << "[andor3 acquisition thread] DONE waiting for buffer index " << m_cam.m_image_index;
       
+      // Testing if we were asked to stop the acquisition thread :
+      // It is best to do that as soon as returning from the SDK, since otherwise it might block some 
+      // thread interacting with the main thread.
+      DEB_TRACE() << "[andor3 acquisition thread] Locking to test if we were asked to stop";
+      the_lock.lock();
+      the_acq_goon = !m_cam.m_acq_thread_waiting && !m_cam.m_acq_thread_should_quit;
+      m_cam.m_acq_thread_running = the_acq_goon;
+      DEB_TRACE() << "[andor3 acquisition thread] Should we continue at the end of this iteration : " << m_cam.m_acq_thread_running << " AKA " << the_acq_goon;
+      m_cam.m_cond.broadcast();
+      DEB_TRACE() << "[andor3 acquisition thread] Just broadcasted for other threads to know that it might be interesting to change state";
+      the_lock.unlock();
+      DEB_TRACE() << "[andor3 acquisition thread] Just Unlocked after state potential modification";
+
       if ( AT_SUCCESS == the_wait_queue_res ) {
         m_cam._setStatus(Readout, false);
         // We managed to get an image buffer returned :
         HwFrameInfoType		the_frame_info;
+	bool                    the_frame_read;
 
         the_frame_info.acq_frame_nb = static_cast<int>(m_cam.m_image_index);
-        the_acq_goon = the_buffer.newFrameReady(the_frame_info);
-        DEB_TRACE() << "[andor3 acquisition thread] image " << m_cam.m_image_index <<" published with newFrameReady()" ;
+        the_frame_read = the_buffer.newFrameReady(the_frame_info);
+        DEB_TRACE() << "[andor3 acquisition thread] image " << m_cam.m_image_index <<" published with newFrameReady(), with result " << the_frame_read ;
+	the_acq_goon = the_acq_goon && the_frame_read;
         
         ++m_cam.m_image_index;
+
         if ( m_cam.m_buffer_ringing ) {
           DEB_TRACE() << "[andor3 acquisition thread] As we are using a ring-buffer : re-queueing the acquired image on the buffer queue.";
           AT_QueueBuffer(m_cam.m_camera_handle, the_returned_image, the_returned_image_size);
@@ -2158,15 +2187,12 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
         << "\tAT_WaitBuffer returned an error " << the_wait_queue_res << "\n"
         << "\t" << m_cam.m_andor3_error_maps[the_wait_queue_res] << "\n"
         << "\t!!! returning to WAIT mode !!!";
-        the_acq_goon = false;
+        m_cam.m_acq_thread_running = the_acq_goon = false;
         m_cam._setStatus(Fault, false);
+	break;
       }
       DEB_TRACE() << "[andor3 acquisition thread] End of the iteration, next iteration will be for image index " << m_cam.m_image_index;
       
-      // Testing if we were asked to stop the acquisition thread :
-      the_lock.lock();
-      the_acq_goon = !m_cam.m_acq_thread_waiting && !m_cam.m_acq_thread_should_quit;
-      the_lock.unlock();
       if ( ! the_acq_goon ) {
         DEB_TRACE() << "[andor3 acquisition thread] In the middle of acquisition, got the request to stop the frame retrieving activity : m_acq_thread_waiting is " << m_cam.m_acq_thread_waiting << " and m_acq_thread_should_quit is " << m_cam.m_acq_thread_should_quit;
       }
