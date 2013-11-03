@@ -62,6 +62,21 @@ namespace lima
 	    virtual void    getStatus(StatusType& status);
 	    virtual int     getNbHwAcquiredFrames();
       
+      // Making the CtAcquisition object to update its cached range for expo. and lat. times
+      virtual void 		updateValidRanges();
+      
+      // Specific to andor-sdk-3... Only a wrapper to the camera equivalent methods
+      //   but completed by the update of the CtAcquisition object when changing a setting.
+      virtual void		setAdcGain(Camera::A3_Gain iGain);
+      virtual void		getAdcGain(Camera::A3_Gain &oGain) const;
+      virtual void		getAdcGainString(std::string &oGainString) const;
+      virtual void		setAdcRate(Camera::A3_ReadOutRate iRate);
+      virtual void		getAdcRate(Camera::A3_ReadOutRate &oRate) const;
+      virtual void		getAdcRateString(std::string &oRateString) const;
+      virtual void		setElectronicShutterMode(Camera::A3_ShutterMode iMode);
+      virtual void		getElectronicShutterMode(Camera::A3_ShutterMode &oMode) const;
+      virtual void		getElectronicShutterModeString(std::string &oModeString) const;
+
       // Giving the possibility to get directly the camera object :
       Camera& getCamera()
       { return m_cam; }

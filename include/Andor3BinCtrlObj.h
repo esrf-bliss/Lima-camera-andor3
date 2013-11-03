@@ -26,6 +26,7 @@ namespace lima
 {
   namespace Andor3
   {
+    class Interface;
     
     /*******************************************************************
      * \class BinCtrlObj
@@ -36,7 +37,7 @@ namespace lima
 	    DEB_CLASS_NAMESPC(DebModCamera, "BinCtrlObj", "Andor3");
       
 	  public:
-	    BinCtrlObj(Camera& cam);
+	    BinCtrlObj(Camera& cam, Interface *interface);
 	    virtual ~BinCtrlObj();
 	    
 	    virtual void getBin(Bin& bin);
@@ -44,6 +45,7 @@ namespace lima
 	    virtual void setBin(const Bin& bin);
 	  private:
 	    Camera& m_cam;
+      Interface *m_interface;
       
     };
     

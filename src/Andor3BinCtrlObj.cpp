@@ -17,11 +17,13 @@
  */
 
 #include "Andor3BinCtrlObj.h"
+#include "Andor3Interface.h"
 
 //-----------------------------------------------------
 // @brief
 //-----------------------------------------------------
-lima::Andor3::BinCtrlObj::BinCtrlObj(Camera &cam) : m_cam(cam)
+lima::Andor3::BinCtrlObj::BinCtrlObj(Camera &cam, Interface *interface)
+: m_cam(cam), m_interface(interface)
 {
   DEB_CONSTRUCTOR();
 }
@@ -60,7 +62,10 @@ lima::Andor3::BinCtrlObj::checkBin(Bin &aBin)
 void
 lima::Andor3::BinCtrlObj::setBin(const Bin& aBin)
 {
-  DEB_MEMBER_FUNCT();    
-  m_cam.setBin(aBin);
+  DEB_MEMBER_FUNCT();
+  Bin		real_bin = aBin;
+  m_cam.checkBin(real_bin);
+  m_cam.setBin(real_bin);
+  m_interface->updateValidRanges();
 }
 

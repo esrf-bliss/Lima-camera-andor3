@@ -62,6 +62,7 @@ namespace lima
 	    virtual void getNbHwFrames(int& nb_frames);
       
 	    virtual void getValidRanges(ValidRangesType& valid_ranges);
+      virtual void updateValidRanges();
       
     private:
 	    Camera& m_cam;

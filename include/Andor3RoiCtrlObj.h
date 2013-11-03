@@ -22,11 +22,13 @@
 #include "HwInterface.h"
 #include "Andor3Camera.h"
 
+
 namespace lima
 {
   namespace Andor3
   {
     
+    class Interface;
     
     /*******************************************************************
      * \class RoiCtrlObj
@@ -38,7 +40,7 @@ namespace lima
 	    DEB_CLASS_NAMESPC(DebModCamera, "RoiCtrlObj", "Andor3");
       
     public:
-	    RoiCtrlObj(Camera& cam);
+	    RoiCtrlObj(Camera& cam, Interface *interface);
 	    virtual ~RoiCtrlObj();
       
 	    virtual void getRoi(Roi& hw_roi);
@@ -47,6 +49,7 @@ namespace lima
       
     private:
 	    Camera& m_cam;
+      Interface *m_interface;
     };
     
     

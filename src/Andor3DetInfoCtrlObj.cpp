@@ -28,6 +28,7 @@
 
 // Andor3 plugin headers :
 #include "Andor3DetInfoCtrlObj.h"
+#include "Andor3Interface.h"
 
 
 //---------------------------
@@ -38,8 +39,8 @@
 //---------------------------
 //- @brief constructor
 //---------------------------
-lima::Andor3::DetInfoCtrlObj::DetInfoCtrlObj(lima::Andor3::Camera& cam) :
-m_cam(cam)
+lima::Andor3::DetInfoCtrlObj::DetInfoCtrlObj(lima::Andor3::Camera& cam, Interface *interface) :
+m_cam(cam), m_interface(interface)
 {
   DEB_CONSTRUCTOR();
 }
@@ -85,6 +86,7 @@ lima::Andor3::DetInfoCtrlObj::setCurrImageType(ImageType  curr_image_type)
 {
   DEB_MEMBER_FUNCT();
   m_cam.setImageType(curr_image_type);
+  m_interface->updateValidRanges();
 }
 
 void

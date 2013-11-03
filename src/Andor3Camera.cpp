@@ -1156,7 +1156,7 @@ int
 lima::Andor3::Camera::getNbHwAcquiredFrames()
 {
   DEB_MEMBER_FUNCT();
-  return m_image_index;
+  return static_cast<int>(m_image_index);
 }
 
 // -- andor3 specific, LIMA don't worry about it !
@@ -1236,7 +1236,7 @@ lima::Andor3::Camera::setAdcGain(A3_Gain iGain)
 }
 
 void
-lima::Andor3::Camera::getAdcGain(A3_Gain &oGain)
+lima::Andor3::Camera::getAdcGain(A3_Gain &oGain) const
 {
   DEB_MEMBER_FUNCT();
 //  int the_gain;
@@ -1279,7 +1279,7 @@ lima::Andor3::Camera::setAdcRate(A3_ReadOutRate iRate)
 }
 
 void
-lima::Andor3::Camera::getAdcRate(A3_ReadOutRate &oRate)
+lima::Andor3::Camera::getAdcRate(A3_ReadOutRate &oRate) const
 {
   DEB_MEMBER_FUNCT();
 //  int the_rate;
@@ -1319,7 +1319,7 @@ lima::Andor3::Camera::setElectronicShutterMode(A3_ShutterMode iMode)
 }
 
 void
-lima::Andor3::Camera::getElectronicShutterMode(A3_ShutterMode &oMode)
+lima::Andor3::Camera::getElectronicShutterMode(A3_ShutterMode &oMode) const
 {
   DEB_MEMBER_FUNCT();
 //  int the_mode;
@@ -1365,7 +1365,7 @@ lima::Andor3::Camera::setBitDepth(A3_BitDepth iMode)
 }
 
 void
-lima::Andor3::Camera::getBitDepth(A3_BitDepth &oMode)
+lima::Andor3::Camera::getBitDepth(A3_BitDepth &oMode) const
 {
   DEB_MEMBER_FUNCT();
 //  int the_mode;
@@ -1424,7 +1424,7 @@ lima::Andor3::Camera::setTriggerMode(A3_TriggerMode iMode)
  @param oMode : the mode selected upon return
  */
 void
-lima::Andor3::Camera::getTriggerMode(A3_TriggerMode &oMode)
+lima::Andor3::Camera::getTriggerMode(A3_TriggerMode &oMode) const
 {
   DEB_MEMBER_FUNCT();
   oMode = m_trig_mode;
@@ -1464,7 +1464,7 @@ lima::Andor3::Camera::setTemperatureSP(double temp)
 //
 //-----------------------------------------------------
 void
-lima::Andor3::Camera::getTemperatureSP(double& temp)
+lima::Andor3::Camera::getTemperatureSP(double& temp) const
 {
   DEB_MEMBER_FUNCT();
   temp = m_temperature_sp;
@@ -1477,7 +1477,7 @@ lima::Andor3::Camera::getTemperatureSP(double& temp)
 //
 //-----------------------------------------------------
 void
-lima::Andor3::Camera::getTemperature(double& temp)
+lima::Andor3::Camera::getTemperature(double& temp) const
 {
   DEB_MEMBER_FUNCT();
   getFloat(andor3::SensorTemperature, &temp);
@@ -1506,7 +1506,7 @@ lima::Andor3::Camera::setCooler(bool flag)
 //
 //-----------------------------------------------------
 void
-lima::Andor3::Camera::getCooler(bool& flag)
+lima::Andor3::Camera::getCooler(bool& flag) const
 {
   DEB_MEMBER_FUNCT();
   flag = m_cooler;
@@ -1518,7 +1518,7 @@ lima::Andor3::Camera::getCooler(bool& flag)
 //
 //-----------------------------------------------------
 void
-lima::Andor3::Camera::getCoolingStatus(std::string& status)
+lima::Andor3::Camera::getCoolingStatus(std::string& status) const
 {
   DEB_MEMBER_FUNCT();
   if ( m_real_camera ) {
@@ -1532,7 +1532,7 @@ lima::Andor3::Camera::getCoolingStatus(std::string& status)
 }
 
 void
-lima::Andor3::Camera::getFrameRate(double &o_frame_rate)
+lima::Andor3::Camera::getFrameRate(double &o_frame_rate) const
 {
   DEB_MEMBER_FUNCT();
   double			the_fr;
@@ -1541,7 +1541,7 @@ lima::Andor3::Camera::getFrameRate(double &o_frame_rate)
 }
 
 void
-lima::Andor3::Camera::getFrameRateRange(double& o_min_fr, double& o_max_fr)
+lima::Andor3::Camera::getFrameRateRange(double& o_min_fr, double& o_max_fr) const
 {
   DEB_MEMBER_FUNCT();
   double			the_min, the_max;

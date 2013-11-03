@@ -33,6 +33,7 @@ namespace lima
 {
   namespace Andor3
   {
+    class Interface;
     
     /*******************************************************************
      * \class DetInfoCtrlObj
@@ -44,7 +45,7 @@ namespace lima
 	    DEB_CLASS_NAMESPC(DebModCamera, "DetInfoCtrlObj", "Andor3");
       
     public:
-	    DetInfoCtrlObj(Camera& cam);
+	    DetInfoCtrlObj(Camera& cam, Interface *interface);
 	    virtual ~DetInfoCtrlObj();
       
 	    virtual void getMaxImageSize(Size& max_image_size);
@@ -63,6 +64,7 @@ namespace lima
       
     private:
 	    Camera& m_cam;
+      Interface *m_interface;
     };
     
   } // namespace Andor3

@@ -140,30 +140,30 @@ namespace lima
       void initialiseController();
 
       void setAdcGain(A3_Gain iGain);					// à exporter (avec le get)
-      void getAdcGain(A3_Gain &oGain);
+      void getAdcGain(A3_Gain &oGain) const;
       void getAdcGainString(std::string &oGainString) const;
       void setAdcRate(A3_ReadOutRate iRate);  // à exporter (avec le get)
-      void getAdcRate(A3_ReadOutRate &oRate);
+      void getAdcRate(A3_ReadOutRate &oRate) const;
       void getAdcRateString(std::string &oRateString) const;
       void setElectronicShutterMode(A3_ShutterMode iMode);  // à exporter (avec le get)
-      void getElectronicShutterMode(A3_ShutterMode &oMode);
+      void getElectronicShutterMode(A3_ShutterMode &oMode) const;
       void getElectronicShutterModeString(std::string &oModeString) const;
       void setBitDepth(A3_BitDepth iMode);
-      void getBitDepth(A3_BitDepth &oMode);
+      void getBitDepth(A3_BitDepth &oMode) const;
       void getBitDepthString(std::string &oDepthString) const;
       void getPxEncoding(std::string &oPxEncoding) const;
       void setTriggerMode(A3_TriggerMode iMode);
-      void getTriggerMode(A3_TriggerMode &oMode);
+      void getTriggerMode(A3_TriggerMode &oMode) const;
       void getTriggerModeString(std::string &oModeString) const;
       void setTemperatureSP(double temp);  // à exporter (avec le get)
-      void getTemperatureSP(double& temp);
-      void getTemperature(double& temp);   // à exporter (read-only)
+      void getTemperatureSP(double& temp) const;
+      void getTemperature(double& temp) const;   // à exporter (read-only)
       void setCooler(bool flag);					 // à exporter (avec le get)
-      void getCooler(bool& flag);
-      void getCoolingStatus(std::string& status);  // à exporter (read-only)
+      void getCooler(bool& flag) const;
+      void getCoolingStatus(std::string& status) const;  // à exporter (read-only)
       
-      void getFrameRate(double &o_frame_rate);
-      void getFrameRateRange(double& o_min_lat, double& o_max_lat);
+      void getFrameRate(double &o_frame_rate) const;
+      void getFrameRateRange(double& o_min_lat, double& o_max_lat) const;
 
     private:
       // -- some internals :

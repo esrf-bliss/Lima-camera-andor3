@@ -48,10 +48,10 @@ m_cap_list() // ,
 {
   DEB_CONSTRUCTOR();
   
-  m_det_info = new DetInfoCtrlObj(m_cam);
+  m_det_info = new DetInfoCtrlObj(m_cam, this);
   m_sync = new SyncCtrlObj(m_cam);
-  m_roi = new RoiCtrlObj(m_cam);
-  m_bin = new BinCtrlObj(m_cam);
+  m_roi = new RoiCtrlObj(m_cam, this);
+  m_bin = new BinCtrlObj(m_cam, this);
   
   // Taking care of the content of the CapList, once for all :
   m_cap_list.push_back(HwCap(m_det_info));
@@ -141,10 +141,10 @@ lima::Andor3::Interface::getStatus(StatusType& status)
        status.det = DetLatency;
        status.acq = AcqRunning;
        break;
-       case Camera::Fault:
-       status.det = DetFault;
-       status.acq = AcqFault;
        */
+    case Camera::Fault:
+      status.det = DetFault;
+      status.acq = AcqFault;
   }
   status.det_mask = DetExposure | DetReadout | DetLatency;
   
@@ -158,7 +158,79 @@ lima::Andor3::Interface::getNbHwAcquiredFrames()
   return m_cam.getNbHwAcquiredFrames();
 }
 
+void
+lima::Andor3::Interface::updateValidRanges()
+{
+  if ( m_sync ) {
+    m_sync->updateValidRanges();
+  }
+}
 
+void
+lima::Andor3::Interface::setAdcGain(Camera::A3_Gain iGain)
+{
+  DEB_MEMBER_FUNCT();
+  m_cam.setAdcGain(iGain);
+  updateValidRanges();
+}
+
+void
+lima::Andor3::Interface::getAdcGain(Camera::A3_Gain &oGain) const
+{
+  DEB_MEMBER_FUNCT();
+  m_cam.getAdcGain(oGain);
+}
+
+void
+lima::Andor3::Interface::getAdcGainString(std::string &oGainString) const
+{
+  DEB_MEMBER_FUNCT();
+  m_cam.getAdcGainString(oGainString);
+}
+
+void
+lima::Andor3::Interface::setAdcRate(Camera::A3_ReadOutRate iRate)
+{
+  DEB_MEMBER_FUNCT();
+  m_cam.getAdcRate(iRate);
+  updateValidRanges();
+}
+
+void
+lima::Andor3::Interface::getAdcRate(Camera::A3_ReadOutRate &oRate) const
+{
+  DEB_MEMBER_FUNCT();
+  m_cam.getAdcRate(oRate);
+}
+
+void
+lima::Andor3::Interface::getAdcRateString(std::string &oRateString) const
+{
+  DEB_MEMBER_FUNCT();
+  m_cam.getAdcRateString(oRateString);
+}
+
+void
+lima::Andor3::Interface::setElectronicShutterMode(Camera::A3_ShutterMode iMode)
+{
+  DEB_MEMBER_FUNCT();
+  m_cam.setElectronicShutterMode(iMode);
+  updateValidRanges();
+}
+
+void
+lima::Andor3::Interface::getElectronicShutterMode(Camera::A3_ShutterMode &oMode) const
+{
+  DEB_MEMBER_FUNCT();
+  m_cam.getElectronicShutterMode(oMode);
+}
+
+void
+lima::Andor3::Interface::getElectronicShutterModeString(std::string &oModeString) const
+{
+  DEB_MEMBER_FUNCT();
+  m_cam.getElectronicShutterModeString(oModeString);
+}
 
 
 /*

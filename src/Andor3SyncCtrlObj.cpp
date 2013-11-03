@@ -81,6 +81,7 @@ lima::Andor3::SyncCtrlObj::setExpTime(double  exp_time)
 {
   DEB_MEMBER_FUNCT();
   m_cam.setExpTime(exp_time);
+  updateValidRanges();
 }
 void
 lima::Andor3::SyncCtrlObj::getExpTime(double& exp_time)
@@ -96,6 +97,7 @@ lima::Andor3::SyncCtrlObj::setLatTime(double  lat_time)
 {
   DEB_MEMBER_FUNCT();
   m_cam.setLatTime(lat_time);
+  updateValidRanges();
 }
 void
 lima::Andor3::SyncCtrlObj::getLatTime(double& lat_time)
@@ -132,8 +134,22 @@ lima::Andor3::SyncCtrlObj::getValidRanges(ValidRangesType& valid_ranges)
   m_cam.getLatTimeRange(min_time, max_time);
   valid_ranges.min_lat_time = min_time;
   valid_ranges.max_lat_time = max_time; 
+
+  DEB_RETURN() << DEB_VAR2(valid_ranges.min_exp_time, valid_ranges.max_exp_time);
+  DEB_RETURN() << DEB_VAR2(valid_ranges.min_lat_time, valid_ranges.max_lat_time);
 }
 
+
+#pragma mark -
+#pragma mark Acquisition possibilities updates :
+void
+lima::Andor3::SyncCtrlObj::updateValidRanges()
+{
+  DEB_MEMBER_FUNCT();
+  ValidRangesType		the_v_range;
+  getValidRanges(the_v_range);
+  validRangesChanged(the_v_range);
+}
 
 /*
  Local Variables:

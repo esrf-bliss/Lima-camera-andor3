@@ -18,13 +18,15 @@
 
 #include "Andor3RoiCtrlObj.h"
 
+#include "Andor3Interface.h"
+
 using namespace lima::Andor3;
 
 //-----------------------------------------------------
 // @brief Ctor
 //-----------------------------------------------------
-lima::Andor3::RoiCtrlObj::RoiCtrlObj(Camera& cam)
-: m_cam(cam)
+lima::Andor3::RoiCtrlObj::RoiCtrlObj(Camera& cam, Interface *interface)
+: m_cam(cam), m_interface(interface)
 {
   DEB_CONSTRUCTOR();    
 }
@@ -67,6 +69,6 @@ lima::Andor3::RoiCtrlObj::setRoi(const Roi& roi)
   Roi real_roi;
   checkRoi(roi,real_roi);
   m_cam.setRoi(real_roi);
-  
+  m_interface->updateValidRanges();
 }
 
