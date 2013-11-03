@@ -95,30 +95,30 @@ namespace Andor3
    void initialiseController();
 
    void setAdcGain(A3_Gain iGain /In/ );
-   void getAdcGain(A3_Gain &oGain /Out/ );
+   void getAdcGain(A3_Gain &oGain /Out/ ) const;
    void getAdcGainString(std::string &oGainString /Out/ ) const;
    void setAdcRate(A3_ReadOutRate iRate /In/ );
-   void getAdcRate(A3_ReadOutRate &oRate /Out/ );
+   void getAdcRate(A3_ReadOutRate &oRate /Out/ ) const;
    void getAdcRateString(std::string &oRateString /Out/ ) const;
    void setElectronicShutterMode(A3_ShutterMode iMode /In/ );
-   void getElectronicShutterMode(A3_ShutterMode &oMode /Out/ );
+   void getElectronicShutterMode(A3_ShutterMode &oMode /Out/ ) const;
    void getElectronicShutterModeString(std::string &oModeString /Out/) const;
    void setBitDepth(A3_BitDepth iMode /In/ );
-   void getBitDepth(A3_BitDepth &oMode /Out/ );
+   void getBitDepth(A3_BitDepth &oMode /Out/ ) const;
    void getBitDepthString(std::string &oDepthString /Out/ ) const;
    void getPxEncoding(std::string &oPxEncoding /Out/ ) const;
    void setTriggerMode(A3_TriggerMode iMode /In/ );
-   void getTriggerMode(A3_TriggerMode &oMode /Out/ );
+   void getTriggerMode(A3_TriggerMode &oMode /Out/ ) const;
    void getTriggerModeString(std::string &oModeString /Out/ ) const;
    void setTemperatureSP(double temp /In/ );
-   void getTemperatureSP(double& temp /Out/ );
-   void getTemperature(double& temp /Out/ );
+   void getTemperatureSP(double& temp /Out/ ) const;
+   void getTemperature(double& temp /Out/ ) const;
    void setCooler(bool flag /In/ );
-   void getCooler(bool& flag /Out/ );
-   void getCoolingStatus(std::string& status /Out/ );
+   void getCooler(bool& flag /Out/ ) const;
+   void getCoolingStatus(std::string& status /Out/ ) const;
 
-   void getFrameRate(double &o_frame_rate /Out/ );
-   void getFrameRateRange(double& o_min_lat /Out/, double& o_max_lat /Out/);
+   void getFrameRate(double &o_frame_rate /Out/ ) const;
+   void getFrameRateRange(double& o_min_lat /Out/, double& o_max_lat /Out/) const;
   };
 
 };
