@@ -16,7 +16,7 @@ print("\n** The environement of the pocess is now : ")
 print(os.environ)
 
 print("\n** Now, importing Lima (Core and Andor3 :")
-sys.path.insert(1, "/usr/local/Lima")
+sys.path.insert(1, os.environ['LD_LIBRARY_PATH'] + "/../..")
 print("\twith sys.path = " + ":".join(sys.path))
 from Lima import Core,Andor3
 
