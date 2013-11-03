@@ -146,6 +146,7 @@ void
 lima::Andor3::SyncCtrlObj::updateValidRanges()
 {
   DEB_MEMBER_FUNCT();
+  DEB_ALWAYS() << "about to update the valid range for exposure and latency times...";
   ValidRangesType		the_v_range;
   getValidRanges(the_v_range);
   validRangesChanged(the_v_range);
