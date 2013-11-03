@@ -6,10 +6,11 @@
 
 ### Note also : there is a bug with Sps : if it is not compiled in (COMPILE_SPS=0 in config.inc) then it is still required by limacore !!!
 
-LD_LIBRARY_PATH=/usr/local/Lima/lib ipython
+LD_LIBRARY_PATH=/usr/local/Lima/Lima/lib ipython
 
-import sys,time
-sys.path.insert(1, "/usr/local/Lima")
+import sys,time,os
+## sys.path.insert(1, "/usr/local/Lima")
+sys.path.insert(1, os.environ['LD_LIBRARY_PATH']+"/../..")
 from Lima import Core,Andor3
 import time
 
