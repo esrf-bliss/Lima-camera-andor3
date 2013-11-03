@@ -15,16 +15,25 @@
  * You should have received a copy of the GNU General Public
  * License along with this file. If not, see <http://www.gnu.org/licenses/>.
  */
+
 namespace Andor3
 {
   class Interface : HwInterface
   {
 %TypeHeaderCode
 #include <Andor3Interface.h>
+#include <Andor3Camera.h>
 %End
+  public:
+// SIP is not working with the namespace, we have to give the enums and use them directly in here, even the one coming from other parts of LIMA :
+    enum A3_Gain { Gain1 = 0, Gain2 = 1, Gain3 = 2, Gain4 = 3, Gain1_Gain3 = 4, Gain1_Gain4 = 5, Gain2_Gain3 = 6, Gain2_Gain4 = 7 };
+    enum A3_ShutterMode { Rolling = 0, Global = 1 };
+    enum A3_ReadOutRate { MHz10 = 0, MHz100 = 1, MHz200 = 2, MHz280 = 3 };
+
   public:
     Interface(Andor3::Camera& cam /In/ );
     virtual ~Interface();
+
 
     //- From HwInterface
 // SIP is not knowing what is CapList ... We have to use the native type rather than the typedef :
@@ -42,14 +51,14 @@ namespace Andor3
       
     // Specific to andor-sdk-3... Only a wrapper to the camera equivalent methods
     //   but completed by the update of the CtAcquisition object when changing a setting.
-    virtual void		setAdcGain(Camera::A3_Gain iGain /In/ );
-    virtual void		getAdcGain(Camera::A3_Gain &oGain /Out/ ) const;
+    virtual void		setAdcGain(A3_Gain iGain /In/ );
+    virtual void		getAdcGain(A3_Gain &oGain /Out/ ) const;
     virtual void		getAdcGainString(std::string &oGainString /Out/ ) const;
-    virtual void		setAdcRate(Camera::A3_ReadOutRate iRate /In/ );
-    virtual void		getAdcRate(Camera::A3_ReadOutRate &oRate /Out/ ) const;
+    virtual void		setAdcRate(A3_ReadOutRate iRate /In/ );
+    virtual void		getAdcRate(A3_ReadOutRate &oRate /Out/ ) const;
     virtual void		getAdcRateString(std::string &oRateString /Out/ ) const;
-    virtual void		setElectronicShutterMode(Camera::A3_ShutterMode iMode /In/ );
-    virtual void		getElectronicShutterMode(Camera::A3_ShutterMode &oMode /Out/ ) const;
+    virtual void		setElectronicShutterMode(A3_ShutterMode iMode /In/ );
+    virtual void		getElectronicShutterMode(A3_ShutterMode &oMode /Out/ ) const;
     virtual void		getElectronicShutterModeString(std::string &oModeString /Out/ ) const;
 
   };
