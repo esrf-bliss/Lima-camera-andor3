@@ -98,6 +98,12 @@ print("* Testing some frame-number based acquisitions")
 # Core.DebParams.setTypeFlagsNameList(['Fatal', 'Error', 'Warning', 'Trace'])
 # Core.DebParams.setModuleFlagsNameList(['Camera'])
 
+print("  Acquiring 3 images, to flush the CtAcquisition and the frame-rate be updated accordingly")
+cam_ctr.acquisition().setAcqNbFrames(3)
+cam_ctr.prepareAcq()
+cam_ctr.startAcq()
+time.sleep(5)
+
 print("  Acquiring 50 image using the current settings.")
 cam_ctr.acquisition().setAcqNbFrames(50)
 
@@ -155,29 +161,29 @@ while ( Core.AcqReady != cam_ctr.getStatus().AcquisitionStatus ) :
 print("Acquisition done with sleep of %ds"% (the_wait))
 
 
-print("** Setting the output to nexus")
-cam_sav.setSavingMode(Core.CtSaving.AutoFrame)
-cam_sav.setFormat(Core.CtSaving.NXS)
-cam_sav.setSuffix(".nxs")
-print("  The saving parameters are :")
-print(cam_sav.getParameters())
-cam_ctr.prepareAcq()
-cam_ctr.startAcq()
-the_wait=0
-while ( Core.AcqReady != cam_ctr.getStatus().AcquisitionStatus ) :
-    time.sleep(1)
-    the_wait += 1
-print("Acquisition done with sleep of %ds"% (the_wait))
-
-print("And again...")
-cam_ctr.prepareAcq()
-cam_ctr.startAcq()
-the_wait=0
-while ( Core.AcqReady != cam_ctr.getStatus().AcquisitionStatus ) :
-    time.sleep(1)
-    the_wait += 1
-print("Acquisition done with sleep of %ds"% (the_wait))
-
+# print("** Setting the output to nexus")
+# cam_sav.setSavingMode(Core.CtSaving.AutoFrame)
+# cam_sav.setFormat(Core.CtSaving.NXS)
+# cam_sav.setSuffix(".nxs")
+# print("  The saving parameters are :")
+# print(cam_sav.getParameters())
+# cam_ctr.prepareAcq()
+# cam_ctr.startAcq()
+# the_wait=0
+# while ( Core.AcqReady != cam_ctr.getStatus().AcquisitionStatus ) :
+#     time.sleep(1)
+#     the_wait += 1
+# print("Acquisition done with sleep of %ds"% (the_wait))
+# 
+# print("And again...")
+# cam_ctr.prepareAcq()
+# cam_ctr.startAcq()
+# the_wait=0
+# while ( Core.AcqReady != cam_ctr.getStatus().AcquisitionStatus ) :
+#     time.sleep(1)
+#     the_wait += 1
+# print("Acquisition done with sleep of %ds"% (the_wait))
+# 
 
 print("* Testing some free-running acquisitions, during approx 2s each test :")
 print("  Setting the output sink :")
@@ -219,17 +225,17 @@ time.sleep(2)
 cam_ctr.video().stopLive()
 print("Acquisition done in free running while the main thread slept 2s")
 
-print("** Setting the output to nexus")
-cam_sav.setSavingMode(Core.CtSaving.AutoFrame)
-cam_sav.setFormat(Core.CtSaving.NXS)
-cam_sav.setSuffix(".nxs")
-print("  The saving parameters are :")
-print(cam_sav.getParameters())
-cam_ctr.video().startLive()
-time.sleep(2)
-cam_ctr.video().stopLive()
-print("Acquisition done in free running while the main thread slept 2s")
-
+## print("** Setting the output to nexus")
+## cam_sav.setSavingMode(Core.CtSaving.AutoFrame)
+## cam_sav.setFormat(Core.CtSaving.NXS)
+## cam_sav.setSuffix(".nxs")
+## print("  The saving parameters are :")
+## print(cam_sav.getParameters())
+## cam_ctr.video().startLive()
+## time.sleep(2)
+## cam_ctr.video().stopLive()
+## print("Acquisition done in free running while the main thread slept 2s")
+## 
 print("And again...")
 cam_ctr.video().startLive()
 time.sleep(2)
