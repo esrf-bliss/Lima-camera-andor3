@@ -165,6 +165,7 @@ m_temperature_sp(5.0)
   // Initing the maps that serves for error string generation :
   _mapAndor3Error();
   
+  DEB_ALWAYS() << "This is LIBRARY 123 ";
   // Initialisation of the atcore library :
   if ( ! sAndorSDK3Initted ) {
     if ( m_bitflow_path != "" ) {

@@ -161,6 +161,7 @@ lima::Andor3::Interface::getNbHwAcquiredFrames()
 void
 lima::Andor3::Interface::updateValidRanges()
 {
+  DEB_MEMBER_FUNCT();
   if ( m_sync ) {
     m_sync->updateValidRanges();
   }
@@ -192,7 +193,7 @@ void
 lima::Andor3::Interface::setAdcRate(Camera::A3_ReadOutRate iRate)
 {
   DEB_MEMBER_FUNCT();
-  m_cam.getAdcRate(iRate);
+  m_cam.setAdcRate(iRate);
   updateValidRanges();
 }
 
