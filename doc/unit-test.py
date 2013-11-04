@@ -127,6 +127,7 @@ while ( Core.AcqReady != cam_ctr.getStatus().AcquisitionStatus ) :
     time.sleep(1)
     the_wait += 1
 print("Acquisition done with sleep of %ds" % (the_wait))
+time.sleep(1)
 
 print("And again...")
 cam_ctr.prepareAcq()
@@ -136,6 +137,7 @@ while ( Core.AcqReady != cam_ctr.getStatus().AcquisitionStatus ) :
     time.sleep(1)
     the_wait += 1
 print("Acquisition done with sleep of %ds" % (the_wait))
+time.sleep(1)
 
 print("** Setting the output to tiff")
 cam_sav.setSavingMode(Core.CtSaving.AutoFrame)
@@ -150,6 +152,7 @@ while ( Core.AcqReady != cam_ctr.getStatus().AcquisitionStatus ) :
     time.sleep(1)
     the_wait += 1
 print("Acquisition done with sleep of %ds"% (the_wait))
+time.sleep(1)
 
 print("And again...")
 cam_ctr.prepareAcq()
@@ -159,6 +162,7 @@ while ( Core.AcqReady != cam_ctr.getStatus().AcquisitionStatus ) :
     time.sleep(1)
     the_wait += 1
 print("Acquisition done with sleep of %ds"% (the_wait))
+time.sleep(1)
 
 
 # print("** Setting the output to nexus")
@@ -201,12 +205,14 @@ cam_ctr.video().startLive()
 time.sleep(2)
 cam_ctr.video().stopLive()
 print("Acquisition done in free running while the main thread slept 2s")
+time.sleep(1)
 
 print("And again...")
 cam_ctr.video().startLive()
 time.sleep(2)
 cam_ctr.video().stopLive()
 print("Acquisition done in free running while the main thread slept 2s")
+time.sleep(1)
 
 print("** Setting the output to tiff")
 cam_sav.setSavingMode(Core.CtSaving.AutoFrame)
@@ -218,12 +224,14 @@ cam_ctr.video().startLive()
 time.sleep(2)
 cam_ctr.video().stopLive()
 print("Acquisition done in free running while the main thread slept 2s")
+time.sleep(1)
 
 print("And again...")
 cam_ctr.video().startLive()
 time.sleep(2)
 cam_ctr.video().stopLive()
 print("Acquisition done in free running while the main thread slept 2s")
+time.sleep(1)
 
 ## print("** Setting the output to nexus")
 ## cam_sav.setSavingMode(Core.CtSaving.AutoFrame)

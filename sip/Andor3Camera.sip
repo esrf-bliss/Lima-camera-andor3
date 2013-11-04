@@ -16,7 +16,6 @@
  * License along with this file. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 namespace Andor3
 {
   class Camera /NoDefaultCtors/
