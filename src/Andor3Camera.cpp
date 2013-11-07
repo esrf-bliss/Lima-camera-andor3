@@ -1800,12 +1800,12 @@ lima::Andor3::Camera::getSyncTriggering(bool &o_sync)
   getBool(andor3::SynchronousTriggering, &o_sync);
 }
 
-void lima::Andor3::Camera::getBytesPerPixel(float &o_value) const
+void lima::Andor3::Camera::getBytesPerPixel(double &o_value) const
 {
   DEB_MEMBER_FUNCT();
   double		the_Bpp;
   getFloat(andor3::BytesPerPixel, &the_Bpp);
-  o_value = static_cast<float>(the_Bpp);
+  o_value = the_Bpp;
   
 }
 
@@ -1858,7 +1858,7 @@ lima::Andor3::Camera::getImageSize(int &o_frame_size) const
 }
 
 void
-lima::Andor3::Camera::getMaxFrameRateTransfer(float &o_max_transfer_rate) const
+lima::Andor3::Camera::getMaxFrameRateTransfer(double &o_max_transfer_rate) const
 {
   DEB_MEMBER_FUNCT();
   double		the_max_fr;
@@ -1872,11 +1872,11 @@ lima::Andor3::Camera::getMaxFrameRateTransfer(float &o_max_transfer_rate) const
     getInt(andor3::ImageSizeBytes, &the_frame_size);
     the_max_fr = the_interface_bandwith / static_cast<double>(the_frame_size);
   }
-  o_max_transfer_rate = static_cast<float>(the_max_fr);
+  o_max_transfer_rate = the_max_fr;
 }
 
 void
-lima::Andor3::Camera::getReadoutTime(float &o_time) const
+lima::Andor3::Camera::getReadoutTime(double &o_time) const
 {
   DEB_MEMBER_FUNCT();
   double		the_time;

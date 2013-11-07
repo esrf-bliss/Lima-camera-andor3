@@ -184,14 +184,14 @@ namespace lima
       void getSyncTriggering(bool &o_sync);
       
       // -- some readonly attributes :
-      void getBytesPerPixel(float &o_value) const;
+      void getBytesPerPixel(double &o_value) const;
       void getFirmwareVersion(std::string &o_fwv) const;
       void getFrameRate(double &o_frame_rate) const;
       void getFrameRateRange(double& o_min_lat, double& o_max_lat) const;
       void getFullRoiControl(bool &o_fullROIcontrol) const;
       void getImageSize(int &o_frame_size) const;
-      void getMaxFrameRateTransfer(float &o_max_transfer_rate) const;
-      void getReadoutTime(float &o_time) const;
+      void getMaxFrameRateTransfer(double &o_max_transfer_rate) const;
+      void getReadoutTime(double &o_time) const;
       void getSerialNumber(std::string &o_sn) const;
       
 
