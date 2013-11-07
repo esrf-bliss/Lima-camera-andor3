@@ -57,6 +57,9 @@ namespace lima
       //! @TODO : later on should do a map (string to int and vice-versa) from parsed enum info for the next 3 :
       // In the same order/index as "PreAmpGainControl"
       enum A3_Gain { Gain1 = 0, Gain2 = 1, Gain3 = 2, Gain4 = 3, Gain1_Gain3 = 4, Gain1_Gain4 = 5, Gain2_Gain3 = 6, Gain2_Gain4 = 7 };
+      // The "simple" version :
+#warning Should verify the order of these on a camera which implements it :
+      enum A3_SimpleGain { b11_hi_gain=0, b11_low_gain=1, b16_lh_gain=2, none=31};
       // In the same order/index as "ElectronicShutteringMode"
       enum A3_ShutterMode { Rolling = 0, Global = 1 };
       // In the same order/index as "PixelReadoutRate"
@@ -67,6 +70,9 @@ namespace lima
       enum A3_TriggerMode { Internal = 0, ExternalLevelTransition = 1, ExternalStart = 2, ExternalExposure = 3, Software = 4, Advanced = 5, External = 6 };
       // The binning system of andor3 :
       enum A3_Binning { B1x1=0, B2x2=1, B4x4=2, B8x8=3};
+      // The fan speed
+      enum A3_FanSpeed { Off=0, Low=1, On=2};
+      
 /*
       // In the order of the menu, the status of the cooling unit :
       enum A3_TemperatureStatus {	Cooler_Off=0,
@@ -162,8 +168,32 @@ namespace lima
       void getCooler(bool& flag) const;
       void getCoolingStatus(std::string& status) const;  // à exporter (read-only)
       
+      void setBufferOverflow(bool i_overflow);
+      void getBufferOverflow(bool &o_overflow) const;
+      void setFanSpeed(A3_FanSpeed iFS);
+      void getFanSpeed(A3_FanSpeed &oFS) const;
+      void getFanSpeedString(std::string &oFSString) const;
+      void setOverlap(bool i_overlap);
+      void getOverlap(bool &o_overlap) const;
+      void setSimpleGain(A3_SimpleGain i_gain);
+      void getSimpleGain(A3_SimpleGain &o_gain) const;
+      void getSimpleGainString(std::string &o_gainString) const;
+      void setSpuriousNoiseFilter(bool i_filter);
+      void getSpuriousNoiseFilter(bool &o_filter) const;
+      void setSyncTriggering(bool i_sync);
+      void getSyncTriggering(bool &o_sync);
+      
+      // -- some readonly attributes :
+      void getBytesPerPixel(float &o_value) const;
+      void getFirmwareVersion(std::string &o_fwv) const;
       void getFrameRate(double &o_frame_rate) const;
       void getFrameRateRange(double& o_min_lat, double& o_max_lat) const;
+      void getFullRoiControl(bool &o_fullROIcontrol) const;
+      void getImageSize(int &o_frame_size) const;
+      void getMaxFrameRateTransfer(float &o_max_transfer_rate) const;
+      void getReadoutTime(float &o_time) const;
+      void getSerialNumber(std::string &o_sn) const;
+      
 
     private:
       // -- some internals :
@@ -177,9 +207,11 @@ namespace lima
       bool andor3Error(int code) const;
       void _mapAndor3Error();
       
-      int printInfoForProp(const AT_WC * iPropName, A3_TypeInfo iPropType);
+      int printInfoForProp(const AT_WC * iPropName, A3_TypeInfo iPropType) const;
+      bool propImplemented(const AT_WC * iPropName) const;
       
       static int getIntSystem(const AT_WC* Feature, AT_64* Value);
+      static int bufferOverflowCallback(AT_H i_handle, AT_WC* i_feature, void* i_info);
       
       int setInt(const AT_WC* Feature, AT_64 Value);
       int getInt(const AT_WC* Feature, AT_64* Value) const;

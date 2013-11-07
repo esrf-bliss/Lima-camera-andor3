@@ -47,6 +47,7 @@ namespace lima {
     static const AT_WC* AOIWidth = L"AOIWidth";
     static const AT_WC* BaselineLevel = L"BaselineLevel";
     static const AT_WC* BitDepth = L"BitDepth";
+    static const AT_WC* BufferOverflowEvent = L"BufferOverflowEvent";
     static const AT_WC* BytesPerPixel = L"BytesPerPixel";
     static const AT_WC* CameraAcquiring = L"CameraAcquiring";
     static const AT_WC* CameraDump = L"CameraDump";
@@ -211,8 +212,28 @@ m_temperature_sp(5.0)
   }
   m_detector_model = WStringToString(std::wstring(model));
   
+  // Adding some extra information on the model (more human readable) :
+  // DC-152 -> Neo
+  if ( ! m_detector_model.compare(0, 6, "DC-152 ")) {
+    m_detector_model += "/Neo";
+  }
+  // DG-152 -> Zyla-5.5
+  if ( ! m_detector_model.compare(0, 6, "DG-152 ")) {
+    m_detector_model += "/Zyla-5.5";
+  }
+  // ZYLA-4.2 -> Zyla-4.2
+  if ( ! m_detector_model.compare(0, 6, "ZYLA-4.2 ")) {
+    m_detector_model += "/Zyla-4.2";
+  }
+  
+  
   if ( m_detector_model != "SIMCAM CMOS" ) {
+    std::string		the_serial, the_fw;
+
+    getSerialNumber(the_serial);
+    getFirmwareVersion(the_fw);
     m_real_camera = true;
+    m_detector_model += " (SN : " + the_serial + ", firmware " + the_fw + ")";
   }
   else {
     m_real_camera = false;
@@ -1179,6 +1200,8 @@ lima::Andor3::Camera::initialiseController()
   setTemperatureSP(m_temperature_sp);
   setExpTime(m_exp_time);
   
+  setSpuriousNoiseFilter(false);
+  
   AT_64			the_chip_width, the_chip_height;
   getInt(andor3::SensorWidth, &the_chip_width);
   getInt(andor3::SensorHeight, &the_chip_height);
@@ -1205,6 +1228,8 @@ lima::Andor3::Camera::initialiseController()
     m_acq_thread = new _AcqThread(*this);
     m_acq_thread->start();
   }
+  
+  AT_RegisterFeatureCallback(m_camera_handle, andor3::BufferOverflowEvent, &lima::Andor3::Camera::bufferOverflowCallback, *this);
 }
 
 void
@@ -1250,7 +1275,7 @@ void
 lima::Andor3::Camera::getAdcGainString(std::string &oGainString) const
 {
   AT_WC		the_string[256];
-  getEnumStringByIndex(andor3::PreAmpGainControl, m_adc_gain, the_string, 255);
+  getEnumString(andor3::PreAmpGainControl, the_string, 255);
   oGainString = WStringToString(std::wstring(the_string));
 }
 
@@ -1293,7 +1318,7 @@ void
 lima::Andor3::Camera::getAdcRateString(std::string &oRateString) const
 {
   AT_WC		the_string[256];
-  getEnumStringByIndex(andor3::PixelReadoutRate, m_adc_rate, the_string, 255);
+  getEnumString(andor3::PixelReadoutRate, the_string, 255);
   oRateString = WStringToString(std::wstring(the_string));
 }
 
@@ -1496,7 +1521,7 @@ lima::Andor3::Camera::setCooler(bool flag)
   setBool(andor3::SensorCooling, flag);
   getBool(andor3::SensorCooling, &m_cooler);
   if ( flag != m_cooler ) {
-    DEB_ERROR() << "Failed to properly set the cooler : requeste " << flag << ", but got " << m_cooler;
+    DEB_ERROR() << "Failed to properly set the cooler : requested " << flag << ", but got " << m_cooler;
     THROW_HW_ERROR(Error) << "Failed to properly set the cooler";
   }
 }
@@ -1533,6 +1558,268 @@ lima::Andor3::Camera::getCoolingStatus(std::string& status) const
 }
 
 void
+lima::Andor3::Camera::setBufferOverflow(bool i_overflow)
+{
+  DEB_MEMBER_FUNCT();
+  setBool(andor3::BufferOverflowEvent, i_overflow);
+  bool		the_bool;
+  getBool(andor3::BufferOverflowEvent, &i_overflow);
+  if ( i_overflow != the_bool ) {
+    DEB_ERROR() << "Failed to properly set the SynchronousTriggering mode : requested " << i_overflow << ", but got " << the_bool;
+    THROW_HW_ERROR(Error) << "Failed to properly set the SynchronousTriggering mode";
+  }
+}
+
+void
+lima::Andor3::Camera::getBufferOverflow(bool &o_overflow) const
+{
+  DEB_MEMBER_FUNCT();
+  getBool(andor3::BufferOverflowEvent, &o_overflow);
+}
+
+
+void
+lima::Andor3::Camera::setFanSpeed(A3_FanSpeed iFS)
+{
+  DEB_MEMBER_FUNCT();
+  if ( propImplemented(andor3::FanSpeed) ) {
+    setEnumIndex(andor3::FanSpeed, iFS);
+  }
+  else {
+    DEB_TRACE() << "The camera has no fan speed setting... Do nothing !";
+  }
+}
+
+void
+lima::Andor3::Camera::getFanSpeed(A3_FanSpeed &oFS) const
+{
+  DEB_MEMBER_FUNCT();
+  if ( propImplemented(andor3::FanSpeed) ) {
+    int  the_fs;
+    getEnumIndex(andor3::FanSpeed, &the_fs);
+    oFS = static_cast<A3_FanSpeed>(the_fs);
+  }
+  else {
+    DEB_TRACE() << "The camera has no fan speed setting... Do nothing !";
+  }  
+}
+
+
+void
+lima::Andor3::Camera::getFanSpeedString(std::string &oFSString) const
+{
+  DEB_MEMBER_FUNCT();
+  if ( propImplemented(andor3::FanSpeed) ) {
+    AT_WC		the_string[256];
+    getEnumString(andor3::FanSpeed, the_string, 255);
+    oFSString = WStringToString(std::wstring(the_string));
+  }
+  else {
+    DEB_TRACE() << "The camera has no fan speed setting... Do nothing !";
+    oFSString = "not implemented";
+  }
+}
+
+
+void
+lima::Andor3::Camera::setOverlap(bool i_overlap)
+{
+  DEB_MEMBER_FUNCT();
+  setBool(andor3::Overlap, i_overlap);
+  bool		the_bool;
+  getBool(andor3::Overlap, &the_bool);
+  if ( i_overlap != the_bool ) {
+    DEB_ERROR() << "Failed to properly set the overlap mode : requested " << i_overlap << ", but got " << the_bool;
+    THROW_HW_ERROR(Error) << "Failed to properly set the overlap mode";
+  }
+}
+
+void
+lima::Andor3::Camera::getOverlap(bool &o_overlap) const
+{
+  DEB_MEMBER_FUNCT();
+  getBool(andor3::Overlap, &o_overlap);
+}
+
+void
+lima::Andor3::Camera::setSimpleGain(A3_SimpleGain i_gain)
+{
+  DEB_MEMBER_FUNCT();
+  if ( propImplemented(andor3::SimplePreAmpGainControl) ) {
+    setEnumIndex(andor3::SimplePreAmpGainControl, i_gain);
+  }
+  else {
+    DEB_TRACE() << "SimplePreAmpGainControl not implemented, emulating it in software";
+    A3_ShutterMode		the_shutter;
+    
+    getElectronicShutterMode(the_shutter);
+    
+    switch (i_gain) {
+      case b11_low_gain:
+        setAdcGain(Gain1);
+        break;
+        
+      case b11_hi_gain:
+        if ( Rolling == the_shutter )
+          setAdcGain(Gain4);
+        else
+          setAdcGain(Gain3);
+        break;
+        
+      case b16_lh_gain:
+        if ( Rolling == the_shutter )
+          setAdcGain(Gain1_Gain4);
+        else
+          setAdcGain(Gain1_Gain3);
+        break;
+        
+      default:
+        DEB_TRACE() << "Not performing any settings since you provided an unavailable value";
+        break;
+    }
+  }
+}
+
+void
+lima::Andor3::Camera::getSimpleGain(A3_SimpleGain &o_gain) const
+{
+  DEB_MEMBER_FUNCT();
+
+  //  (0) "Gain 1 (11 bit)"; implemented = true; available = true.
+  //  (1) "Gain 2 (11 bit)"; implemented = true; available = true.
+  //  (2) "Gain 3 (11 bit)"; implemented = true; available = true.
+  //  (3) "Gain 4 (11 bit)"; implemented = true; available = true.
+  //  (4) "Gain 1 Gain 3 (16 bit)"; implemented = true; available = true.
+  //  (5) "Gain 1 Gain 4 (16 bit)"; implemented = true; available = true.
+  //  (6) "Gain 2 Gain 3 (16 bit)"; implemented = true; available = true.
+  //  (7) "Gain 2 Gain 4 (16 bit)"; implemented = true; available = true.
+  if ( propImplemented(andor3::SimplePreAmpGainControl) ) {
+    int			the_gain;
+    getEnumIndex(andor3::SimplePreAmpGainControl, &the_gain);
+    o_gain = static_cast<A3_SimpleGain>(the_gain);
+  }
+  else {
+    DEB_TRACE() << "SimplePreAmpGainControl not implemented, emulating it in software";
+
+    A3_Gain					the_gain;
+    A3_ShutterMode	the_shutter;
+    
+    getAdcGain(the_gain);
+    getElectronicShutterMode(the_shutter);
+
+    if ( Rolling == the_shutter ) {
+      switch (the_gain) {
+        case Gain1:
+          o_gain = b11_low_gain;
+          break;
+        case Gain4:
+          o_gain = b11_hi_gain;
+          break;
+        case Gain1_Gain4:
+          o_gain = b16_lh_gain;
+          break;
+          
+        default:
+          o_gain = none;
+          break;
+      }
+    }
+    else {
+      switch (the_gain) {
+        case Gain1:
+          o_gain = b11_low_gain;
+          break;
+        case Gain3:
+          o_gain = b11_hi_gain;
+          break;
+        case Gain1_Gain3:
+          o_gain = b16_lh_gain;
+          break;
+          
+        default:
+          o_gain = none;
+          break;
+      }      
+    }
+  }
+}
+
+
+void
+lima::Andor3::Camera::getSimpleGainString(std::string &o_gainString) const
+{
+  DEB_MEMBER_FUNCT();
+  if ( propImplemented(andor3::SimplePreAmpGainControl) ) {
+    AT_WC		the_string[256];
+    getEnumString(andor3::SimplePreAmpGainControl, the_string, 255);
+    o_gainString = WStringToString(std::wstring(the_string));
+  }
+  else {
+    DEB_TRACE() << "The camera has no simple gain control setting... Do nothing !";
+    o_gainString = "not implemented";
+  }
+}
+
+void
+lima::Andor3::Camera::setSpuriousNoiseFilter(bool i_filter)
+{
+  DEB_MEMBER_FUNCT();
+  setBool(andor3::SpuriousNoiseFilter, i_filter);
+  bool		the_bool;
+  getBool(andor3::SpuriousNoiseFilter, &the_bool);
+  if ( i_filter != the_bool ) {
+    DEB_ERROR() << "Failed to properly set the spurious noise filter mode : requested " << i_filter << ", but got " << the_bool;
+    THROW_HW_ERROR(Error) << "Failed to properly set the spurious noise filter mode";
+  }  
+}
+
+void
+lima::Andor3::Camera::getSpuriousNoiseFilter(bool &o_filter) const
+{
+  DEB_MEMBER_FUNCT();
+  getBool(andor3::SpuriousNoiseFilter, &o_filter);
+}
+
+void
+lima::Andor3::Camera::setSyncTriggering(bool i_sync)
+{
+  DEB_MEMBER_FUNCT();
+  setBool(andor3::SynchronousTriggering, i_sync);
+  bool		the_bool;
+  getBool(andor3::SynchronousTriggering, &the_bool);
+  if ( i_sync != the_bool ) {
+    DEB_ERROR() << "Failed to properly set the SynchronousTriggering mode : requested " << i_sync << ", but got " << the_bool;
+    THROW_HW_ERROR(Error) << "Failed to properly set the SynchronousTriggering mode";
+  }
+}
+
+void
+lima::Andor3::Camera::getSyncTriggering(bool &o_sync)
+{
+  DEB_MEMBER_FUNCT();
+  getBool(andor3::SynchronousTriggering, &o_sync);
+}
+
+void lima::Andor3::Camera::getBytesPerPixel(float &o_value) const
+{
+  DEB_MEMBER_FUNCT();
+  double		the_Bpp;
+  getFloat(andor3::BytesPerPixel, &the_Bpp);
+  o_value = static_cast<float>(the_Bpp);
+  
+}
+
+void
+lima::Andor3::Camera::getFirmwareVersion(std::string &o_fwv) const
+{
+  DEB_MEMBER_FUNCT();
+  AT_WC	the_fwv[1024];
+  getString(andor3::FirmwareVersion, the_fwv, 1024);
+  o_fwv = WStringToString(the_fwv);
+}
+
+
+void
 lima::Andor3::Camera::getFrameRate(double &o_frame_rate) const
 {
   DEB_MEMBER_FUNCT();
@@ -1553,6 +1840,59 @@ lima::Andor3::Camera::getFrameRateRange(double& o_min_fr, double& o_max_fr) cons
   o_min_fr = the_min;
   o_max_fr = the_max;
 }
+
+void
+lima::Andor3::Camera::getFullRoiControl(bool &o_fullROIcontrol) const
+{
+  DEB_MEMBER_FUNCT();
+  getBool(andor3::FullAOIControl, &o_fullROIcontrol);
+}
+
+void
+lima::Andor3::Camera::getImageSize(int &o_frame_size) const
+{
+  DEB_MEMBER_FUNCT();
+  AT_64 		the_size;
+  getInt(andor3::ImageSizeBytes, &the_size);
+  o_frame_size = static_cast<int>(the_size);
+}
+
+void
+lima::Andor3::Camera::getMaxFrameRateTransfer(float &o_max_transfer_rate) const
+{
+  DEB_MEMBER_FUNCT();
+  double		the_max_fr;
+  if ( propImplemented(andor3::MaxInterfaceTransferRate) ) {
+    getFloat(andor3::MaxInterfaceTransferRate, &the_max_fr);
+  }
+  else {
+    DEB_TRACE() << "Requested the maximum sustainable frame rate, but the feature is not existent on this camera. Doing a software estimation. Currently considering the Neo only (no easy way to know the camera attached)";
+    AT_64			the_frame_size;
+    double		the_interface_bandwith = 250.0e6;
+    getInt(andor3::ImageSizeBytes, &the_frame_size);
+    the_max_fr = the_interface_bandwith / static_cast<double>(the_frame_size);
+  }
+  o_max_transfer_rate = static_cast<float>(the_max_fr);
+}
+
+void
+lima::Andor3::Camera::getReadoutTime(float &o_time) const
+{
+  DEB_MEMBER_FUNCT();
+  double		the_time;
+  getFloat(andor3::ReadoutTime, &the_time);
+  o_time = static_cast<float>(the_time);
+}
+
+void
+lima::Andor3::Camera::getSerialNumber(std::string &o_sn) const
+{
+  DEB_MEMBER_FUNCT();
+  AT_WC	the_sn[1024];
+  getString(andor3::SerialNumber, the_sn, 1024);
+  o_sn = WStringToString(the_sn);
+}
+
 
 
 /*!
@@ -1705,7 +2045,7 @@ lima::Andor3::Camera::_mapAndor3Error()
 }
 
 int
-lima::Andor3::Camera::printInfoForProp(const AT_WC * iPropName, A3_TypeInfo iPropType)
+lima::Andor3::Camera::printInfoForProp(const AT_WC * iPropName, A3_TypeInfo iPropType) const
 {
   DEB_MEMBER_FUNCT();
   
@@ -1872,11 +2212,40 @@ lima::Andor3::Camera::printInfoForProp(const AT_WC * iPropName, A3_TypeInfo iPro
   return i_err;
 }
 
+bool
+lima::Andor3::Camera::propImplemented(const AT_WC * iPropName) const
+{
+  DEB_MEMBER_FUNCT();
+  AT_BOOL		b_exists;
+
+  if ( AT_SUCCESS != andor3Error(AT_IsImplemented(m_camera_handle, iPropName, &b_exists)) ) {
+    DEB_TRACE() << "Error in printInfoForProp : " << m_camera_error_str;
+    return false;
+  }
+  DEB_TRACE() << "\tIsImplemented = " << atBoolToString(b_exists);
+  return b_exists;
+}
+
+
 int
 lima::Andor3::Camera::getIntSystem(const AT_WC* Feature, AT_64* Value)
 {
   DEB_STATIC_FUNCT();
   return (AT_SUCCESS != AT_GetInt(AT_HANDLE_SYSTEM, Feature, Value));
+}
+
+
+
+int
+lima::Andor3::Camera::bufferOverflowCallback(AT_H i_handle, AT_WC* i_feature, void* i_info)
+{
+  DEB_STATIC_FUNCT();
+  Camera		*the_camera;
+  
+  the_camera = static_cast<Camera*>(i_info);
+  DEB_WARNING() << "The camera " << the_camera->m_detector_serial << " has lost (at least) a frame.\n" << "\n\t Will now try to STOP the acquisition (if not already done).";
+  the_camera->_setStatus(Fault, false);
+  return 1;
 }
 
 int
