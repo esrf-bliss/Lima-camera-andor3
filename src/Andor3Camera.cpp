@@ -1229,7 +1229,7 @@ lima::Andor3::Camera::initialiseController()
     m_acq_thread->start();
   }
   
-  AT_RegisterFeatureCallback(m_camera_handle, andor3::BufferOverflowEvent, &lima::Andor3::Camera::bufferOverflowCallback, *this);
+  AT_RegisterFeatureCallback(m_camera_handle, andor3::BufferOverflowEvent, &lima::Andor3::Camera::bufferOverflowCallback, static_cast<void*>(this));
 }
 
 void
@@ -2237,7 +2237,7 @@ lima::Andor3::Camera::getIntSystem(const AT_WC* Feature, AT_64* Value)
 
 
 int
-lima::Andor3::Camera::bufferOverflowCallback(AT_H i_handle, AT_WC* i_feature, void* i_info)
+lima::Andor3::Camera::bufferOverflowCallback(AT_H i_handle, const AT_WC* i_feature, void* i_info)
 {
   DEB_STATIC_FUNCT();
   Camera		*the_camera;
