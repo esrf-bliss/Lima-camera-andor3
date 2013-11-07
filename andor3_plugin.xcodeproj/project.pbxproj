@@ -15,6 +15,10 @@
 		958C874517B65DC9003B74B2 /* Andor3DetInfoCtrlObj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 958C874117B65DC9003B74B2 /* Andor3DetInfoCtrlObj.cpp */; };
 		958C874617B65DC9003B74B2 /* Andor3Interface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 958C874217B65DC9003B74B2 /* Andor3Interface.cpp */; };
 		958C874717B65DC9003B74B2 /* Andor3SyncCtrlObj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 958C874317B65DC9003B74B2 /* Andor3SyncCtrlObj.cpp */; };
+		95D5C466182BBF64003FB5F7 /* Andor3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 95D5C465182BBF64003FB5F7 /* Andor3.cpp */; };
+		95D5C468182BBF6D003FB5F7 /* Andor3Class.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 95D5C467182BBF6D003FB5F7 /* Andor3Class.cpp */; };
+		95D5C46A182BBF71003FB5F7 /* Andor3StateMachine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 95D5C469182BBF71003FB5F7 /* Andor3StateMachine.cpp */; };
+		95D5C477182BC012003FB5F7 /* Andor3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 95D5C465182BBF64003FB5F7 /* Andor3.cpp */; };
 		95E42AF6181DBB3D0090742A /* Andor3BinCtrlObj.h in Headers */ = {isa = PBXBuildFile; fileRef = 95E42AF4181DBB3D0090742A /* Andor3BinCtrlObj.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		95E42AF7181DBB3D0090742A /* Andor3RoiCtrlObj.h in Headers */ = {isa = PBXBuildFile; fileRef = 95E42AF5181DBB3D0090742A /* Andor3RoiCtrlObj.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		95E42AFA181DBB4D0090742A /* Andor3BinCtrlObj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 95E42AF8181DBB4D0090742A /* Andor3BinCtrlObj.cpp */; };
@@ -47,6 +51,11 @@
 		958C874E17B65DF0003B74B2 /* __init__.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = __init__.py; sourceTree = "<group>"; };
 		958C874F17B65E1F003B74B2 /* index.rst */ = {isa = PBXFileReference; lastKnownFileType = text; path = index.rst; sourceTree = "<group>"; };
 		958C875017B65E1F003B74B2 /* neo_header.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = neo_header.jpg; sourceTree = "<group>"; };
+		95D5C464182BB3E5003FB5F7 /* applications */ = {isa = PBXFileReference; lastKnownFileType = folder; name = applications; path = ../../applications; sourceTree = "<group>"; };
+		95D5C465182BBF64003FB5F7 /* Andor3.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; name = Andor3.cpp; path = ../../applications/tango/LimaDetector/src/Andor3.cpp; sourceTree = "<group>"; };
+		95D5C467182BBF6D003FB5F7 /* Andor3Class.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; name = Andor3Class.cpp; path = ../../applications/tango/LimaDetector/src/Andor3Class.cpp; sourceTree = "<group>"; };
+		95D5C469182BBF71003FB5F7 /* Andor3StateMachine.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; name = Andor3StateMachine.cpp; path = ../../applications/tango/LimaDetector/src/Andor3StateMachine.cpp; sourceTree = "<group>"; };
+		95D5C46F182BBFF4003FB5F7 /* libtesting-tango.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libtesting-tango.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		95D5EA221526233B008221ED /* adsc */ = {isa = PBXFileReference; lastKnownFileType = folder; name = adsc; path = ../adsc; sourceTree = "<group>"; };
 		95D5EA231526233B008221ED /* andor */ = {isa = PBXFileReference; lastKnownFileType = folder; name = andor; path = ../andor; sourceTree = "<group>"; };
 		95D5EA241526233B008221ED /* basler */ = {isa = PBXFileReference; lastKnownFileType = folder; name = basler; path = ../basler; sourceTree = "<group>"; };
@@ -75,6 +84,13 @@
 
 /* Begin PBXFrameworksBuildPhase section */
 		956C320C1523BB6B00F0632C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		95D5C46C182BBFF4003FB5F7 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -128,6 +144,7 @@
 			isa = PBXGroup;
 			children = (
 				956C320F1523BB6B00F0632C /* andor3.dylib */,
+				95D5C46F182BBFF4003FB5F7 /* libtesting-tango.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -144,6 +161,9 @@
 		95B6658014E983F900A8C6FC = {
 			isa = PBXGroup;
 			children = (
+				95D5C469182BBF71003FB5F7 /* Andor3StateMachine.cpp */,
+				95D5C467182BBF6D003FB5F7 /* Andor3Class.cpp */,
+				95D5C465182BBF64003FB5F7 /* Andor3.cpp */,
 				95D5EA1D1526230A008221ED /* LIMA-other */,
 				956B30DD152621ED00FB4D2D /* Other Cameras */,
 				958C874A17B65DDC003B74B2 /* Makefile */,
@@ -200,6 +220,7 @@
 		95D5EA1D1526230A008221ED /* LIMA-other */ = {
 			isa = PBXGroup;
 			children = (
+				95D5C464182BB3E5003FB5F7 /* applications */,
 				95365B76152449960099116D /* common */,
 				95365B77152449960099116D /* control */,
 				95365B78152449960099116D /* hardware */,
@@ -235,6 +256,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		95D5C46D182BBFF4003FB5F7 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
@@ -254,6 +282,23 @@
 			productName = andor3;
 			productReference = 956C320F1523BB6B00F0632C /* andor3.dylib */;
 			productType = "com.apple.product-type.library.dynamic";
+		};
+		95D5C46E182BBFF4003FB5F7 /* testing-tango */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 95D5C470182BBFF4003FB5F7 /* Build configuration list for PBXNativeTarget "testing-tango" */;
+			buildPhases = (
+				95D5C46B182BBFF4003FB5F7 /* Sources */,
+				95D5C46C182BBFF4003FB5F7 /* Frameworks */,
+				95D5C46D182BBFF4003FB5F7 /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "testing-tango";
+			productName = "testing-tango";
+			productReference = 95D5C46F182BBFF4003FB5F7 /* libtesting-tango.a */;
+			productType = "com.apple.product-type.library.static";
 		};
 /* End PBXNativeTarget section */
 
@@ -277,6 +322,7 @@
 			projectRoot = "";
 			targets = (
 				956C320E1523BB6B00F0632C /* andor3 */,
+				95D5C46E182BBFF4003FB5F7 /* testing-tango */,
 			);
 		};
 /* End PBXProject section */
@@ -292,6 +338,17 @@
 				958C874717B65DC9003B74B2 /* Andor3SyncCtrlObj.cpp in Sources */,
 				95E42AFA181DBB4D0090742A /* Andor3BinCtrlObj.cpp in Sources */,
 				95E42AFB181DBB4D0090742A /* Andor3RoiCtrlObj.cpp in Sources */,
+				95D5C46A182BBF71003FB5F7 /* Andor3StateMachine.cpp in Sources */,
+				95D5C468182BBF6D003FB5F7 /* Andor3Class.cpp in Sources */,
+				95D5C466182BBF64003FB5F7 /* Andor3.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		95D5C46B182BBFF4003FB5F7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				95D5C477182BC012003FB5F7 /* Andor3.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -383,6 +440,89 @@
 			};
 			name = Release;
 		};
+		95D5C471182BBFF4003FB5F7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				EXECUTABLE_PREFIX = lib;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"\"$(SRCROOT)/../../../lima-dep/andor3-tests/andor-include\"",
+					"\"$(SRCROOT)/../../common/include\"",
+					"\"$(SRCROOT)/../../control/include\"",
+					"\"$(SRCROOT)/../../hardware/include\"",
+					"\"$(SRCROOT)/include\"",
+					"\"$(SRCROOT)/../../applications/tango/LimaDetector/src\"",
+					"\"$(SRCROOT)/../../third-party/Processlib/core/include\"",
+					"\"$(SRCROOT)/../../third-party/yat/include\"",
+					"\"$(SRCROOT)/../../../lima-dep/tango/tango\"",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		95D5C472182BBFF4003FB5F7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				EXECUTABLE_PREFIX = lib;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"\"$(SRCROOT)/../../../lima-dep/andor3-tests/andor-include\"",
+					"\"$(SRCROOT)/../../common/include\"",
+					"\"$(SRCROOT)/../../control/include\"",
+					"\"$(SRCROOT)/../../hardware/include\"",
+					"\"$(SRCROOT)/include\"",
+					"\"$(SRCROOT)/../../applications/tango/LimaDetector/src\"",
+					"\"$(SRCROOT)/../../third-party/Processlib/core/include\"",
+					"\"$(SRCROOT)/../../third-party/yat/include\"",
+					"\"$(SRCROOT)/../../../lima-dep/tango/tango\"",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -403,6 +543,14 @@
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
+		};
+		95D5C470182BBFF4003FB5F7 /* Build configuration list for PBXNativeTarget "testing-tango" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				95D5C471182BBFF4003FB5F7 /* Debug */,
+				95D5C472182BBFF4003FB5F7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
 		};
 /* End XCConfigurationList section */
 	};
