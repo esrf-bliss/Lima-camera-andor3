@@ -296,13 +296,13 @@ lima::Andor3::Camera::~Camera()
     
     DEB_TRACE() << "While leaving the camera, the temperature provided by the cooler is " << the_sensor_temperature;
     getTemperature(the_sensor_temperature);
-    while ( the_sensor_temperature < 5.1 ) {
-      sleep(1);
-      ++the_sensor_temp_wait;
-      getTemperature(the_sensor_temperature);
-      DEB_TRACE() << "The temperature provided by the cooler is " << the_sensor_temperature << "(waited approx. " << the_sensor_temp_wait << "s)";
-    }
-    setCooler(false);
+    // while ( the_sensor_temperature < 5.1 ) {
+    //   sleep(1);
+    //   ++the_sensor_temp_wait;
+    //   getTemperature(the_sensor_temperature);
+    //   DEB_TRACE() << "The temperature provided by the cooler is " << the_sensor_temperature << "(waited approx. " << the_sensor_temp_wait << "s)";
+    // }
+    // setCooler(false);
     
     //    THROW_HW_ERROR(Error)<<"Please stop the cooling before shuting dowm the camera\n"
     //    << "brutale heating could damage the sensor.\n"
