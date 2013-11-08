@@ -1229,7 +1229,7 @@ lima::Andor3::Camera::initialiseController()
     m_acq_thread->start();
   }
   
-  AT_RegisterFeatureCallback(m_camera_handle, andor3::BufferOverflowEvent, &lima::Andor3::Camera::bufferOverflowCallback, static_cast<void*>(this));
+  //  AT_RegisterFeatureCallback(m_camera_handle, andor3::BufferOverflowEvent, &lima::Andor3::Camera::bufferOverflowCallback, static_cast<void*>(this));
 }
 
 void
@@ -2236,17 +2236,17 @@ lima::Andor3::Camera::getIntSystem(const AT_WC* Feature, AT_64* Value)
 
 
 
-int
-lima::Andor3::Camera::bufferOverflowCallback(AT_H i_handle, const AT_WC* i_feature, void* i_info)
-{
-  DEB_STATIC_FUNCT();
-  Camera		*the_camera;
+// int
+// lima::Andor3::Camera::bufferOverflowCallback(AT_H i_handle, const AT_WC* i_feature, void* i_info)
+// {
+//   DEB_STATIC_FUNCT();
+//   Camera		*the_camera;
   
-  the_camera = static_cast<Camera*>(i_info);
-  DEB_WARNING() << "The camera " << the_camera->m_detector_serial << " has lost (at least) a frame.\n" << "\n\t Will now try to STOP the acquisition (if not already done).";
-  the_camera->_setStatus(Fault, false);
-  return 1;
-}
+//   the_camera = static_cast<Camera*>(i_info);
+//   DEB_WARNING() << "The camera " << the_camera->m_detector_serial << " has lost (at least) a frame.\n" << "\n\t Will now try to STOP the acquisition (if not already done).";
+//   the_camera->_setStatus(Fault, false);
+//   return 1;
+// }
 
 int
 lima::Andor3::Camera::setInt(const AT_WC* Feature, AT_64 Value)

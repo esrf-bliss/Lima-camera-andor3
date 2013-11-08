@@ -211,7 +211,7 @@ namespace lima
       bool propImplemented(const AT_WC * iPropName) const;
       
       static int getIntSystem(const AT_WC* Feature, AT_64* Value);
-      static int bufferOverflowCallback(AT_H i_handle, const AT_WC* i_feature, void* i_info);
+      //      static int bufferOverflowCallback(AT_H i_handle, const AT_WC* i_feature, void* i_info);
       
       int setInt(const AT_WC* Feature, AT_64 Value);
       int getInt(const AT_WC* Feature, AT_64* Value) const;
