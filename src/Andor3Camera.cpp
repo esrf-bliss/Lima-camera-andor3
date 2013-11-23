@@ -1214,10 +1214,17 @@ lima::Andor3::Camera::initialiseController()
   setRoi(aRoi);
 
   if ( m_real_camera ) {
-    // Making sure the «spurious noise filter» is OFF :
-    if ( AT_SUCCESS != setBool(andor3::SpuriousNoiseFilter, false) ) {
+    // Making sure the «spurious noise filter» is OFF (maybe later use the higher level setSpuriousNoiseFilter call rather than this low level one) :
+    int  the_err_code = setBool(andor3::SpuriousNoiseFilter, false);
+    if ( AT_SUCCESS != the_err_code ) {
       DEB_ERROR() << "Cannot set SpuriousNoiseFilter to false" << " : error code = " << m_camera_error_str;
-      THROW_HW_ERROR(Error) << "Cannot set SpuriousNoiseFilter to false";
+      if ( AT_ERR_NOTIMPLEMENTED == the_err_code ) {
+	DEB_ERROR() << "It seems that the feature 'SpuriousNoiseFilter' is not implemented on this hardware, we will not throw an exception this time.";
+      }
+      else {
+	DEB_ERROR() << "Indeed the 'SpuriousNoiseFilter' is implemented, so we are throwing an error since we can not choose the state of this filter.";
+	THROW_HW_ERROR(Error) << "Cannot set SpuriousNoiseFilter to false";
+      }
     }
   }
   else {
@@ -1565,8 +1572,8 @@ lima::Andor3::Camera::setBufferOverflow(bool i_overflow)
   bool		the_bool;
   getBool(andor3::BufferOverflowEvent, &i_overflow);
   if ( i_overflow != the_bool ) {
-    DEB_ERROR() << "Failed to properly set the SynchronousTriggering mode : requested " << i_overflow << ", but got " << the_bool;
-    THROW_HW_ERROR(Error) << "Failed to properly set the SynchronousTriggering mode";
+    DEB_ERROR() << "Failed to properly set the BufferOverflow mode : requested " << i_overflow << ", but got " << the_bool;
+    THROW_HW_ERROR(Error) << "Failed to properly set the BufferOverflow mode";
   }
 }
 
@@ -1769,8 +1776,8 @@ lima::Andor3::Camera::setSpuriousNoiseFilter(bool i_filter)
   getBool(andor3::SpuriousNoiseFilter, &the_bool);
   if ( i_filter != the_bool ) {
     DEB_ERROR() << "Failed to properly set the spurious noise filter mode : requested " << i_filter << ", but got " << the_bool;
-    THROW_HW_ERROR(Error) << "Failed to properly set the spurious noise filter mode";
-  }  
+    // THROW_HW_ERROR(Error) << "Failed to properly set the spurious noise filter mode";
+  }
 }
 
 void
@@ -1789,7 +1796,7 @@ lima::Andor3::Camera::setSyncTriggering(bool i_sync)
   getBool(andor3::SynchronousTriggering, &the_bool);
   if ( i_sync != the_bool ) {
     DEB_ERROR() << "Failed to properly set the SynchronousTriggering mode : requested " << i_sync << ", but got " << the_bool;
-    THROW_HW_ERROR(Error) << "Failed to properly set the SynchronousTriggering mode";
+    // THROW_HW_ERROR(Error) << "Failed to properly set the SynchronousTriggering mode";
   }
 }
 
