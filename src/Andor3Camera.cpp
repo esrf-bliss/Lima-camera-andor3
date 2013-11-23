@@ -290,7 +290,7 @@ lima::Andor3::Camera::~Camera()
     << "we are now waiting the camera to warm-up slowly, "
     << "setting the temperature to 10C and waiting for it "
     << "to rise above 5C before conitnuing the shutdown.";
-    setTemperatureSP(6.0);
+    //    setTemperatureSP(6.0);
     double			the_sensor_temperature;
     size_t			the_sensor_temp_wait = 0;
     
