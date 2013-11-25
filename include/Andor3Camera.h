@@ -184,14 +184,14 @@ namespace lima
       void getSyncTriggering(bool &o_sync);
       
       // -- some readonly attributes :
-      void getBytesPerPixel(float &o_value) const;
+      void getBytesPerPixel(double &o_value) const;
       void getFirmwareVersion(std::string &o_fwv) const;
       void getFrameRate(double &o_frame_rate) const;
       void getFrameRateRange(double& o_min_lat, double& o_max_lat) const;
       void getFullRoiControl(bool &o_fullROIcontrol) const;
       void getImageSize(int &o_frame_size) const;
-      void getMaxFrameRateTransfer(float &o_max_transfer_rate) const;
-      void getReadoutTime(float &o_time) const;
+      void getMaxFrameRateTransfer(double &o_max_transfer_rate) const;
+      void getReadoutTime(double &o_time) const;
       void getSerialNumber(std::string &o_sn) const;
       
 
@@ -211,7 +211,7 @@ namespace lima
       bool propImplemented(const AT_WC * iPropName) const;
       
       static int getIntSystem(const AT_WC* Feature, AT_64* Value);
-      static int bufferOverflowCallback(AT_H i_handle, AT_WC* i_feature, void* i_info);
+      //      static int bufferOverflowCallback(AT_H i_handle, const AT_WC* i_feature, void* i_info);
       
       int setInt(const AT_WC* Feature, AT_64 Value);
       int getInt(const AT_WC* Feature, AT_64* Value) const;

@@ -290,19 +290,19 @@ lima::Andor3::Camera::~Camera()
     << "we are now waiting the camera to warm-up slowly, "
     << "setting the temperature to 10C and waiting for it "
     << "to rise above 5C before conitnuing the shutdown.";
-    setTemperatureSP(6.0);
+    //    setTemperatureSP(6.0);
     double			the_sensor_temperature;
     size_t			the_sensor_temp_wait = 0;
     
     DEB_TRACE() << "While leaving the camera, the temperature provided by the cooler is " << the_sensor_temperature;
     getTemperature(the_sensor_temperature);
-    while ( the_sensor_temperature < 5.1 ) {
-      sleep(1);
-      ++the_sensor_temp_wait;
-      getTemperature(the_sensor_temperature);
-      DEB_TRACE() << "The temperature provided by the cooler is " << the_sensor_temperature << "(waited approx. " << the_sensor_temp_wait << "s)";
-    }
-    setCooler(false);
+    // while ( the_sensor_temperature < 5.1 ) {
+    //   sleep(1);
+    //   ++the_sensor_temp_wait;
+    //   getTemperature(the_sensor_temperature);
+    //   DEB_TRACE() << "The temperature provided by the cooler is " << the_sensor_temperature << "(waited approx. " << the_sensor_temp_wait << "s)";
+    // }
+    // setCooler(false);
     
     //    THROW_HW_ERROR(Error)<<"Please stop the cooling before shuting dowm the camera\n"
     //    << "brutale heating could damage the sensor.\n"
@@ -1214,10 +1214,17 @@ lima::Andor3::Camera::initialiseController()
   setRoi(aRoi);
 
   if ( m_real_camera ) {
-    // Making sure the «spurious noise filter» is OFF :
-    if ( AT_SUCCESS != setBool(andor3::SpuriousNoiseFilter, false) ) {
+    // Making sure the «spurious noise filter» is OFF (maybe later use the higher level setSpuriousNoiseFilter call rather than this low level one) :
+    int  the_err_code = setBool(andor3::SpuriousNoiseFilter, false);
+    if ( AT_SUCCESS != the_err_code ) {
       DEB_ERROR() << "Cannot set SpuriousNoiseFilter to false" << " : error code = " << m_camera_error_str;
-      THROW_HW_ERROR(Error) << "Cannot set SpuriousNoiseFilter to false";
+      if ( AT_ERR_NOTIMPLEMENTED == the_err_code ) {
+	DEB_ERROR() << "It seems that the feature 'SpuriousNoiseFilter' is not implemented on this hardware, we will not throw an exception this time.";
+      }
+      else {
+	DEB_ERROR() << "Indeed the 'SpuriousNoiseFilter' is implemented, so we are throwing an error since we can not choose the state of this filter.";
+	THROW_HW_ERROR(Error) << "Cannot set SpuriousNoiseFilter to false";
+      }
     }
   }
   else {
@@ -1229,7 +1236,7 @@ lima::Andor3::Camera::initialiseController()
     m_acq_thread->start();
   }
   
-  AT_RegisterFeatureCallback(m_camera_handle, andor3::BufferOverflowEvent, &lima::Andor3::Camera::bufferOverflowCallback, *this);
+  //  AT_RegisterFeatureCallback(m_camera_handle, andor3::BufferOverflowEvent, &lima::Andor3::Camera::bufferOverflowCallback, static_cast<void*>(this));
 }
 
 void
@@ -1565,8 +1572,8 @@ lima::Andor3::Camera::setBufferOverflow(bool i_overflow)
   bool		the_bool;
   getBool(andor3::BufferOverflowEvent, &i_overflow);
   if ( i_overflow != the_bool ) {
-    DEB_ERROR() << "Failed to properly set the SynchronousTriggering mode : requested " << i_overflow << ", but got " << the_bool;
-    THROW_HW_ERROR(Error) << "Failed to properly set the SynchronousTriggering mode";
+    DEB_ERROR() << "Failed to properly set the BufferOverflow mode : requested " << i_overflow << ", but got " << the_bool;
+    THROW_HW_ERROR(Error) << "Failed to properly set the BufferOverflow mode";
   }
 }
 
@@ -1769,8 +1776,8 @@ lima::Andor3::Camera::setSpuriousNoiseFilter(bool i_filter)
   getBool(andor3::SpuriousNoiseFilter, &the_bool);
   if ( i_filter != the_bool ) {
     DEB_ERROR() << "Failed to properly set the spurious noise filter mode : requested " << i_filter << ", but got " << the_bool;
-    THROW_HW_ERROR(Error) << "Failed to properly set the spurious noise filter mode";
-  }  
+    // THROW_HW_ERROR(Error) << "Failed to properly set the spurious noise filter mode";
+  }
 }
 
 void
@@ -1789,7 +1796,7 @@ lima::Andor3::Camera::setSyncTriggering(bool i_sync)
   getBool(andor3::SynchronousTriggering, &the_bool);
   if ( i_sync != the_bool ) {
     DEB_ERROR() << "Failed to properly set the SynchronousTriggering mode : requested " << i_sync << ", but got " << the_bool;
-    THROW_HW_ERROR(Error) << "Failed to properly set the SynchronousTriggering mode";
+    // THROW_HW_ERROR(Error) << "Failed to properly set the SynchronousTriggering mode";
   }
 }
 
@@ -1800,12 +1807,12 @@ lima::Andor3::Camera::getSyncTriggering(bool &o_sync)
   getBool(andor3::SynchronousTriggering, &o_sync);
 }
 
-void lima::Andor3::Camera::getBytesPerPixel(float &o_value) const
+void lima::Andor3::Camera::getBytesPerPixel(double &o_value) const
 {
   DEB_MEMBER_FUNCT();
   double		the_Bpp;
   getFloat(andor3::BytesPerPixel, &the_Bpp);
-  o_value = static_cast<float>(the_Bpp);
+  o_value = the_Bpp;
   
 }
 
@@ -1858,7 +1865,7 @@ lima::Andor3::Camera::getImageSize(int &o_frame_size) const
 }
 
 void
-lima::Andor3::Camera::getMaxFrameRateTransfer(float &o_max_transfer_rate) const
+lima::Andor3::Camera::getMaxFrameRateTransfer(double &o_max_transfer_rate) const
 {
   DEB_MEMBER_FUNCT();
   double		the_max_fr;
@@ -1872,11 +1879,11 @@ lima::Andor3::Camera::getMaxFrameRateTransfer(float &o_max_transfer_rate) const
     getInt(andor3::ImageSizeBytes, &the_frame_size);
     the_max_fr = the_interface_bandwith / static_cast<double>(the_frame_size);
   }
-  o_max_transfer_rate = static_cast<float>(the_max_fr);
+  o_max_transfer_rate = the_max_fr;
 }
 
 void
-lima::Andor3::Camera::getReadoutTime(float &o_time) const
+lima::Andor3::Camera::getReadoutTime(double &o_time) const
 {
   DEB_MEMBER_FUNCT();
   double		the_time;
@@ -2236,17 +2243,17 @@ lima::Andor3::Camera::getIntSystem(const AT_WC* Feature, AT_64* Value)
 
 
 
-int
-lima::Andor3::Camera::bufferOverflowCallback(AT_H i_handle, AT_WC* i_feature, void* i_info)
-{
-  DEB_STATIC_FUNCT();
-  Camera		*the_camera;
+// int
+// lima::Andor3::Camera::bufferOverflowCallback(AT_H i_handle, const AT_WC* i_feature, void* i_info)
+// {
+//   DEB_STATIC_FUNCT();
+//   Camera		*the_camera;
   
-  the_camera = static_cast<Camera*>(i_info);
-  DEB_WARNING() << "The camera " << the_camera->m_detector_serial << " has lost (at least) a frame.\n" << "\n\t Will now try to STOP the acquisition (if not already done).";
-  the_camera->_setStatus(Fault, false);
-  return 1;
-}
+//   the_camera = static_cast<Camera*>(i_info);
+//   DEB_WARNING() << "The camera " << the_camera->m_detector_serial << " has lost (at least) a frame.\n" << "\n\t Will now try to STOP the acquisition (if not already done).";
+//   the_camera->_setStatus(Fault, false);
+//   return 1;
+// }
 
 int
 lima::Andor3::Camera::setInt(const AT_WC* Feature, AT_64 Value)
