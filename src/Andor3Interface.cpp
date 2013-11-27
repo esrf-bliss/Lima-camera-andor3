@@ -190,6 +190,30 @@ lima::Andor3::Interface::getAdcGainString(std::string &oGainString) const
 }
 
 void
+lima::Andor3::Interface::setSimpleGain(Camera::A3_SimpleGain iGain)
+{
+  DEB_MEMBER_FUNCT();
+  m_cam.setSimpleGain(iGain);
+  updateValidRanges();
+}
+
+void
+lima::Andor3::Interface::getSimpleGain(Camera::A3_SimpleGain &oGain) const
+{
+  DEB_MEMBER_FUNCT();
+  m_cam.getSimpleGain(oGain);
+}
+
+void
+lima::Andor3::Interface::getSimpleGainString(std::string &oGainString) const
+{
+  DEB_MEMBER_FUNCT();
+  m_cam.getSimpleGainString(oGainString);
+}
+
+
+
+void
 lima::Andor3::Interface::setAdcRate(Camera::A3_ReadOutRate iRate)
 {
   DEB_MEMBER_FUNCT();
