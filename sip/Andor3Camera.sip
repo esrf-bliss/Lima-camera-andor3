@@ -32,11 +32,13 @@ namespace Andor3
     enum A3_TypeInfo { Unknown, Int, Float, Bool, Enum, String };
 
     enum A3_Gain { Gain1 = 0, Gain2 = 1, Gain3 = 2, Gain4 = 3, Gain1_Gain3 = 4, Gain1_Gain4 = 5, Gain2_Gain3 = 6, Gain2_Gain4 = 7 };
+    enum A3_SimpleGain { b11_hi_gain=0, b11_low_gain=1, b16_lh_gain=2, none=31};
     enum A3_ShutterMode { Rolling = 0, Global = 1 };
     enum A3_ReadOutRate { MHz10 = 0, MHz100 = 1, MHz200 = 2, MHz280 = 3 };
     enum A3_BitDepth { b11 = 0, b16= 1 };
     enum A3_TriggerMode { Internal = 0, ExternalLevelTransition = 1, ExternalStart = 2, ExternalExposure = 3, Software = 4, Advanced = 5, External = 6 };
     enum A3_Binning { B1x1=0, B2x2=1, B4x4=2, B8x8=3};
+    enum A3_FanSpeed { Off=0, Low=1, On=2};
 
     Camera(const std::string& bitflow_path, int camera_number=0);
     ~Camera();
