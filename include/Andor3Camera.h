@@ -181,7 +181,7 @@ namespace lima
       void setSpuriousNoiseFilter(bool i_filter);
       void getSpuriousNoiseFilter(bool &o_filter) const;
       void setSyncTriggering(bool i_sync);
-      void getSyncTriggering(bool &o_sync);
+      void getSyncTriggering(bool &o_sync) const;
       
       // -- some readonly attributes :
       void getBytesPerPixel(double &o_value) const;

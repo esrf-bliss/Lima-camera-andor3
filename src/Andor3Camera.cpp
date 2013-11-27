@@ -1801,7 +1801,7 @@ lima::Andor3::Camera::setSyncTriggering(bool i_sync)
 }
 
 void
-lima::Andor3::Camera::getSyncTriggering(bool &o_sync)
+lima::Andor3::Camera::getSyncTriggering(bool &o_sync) const
 {
   DEB_MEMBER_FUNCT();
   getBool(andor3::SynchronousTriggering, &o_sync);
