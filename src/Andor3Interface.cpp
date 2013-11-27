@@ -257,6 +257,35 @@ lima::Andor3::Interface::getElectronicShutterModeString(std::string &oModeString
   m_cam.getElectronicShutterModeString(oModeString);
 }
 
+void
+lima::Andor3::Interface::setOverlap(bool i_overlap)
+{
+  DEB_MEMBER_FUNCT();
+  m_cam.setOverlap(i_overlap);
+  updateValidRanges();
+}
+
+void
+lima::Andor3::Interface::getOverlap(bool &o_overlap) const
+{
+  DEB_MEMBER_FUNCT();
+  m_cam.getOverlap(o_overlap);
+}
+
+void
+lima::Andor3::Interface::setSyncTriggering(bool i_sync)
+{
+  DEB_MEMBER_FUNCT();
+  m_cam.setSyncTriggering(i_sync);
+  updateValidRanges();
+}
+
+void
+lima::Andor3::Interface::getSyncTriggering(bool &o_sync) const
+{
+  DEB_MEMBER_FUNCT();
+  m_cam.getSyncTriggering(o_sync);
+}
 
 /*
  Local Variables:

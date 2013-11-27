@@ -80,6 +80,13 @@ namespace lima
       virtual void		getElectronicShutterMode(Camera::A3_ShutterMode &oMode) const;
       virtual void		getElectronicShutterModeString(std::string &oModeString) const;
 
+      virtual void setOverlap(bool i_overlap);
+      virtual void getOverlap(bool &o_overlap) const;
+      virtual void setSyncTriggering(bool i_sync);
+      virtual void getSyncTriggering(bool &o_sync) const;
+
+#warning Later should also have overlap and synctriggering ?
+
       // Giving the possibility to get directly the camera object :
       Camera& getCamera()
       { return m_cam; }
