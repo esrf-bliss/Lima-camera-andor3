@@ -118,8 +118,31 @@ namespace Andor3
    void getCooler(bool& flag /Out/ ) const;
    void getCoolingStatus(std::string& status /Out/ ) const;
 
+   void setBufferOverflow(bool i_overflow /In/ );
+   void getBufferOverflow(bool &o_overflow /Out/ ) const;
+   void setFanSpeed(A3_FanSpeed iFS /In/ );
+   void getFanSpeed(A3_FanSpeed &oFS /Out/ ) const;
+   void getFanSpeedString(std::string &oFSString /Out/ ) const;
+   void setOverlap(bool i_overlap /In/ );
+   void getOverlap(bool &o_overlap /Out/ ) const;
+   void setSimpleGain(A3_SimpleGain i_gain /In/ );
+   void getSimpleGain(A3_SimpleGain &o_gain /Out/ ) const;
+   void getSimpleGainString(std::string &o_gainString /Out/ ) const;
+   void setSpuriousNoiseFilter(bool i_filter /In/ );
+   void getSpuriousNoiseFilter(bool &o_filter /Out/ ) const;
+   void setSyncTriggering(bool i_sync /In/ );
+   void getSyncTriggering(bool &o_sync /Out/ );
+      
+      // -- some readonly attributes :
+   void getBytesPerPixel(double &o_value /Out/ ) const;
+   void getFirmwareVersion(std::string &o_fwv /Out/ ) const;
    void getFrameRate(double &o_frame_rate /Out/ ) const;
    void getFrameRateRange(double& o_min_lat /Out/, double& o_max_lat /Out/) const;
+   void getFullRoiControl(bool &o_fullROIcontrol /Out/ ) const;
+   void getImageSize(int &o_frame_size /Out/ ) const;
+   void getMaxFrameRateTransfer(double &o_max_transfer_rate /Out/ ) const;
+   void getReadoutTime(double &o_time /Out/ ) const;
+   void getSerialNumber(std::string &o_sn /Out/ ) const;
   };
 
 };
