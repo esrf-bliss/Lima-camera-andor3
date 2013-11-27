@@ -2517,6 +2517,7 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
     DEB_TRACE() << "[andor3 acquisition thread] About to start looping to get the images-frame retrieved";
     bool		the_acq_goon = true;
     while ( the_acq_goon && ((0 == m_cam.m_nb_frames_to_collect) || (m_cam.m_nb_frames_to_collect != m_cam.m_image_index)) ) {
+#warning Changing to have a finite timeout (around 1-5s ?)
       unsigned char  		*the_returned_image;
       int								the_returned_image_size;
       unsigned int			the_wait_timeout = AT_INFINITE;
