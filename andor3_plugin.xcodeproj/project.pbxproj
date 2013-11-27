@@ -71,6 +71,11 @@
 		95E42AF5181DBB3D0090742A /* Andor3RoiCtrlObj.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Andor3RoiCtrlObj.h; sourceTree = "<group>"; };
 		95E42AF8181DBB4D0090742A /* Andor3BinCtrlObj.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Andor3BinCtrlObj.cpp; sourceTree = "<group>"; };
 		95E42AF9181DBB4D0090742A /* Andor3RoiCtrlObj.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Andor3RoiCtrlObj.cpp; sourceTree = "<group>"; };
+		95FF70D31845DF0200E46F0F /* Andor3.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Andor3.cpp; sourceTree = "<group>"; };
+		95FF70D41845DF0200E46F0F /* Andor3.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Andor3.h; sourceTree = "<group>"; };
+		95FF70D51845DF0200E46F0F /* Andor3Class.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Andor3Class.cpp; sourceTree = "<group>"; };
+		95FF70D61845DF0200E46F0F /* Andor3Class.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Andor3Class.h; sourceTree = "<group>"; };
+		95FF70D71845DF0200E46F0F /* Andor3StateMachine.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Andor3StateMachine.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -144,6 +149,7 @@
 		95B6658014E983F900A8C6FC = {
 			isa = PBXGroup;
 			children = (
+				95FF70D21845DEDD00E46F0F /* ds_LimaDetector */,
 				95D5EA1D1526230A008221ED /* LIMA-other */,
 				956B30DD152621ED00FB4D2D /* Other Cameras */,
 				958C874A17B65DDC003B74B2 /* Makefile */,
@@ -217,6 +223,19 @@
 				95D5EA4C1526245D008221ED /* VERSION */,
 			);
 			name = pco;
+			sourceTree = "<group>";
+		};
+		95FF70D21845DEDD00E46F0F /* ds_LimaDetector */ = {
+			isa = PBXGroup;
+			children = (
+				95FF70D31845DF0200E46F0F /* Andor3.cpp */,
+				95FF70D41845DF0200E46F0F /* Andor3.h */,
+				95FF70D51845DF0200E46F0F /* Andor3Class.cpp */,
+				95FF70D61845DF0200E46F0F /* Andor3Class.h */,
+				95FF70D71845DF0200E46F0F /* Andor3StateMachine.cpp */,
+			);
+			name = ds_LimaDetector;
+			path = ../../applications/tango/LimaDetector/src;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
