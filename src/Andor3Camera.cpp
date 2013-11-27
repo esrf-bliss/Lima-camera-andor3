@@ -1217,9 +1217,9 @@ lima::Andor3::Camera::initialiseController()
     // Making sure the «spurious noise filter» is OFF (maybe later use the higher level setSpuriousNoiseFilter call rather than this low level one) :
     int  the_err_code = setBool(andor3::SpuriousNoiseFilter, false);
     if ( AT_SUCCESS != the_err_code ) {
-      DEB_ERROR() << "Cannot set SpuriousNoiseFilter to false" << " : error code = " << m_camera_error_str;
+      DEB_WARNING() << "Cannot set SpuriousNoiseFilter to false" << " : error code = " << m_camera_error_str;
       if ( AT_ERR_NOTIMPLEMENTED == the_err_code ) {
-	DEB_ERROR() << "It seems that the feature 'SpuriousNoiseFilter' is not implemented on this hardware, we will not throw an exception this time.";
+	DEB_WARNING() << "It seems that the feature 'SpuriousNoiseFilter' is not implemented on this hardware, we will not throw an exception this time.";
       }
       else {
 	DEB_ERROR() << "Indeed the 'SpuriousNoiseFilter' is implemented, so we are throwing an error since we can not choose the state of this filter.";
@@ -1993,14 +1993,15 @@ lima::Andor3::Camera::_setStatus(Status iStatus, bool iForce)
 //-----------------------------------------------------
 // @brief handle the andor3 error codes
 //-----------------------------------------------------
-bool
+int
 lima::Andor3::Camera::andor3Error(int code) const
 {
   m_camera_error = code;
   //  m_camera_error_str = m_andor3_error_maps[code]; // Not const !
   m_camera_error_str = m_andor3_error_maps.at(code);
   
-  return ( AT_SUCCESS != code );
+  //return ( AT_SUCCESS != code );
+  return code;
 }
 
 //-----------------------------------------------------

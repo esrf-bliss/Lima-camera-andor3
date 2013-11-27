@@ -204,7 +204,7 @@ namespace lima
       
     private:
       // -- andor3 Lower level functions
-      bool andor3Error(int code) const;
+      int andor3Error(int code) const;
       void _mapAndor3Error();
       
       int printInfoForProp(const AT_WC * iPropName, A3_TypeInfo iPropType) const;
