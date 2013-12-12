@@ -173,7 +173,7 @@ m_temperature_sp(5.0)
       setenv("BITFLOW_INSTALL_DIRS", m_bitflow_path.c_str(), true);
     }
     else {
-      setenv("BITFLOW_INSTALL_DIRS", "/usr/local/andor/bitflow", false);
+      setenv("BITFLOW_INSTALL_DIRS", "/usr/share/andor-3-sdk", false);
     }
     
     if ( AT_SUCCESS != andor3Error(AT_InitialiseLibrary()) ) {
