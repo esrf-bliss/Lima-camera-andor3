@@ -2548,6 +2548,7 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
         HwFrameInfoType		the_frame_info;
 	bool                    the_frame_read;
 
+#warning Potential bug here : maybe it is : the_frame_info.acq_frame_nb = static_cast<int>(m_cam.m_image_index) % the_buffer.getNbBuffers() [<- this later one being cached locally?]
         the_frame_info.acq_frame_nb = static_cast<int>(m_cam.m_image_index);
         the_frame_read = the_buffer.newFrameReady(the_frame_info);
         DEB_TRACE() << "[andor3 acquisition thread] image " << m_cam.m_image_index <<" published with newFrameReady(), with result " << the_frame_read ;
