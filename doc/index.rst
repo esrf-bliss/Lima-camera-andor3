@@ -1,5 +1,7 @@
-Andor3
--------
+.. _camera-andor3:
+
+Andor SDK3 camera plugin
+-------------------------
 
 .. image:: neo_header.jpg 
 
