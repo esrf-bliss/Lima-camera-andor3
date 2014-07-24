@@ -29,7 +29,7 @@ namespace Andor3
   protected:
 
   public:
-    Interface(Andor3::Camera& cam /In/ );
+    Interface(Andor3::Camera& cam /In,KeepReference/);
     virtual ~Interface();
 
 
