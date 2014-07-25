@@ -145,6 +145,7 @@ namespace Andor3
    void getMaxFrameRateTransfer(double &o_max_transfer_rate /Out/ ) const;
    void getReadoutTime(double &o_time /Out/ ) const;
    void getSerialNumber(std::string &o_sn /Out/ ) const;
+   int  getPixelStride() const;
   };
 
 };

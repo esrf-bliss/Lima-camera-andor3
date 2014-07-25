@@ -46,9 +46,12 @@ namespace lima
      * \class Camera
      * \brief object controlling the andor3 camera via andor3 SDK driver
      *******************************************************************/
-    class Camera
+    class Camera : public HwMaxImageSizeCallbackGen
     {
+      friend class Interface;
+
       DEB_CLASS_NAMESPC(DebModCamera, "Camera", "Andor3");
+
     public:
       
       enum Status { Ready, Exposure, Readout, Latency, Fault };
@@ -193,9 +196,14 @@ namespace lima
       void getMaxFrameRateTransfer(double &o_max_transfer_rate) const;
       void getReadoutTime(double &o_time) const;
       void getSerialNumber(std::string &o_sn) const;
-      
+      int getPixelStride() const;
+
+    protected:
+      virtual void setMaxImageSizeCallbackActive(bool cb_active);
 
     private:
+      void setDestrideActive(bool active);
+      
       // -- some internals :
       // Stopping an acquisition, iForce : without waiting the end of frame buffer retrieval by m_acq_thread
       void _stopAcq(bool iImmediate);
@@ -241,7 +249,6 @@ namespace lima
       
       int sendCommand(const AT_WC* Feature);
 
-      
     private:
       class _AcqThread;
       friend class _AcqThread;
@@ -287,6 +294,9 @@ namespace lima
       std::map<int, std::string>  m_andor3_error_maps;
 
       static bool						sAndorSDK3Initted;
+      
+      bool m_destride_active;
+      bool m_maximage_size_cb_active;
     };
     
     // Some inline utility functions; used all-over in Andor3 plugin :

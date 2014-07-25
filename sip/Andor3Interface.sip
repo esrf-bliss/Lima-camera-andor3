@@ -29,7 +29,7 @@ namespace Andor3
   protected:
 
   public:
-    Interface(Andor3::Camera& cam /In/ );
+    Interface(Andor3::Camera& cam /In/, bool destride_active = true );
     virtual ~Interface();
 
 
@@ -66,5 +66,9 @@ namespace Andor3
     virtual void getOverlap(bool &o_overlap /Out/ ) const;
     virtual void setSyncTriggering(bool i_sync /In/ );
     virtual void getSyncTriggering(bool &o_sync /Out/ ) const;
+
+   void setDestrideActive(bool active /In/);
+   void getDestrideActive(bool& active /Out/);
+
   };
 };
