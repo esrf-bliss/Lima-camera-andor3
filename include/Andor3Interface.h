@@ -32,6 +32,7 @@
 #include "Andor3SyncCtrlObj.h"
 #include "Andor3RoiCtrlObj.h"
 #include "Andor3BinCtrlObj.h"
+#include "Andor3ReconstructionCtrlObj.h"
 
 namespace lima
 {
@@ -50,7 +51,7 @@ namespace lima
 	    DEB_CLASS_NAMESPC(DebModCamera, "Andor3Interface", "Andor3");
       
     public:
-	    Interface(Camera& cam);
+	    Interface(Camera& cam, bool destride_active = true);
 	    virtual ~Interface();
       
 	    //- From HwInterface
@@ -61,7 +62,7 @@ namespace lima
 	    virtual void    stopAcq();
 	    virtual void    getStatus(StatusType& status);
 	    virtual int     getNbHwAcquiredFrames();
-      
+	   
       // Making the CtAcquisition object to update its cached range for expo. and lat. times
       virtual void 		updateValidRanges();
       
@@ -85,6 +86,9 @@ namespace lima
       virtual void setSyncTriggering(bool i_sync);
       virtual void getSyncTriggering(bool &o_sync) const;
 
+      void setDestrideActive(bool active);
+      void getDestrideActive(bool& active);
+
 #warning Later should also have overlap and synctriggering ?
 
       // Giving the possibility to get directly the camera object :
@@ -99,6 +103,7 @@ namespace lima
 	    SyncCtrlObj     *m_sync;
       RoiCtrlObj			*m_roi;
       BinCtrlObj			*m_bin;
+      ReconstructionCtrlObj *m_reconstruction;
     };
     
     

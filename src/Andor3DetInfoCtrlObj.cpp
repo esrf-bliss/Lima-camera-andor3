@@ -115,16 +115,15 @@ void
 lima::Andor3::DetInfoCtrlObj::registerMaxImageSizeCallback(HwMaxImageSizeCallback& cb)
 {
   DEB_MEMBER_FUNCT();
-  // Do nothing ... So far I on't know exactly what it is suppose to do
+  m_cam.registerMaxImageSizeCallback(cb);
 }
 
 void
 lima::Andor3::DetInfoCtrlObj::unregisterMaxImageSizeCallback(HwMaxImageSizeCallback& cb)
 {
   DEB_MEMBER_FUNCT();
-  // Do nothing ... So far I on't know exactly what it is suppose to do  
+  m_cam.unregisterMaxImageSizeCallback(cb);
 }
-
 
 
 /*

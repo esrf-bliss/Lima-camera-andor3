@@ -160,7 +160,9 @@ m_electronic_shutter_mode(Rolling),
 m_bit_depth(b16),
 m_trig_mode(Internal),
 m_cooler(true),
-m_temperature_sp(5.0)
+m_temperature_sp(5.0),
+m_destride_active(true),
+m_maximage_size_cb_active(false)
 {
   DEB_CONSTRUCTOR();
   // Initing the maps that serves for error string generation :
@@ -630,7 +632,10 @@ void
 lima::Andor3::Camera::getDetectorImageSize(Size& size)
 {
   DEB_MEMBER_FUNCT();
-  size = m_detector_size;
+  if (m_destride_active)
+    size = m_detector_size;
+  else
+    size = Size(getPixelStride(), m_detector_size.getHeight());
 }
 
 // -- Buffer control object
@@ -854,7 +859,10 @@ lima::Andor3::Camera::checkRoi(const Roi& set_roi, Roi& hw_roi)
   
   //  the_phys_set_roi = Roi(set_roi.getTopLeft()*the_bin_nb, set_roi.getSize()*the_bin_nb);
   the_phys_set_roi = set_roi.getUnbinned(Bin(the_bin_nb, the_bin_nb));
-  the_phys_test_roi = Roi(Point(0, 0), m_detector_size);
+  Point phy_ori = the_phys_set_roi.getTopLeft();
+  phy_ori += 1;
+  the_phys_set_roi = Roi(phy_ori,the_phys_set_roi.getSize());
+  the_phys_test_roi = Roi(Point(1, 1), m_detector_size);
   
   DEB_TRACE() << "Requested ROI is : " << set_roi << ", corresponding to " << the_phys_set_roi << " in term of physical pixel";
   // First : check that we are smaller than the maximum AOI for the current binning
@@ -936,6 +944,13 @@ lima::Andor3::Camera::checkRoi(const Roi& set_roi, Roi& hw_roi)
   }
 
   hw_roi = the_phys_hw_roi.getBinned(Bin(the_bin_nb, the_bin_nb));
+
+  // Lima Roi starts at <0,0> Andor3 starts at <1,1>, so -1 for topleft
+  Point topleft = hw_roi.getTopLeft();
+  Size  size = hw_roi.getSize();
+  topleft -=1;
+  hw_roi = Roi(topleft, size);
+
   //  hw_roi = Roi(the_left, the_top, the_width, the_height);
 }
 
@@ -957,10 +972,11 @@ lima::Andor3::Camera::setRoi(const Roi& set_roi)
   // Performing the settings in the order prescribed by the SDK's documentation:
   // Binning, width, left, heigh, top :
   setBin(the_binning);
+  // Lima Roi starts at <0,0> Andor3 starts at <1,1>
   setInt(andor3::AOIWidth, the_width);
-  setInt(andor3::AOILeft, the_left);
+  setInt(andor3::AOILeft, the_left+1);
   setInt(andor3::AOIHeight, the_height);
-  setInt(andor3::AOITop, the_top);
+  setInt(andor3::AOITop, the_top+1);
 }
 
 void
@@ -974,7 +990,8 @@ lima::Andor3::Camera::getRoi(Roi& hw_roi)
   getInt(andor3::AOIHeight, &the_height);
   getInt(andor3::AOITop, &the_top);
 
-  hw_roi = Roi(static_cast<int>(the_left), static_cast<int>(the_top), static_cast<int>(the_width), static_cast<int>(the_height));
+  // Lima Roi starts at <0,0> Andor3 starts at <1,1>
+  hw_roi = Roi(static_cast<int>(the_left-1), static_cast<int>(the_top-1), static_cast<int>(the_width), static_cast<int>(the_height));
 }
 
 bool
@@ -2464,6 +2481,42 @@ int lima::Andor3::Camera::getHwBitDepth(int *bit_depth)
 		<< "fixing b16";
   *bit_depth = b16;
   return AT_SUCCESS;
+}
+
+void lima::Andor3::Camera::setDestrideActive(bool active)
+{
+  DEB_MEMBER_FUNCT();
+
+  m_destride_active = active;
+
+  if (m_maximage_size_cb_active) {
+    // only if the callaback is active
+    // inform lima about the size change
+    ImageType image_type;
+    Size image_size;
+    getImageType(image_type);
+    getDetectorImageSize(image_size);
+    maxImageSizeChanged(image_size, image_type);       
+  }
+}
+
+int lima::Andor3::Camera::getPixelStride() const
+{
+  DEB_MEMBER_FUNCT();
+
+  AT_64  the_stride;
+  double the_byte_p_px;
+
+  getInt(andor3::AOIStride, &the_stride);
+  getFloat(andor3::BytesPerPixel, &the_byte_p_px);
+
+  return int(the_stride / the_byte_p_px);
+}
+
+void lima::Andor3::Camera::setMaxImageSizeCallbackActive(bool cb_active)
+{
+    DEB_MEMBER_FUNCT();
+    m_maximage_size_cb_active = cb_active;
 }
 
 //-----------------------------------------------------

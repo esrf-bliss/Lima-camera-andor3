@@ -17,12 +17,12 @@
 
 
 
-andor3-objs = Andor3Camera.o Andor3Interface.o Andor3DetInfoCtrlObj.o Andor3SyncCtrlObj.o Andor3RoiCtrlObj.o Andor3BinCtrlObj.o
+andor3-objs = Andor3Camera.o Andor3Interface.o Andor3DetInfoCtrlObj.o Andor3SyncCtrlObj.o Andor3RoiCtrlObj.o Andor3BinCtrlObj.o Andor3ReconstructionCtrlObj.o
 
 SRCS = $(andor3-objs:.o=.cpp) 
 
 CXXFLAGS += -I../include -I../../../hardware/include -I../../../common/include \
-			-I/usr/local/include \
+	-I/usr/local/include -I../../../third-party/Processlib/core/include -I../../../third-party/Processlib/tasks/include \
 			-Wall -pthread -fPIC -g
 
 all:	Andor3.o
@@ -41,3 +41,8 @@ clean:
 	rm -f $*.d
 
 -include $(SRCS:.cpp=.P)
+
+
+.PHONY: check-syntax
+check-syntax:
+	$(CXX) -Wall -Wextra -fsyntax-only $(CXXFLAGS) $(CHK_SOURCES)

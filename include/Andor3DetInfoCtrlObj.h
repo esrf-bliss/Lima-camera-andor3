@@ -43,7 +43,6 @@ namespace lima
     class DetInfoCtrlObj : public HwDetInfoCtrlObj
     {
 	    DEB_CLASS_NAMESPC(DebModCamera, "DetInfoCtrlObj", "Andor3");
-      
     public:
 	    DetInfoCtrlObj(Camera& cam, Interface *interface);
 	    virtual ~DetInfoCtrlObj();
@@ -61,10 +60,10 @@ namespace lima
       
 	    virtual void registerMaxImageSizeCallback(HwMaxImageSizeCallback& cb);
 	    virtual void unregisterMaxImageSizeCallback(HwMaxImageSizeCallback& cb);
-      
+
     private:
 	    Camera& m_cam;
-      Interface *m_interface;
+	    Interface *m_interface;
     };
     
   } // namespace Andor3
