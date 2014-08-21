@@ -203,6 +203,8 @@ namespace lima
 
     private:
       void setDestrideActive(bool active);
+
+      int getHwBitDepth(int *bit_depth);
       
       // -- some internals :
       // Stopping an acquisition, iForce : without waiting the end of frame buffer retrieval by m_acq_thread
