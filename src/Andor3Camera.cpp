@@ -488,6 +488,9 @@ lima::Andor3::Camera::prepareAcq()
     DEB_TRACE() << "Then setting the number of frame appropriatly";
     setInt(andor3::FrameCount, the_frame_count);
     getInt(andor3::FrameCount, &the_frame_count);
+    AT_64        max_frame_count;
+    getIntMax(andor3::FrameCount, &max_frame_count);
+    DEB_TRACE() << "SDK3 says max_frame_count = "<< max_frame_count;
     DEB_TRACE() << "Now proof-reading the number of frames to collect : " << the_frame_count << " (was requested :" << m_nb_frames_to_collect << ")";
     if ( the_frame_count != m_nb_frames_to_collect ) {
       DEB_ERROR() << "Got erreo !!! Required to collect : " << m_nb_frames_to_collect << " frames, but the SDK is thinking it should collect " << the_frame_count << " frames!!!";
@@ -850,7 +853,9 @@ lima::Andor3::Camera::checkRoi(const Roi& set_roi, Roi& hw_roi)
   else {
     the_fullaoi_control = false;
   }
-  
+ 
+  DEB_TRACE() << "Is Full AOI control available? " << the_fullaoi_control;
+ 
   // From now on, we are performing all tests in physical pixels (and we will convert back to super pixel just before returning).
   int				the_bin_nb = the_binning.getX();
   Roi				the_phys_set_roi;
@@ -945,10 +950,13 @@ lima::Andor3::Camera::checkRoi(const Roi& set_roi, Roi& hw_roi)
 
   hw_roi = the_phys_hw_roi.getBinned(Bin(the_bin_nb, the_bin_nb));
 
+  DEB_TRACE() << "hw_roi = " << hw_roi;
+
   // Lima Roi starts at <0,0> Andor3 starts at <1,1>, so -1 for topleft
   Point topleft = hw_roi.getTopLeft();
   Size  size = hw_roi.getSize();
-  topleft -=1;
+  if (topleft.x >0) topleft.x -=1;
+  if (topleft.y >0) topleft.y -=1;
   hw_roi = Roi(topleft, size);
 
   //  hw_roi = Roi(the_left, the_top, the_width, the_height);
@@ -2592,9 +2600,9 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
       int               the_wait_queue_res;
       
 
-      DEB_ALWAYS() << "[andor3 acquisition thread] Waiting for buffer index " << m_cam.m_image_index << " (AT_WaitBuffer)";
+      //DEB_ALWAYS() << "[andor3 acquisition thread] Waiting for buffer index " << m_cam.m_image_index << " (AT_WaitBuffer)";
       the_wait_queue_res = AT_WaitBuffer(m_cam.m_camera_handle, &the_returned_image, &the_returned_image_size, the_wait_timeout);
-      DEB_ALWAYS() << "[andor3 acquisition thread] DONE waiting for buffer index " << m_cam.m_image_index;
+      //DEB_ALWAYS() << "[andor3 acquisition thread] DONE waiting for buffer index " << m_cam.m_image_index;
       
       // Testing if we were asked to stop the acquisition thread :
       // It is best to do that as soon as returning from the SDK, since otherwise it might block some 
