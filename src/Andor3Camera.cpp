@@ -374,7 +374,7 @@ lima::Andor3::Camera::prepareAcq()
   
   getEnumString(andor3::BitDepth, the_bit_depth_wc, 255);
   the_bit_depth = WStringToString(std::wstring(the_bit_depth_wc));
-  getEnumIndex(andor3::BitDepth, &the_bit_depth_index);
+  getHwBitDepth(&the_bit_depth_index);
   DEB_TRACE() << "The bit depth of the image is " << the_bit_depth << " (index : " << the_bit_depth_index << ").";
   
   if ( b11 == the_bit_depth_index ) {
@@ -423,6 +423,8 @@ lima::Andor3::Camera::prepareAcq()
       the_frame_dim.setImageType(Bpp16);
       break;
     default:
+      DEB_ERROR() << "Trouble: the_bit_depth_index=" << the_bit_depth_index
+		  << "(b11=" << b11 << ", b16=" << b16 << ")";
       //! TODO : again trouble (signal to user), we don't know how to do that.
       break;
   }
@@ -1287,9 +1289,8 @@ lima::Andor3::Camera::setAdcGain(A3_Gain iGain)
   int			the_bit_depth; // Pixel encoding will be reset appropriately in the setBitDepth method
   //  int			the_px_encoding;
   
-  getEnumIndex(andor3::BitDepth, &the_bit_depth);
+  getHwBitDepth(&the_bit_depth);
   //  getEnumIndex(andor3::PixelEncoding, &the_px_encoding);
-
   setBitDepth(static_cast<A3_BitDepth>(the_bit_depth));
 }
 
@@ -1400,7 +1401,7 @@ lima::Andor3::Camera::setBitDepth(A3_BitDepth iMode)
   DEB_MEMBER_FUNCT();
   int the_mode;
   setEnumIndex(andor3::BitDepth, static_cast<int>(iMode));
-  getEnumIndex(andor3::BitDepth, &the_mode);
+  getHwBitDepth(&the_mode);
   m_bit_depth = static_cast<A3_BitDepth>(the_mode);
   if ( m_bit_depth != iMode ) {
     DEB_ERROR() << "Proof-reading the image bit-depth :"
@@ -2475,6 +2476,19 @@ lima::Andor3::Camera::sendCommand(const AT_WC* Feature)
 {
   DEB_MEMBER_FUNCT();
   return andor3Error(AT_Command(m_camera_handle, Feature));
+}
+
+int lima::Andor3::Camera::getHwBitDepth(int *bit_depth)
+{
+  DEB_MEMBER_FUNCT();
+  int the_err_code = getEnumIndex(andor3::BitDepth, bit_depth);
+  if ( (the_err_code != AT_ERR_NOTIMPLEMENTED) || m_real_camera )
+    return the_err_code;
+
+  DEB_WARNING() << "Get BitDepth not implemented for simulated camera: "
+		<< "fixing b16";
+  *bit_depth = b16;
+  return AT_SUCCESS;
 }
 
 void lima::Andor3::Camera::setDestrideActive(bool active)
