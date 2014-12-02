@@ -139,6 +139,8 @@ namespace lima
       
       void getPixelSize(double& sizex, double& sizey);
 
+      void getSdkFrameDim(FrameDim &frame_dim);
+
       void getStatus(Camera::Status& status);
       
       // --- Acquisition interface
@@ -252,11 +254,12 @@ namespace lima
 
     private:
       class _AcqThread;
+      class _BufferCtrlObj;
       friend class _AcqThread;
 
       // -- Members
       // LIMA / Acquisition (thread) related :
-      SoftBufferCtrlObj						m_buffer_ctrl_obj;
+      _BufferCtrlObj*						m_buffer_ctrl_obj;
       // Pure thread and signals :
       _AcqThread*                 m_acq_thread;						// The thread retieving frame buffers from the SDK
       Cond                        m_cond;									// Waiting condition for inter thread signaling

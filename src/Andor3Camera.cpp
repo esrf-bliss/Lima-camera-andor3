@@ -133,9 +133,37 @@ namespace lima {
   }
 }
 
+//---------------------------
+//- Soft Buffer Ctrl Object
+//---------------------------
+// Use a derivated class in order to set the allocated buffers to 
+// the real sdk frame size, which is strided, means it can have extra
+// columns added for alignment optimisation purpose.
+// So the passed frame_dim is ignore and the sdk one is passed instead.
+// Then the reconstruction task will take care of removing the stride data (if requested).
+// NOTE: Changing the frame dim here is a little bit crappy but we do not
+// any other solution today with buffer interfaces.
+
+namespace lima {
+  namespace Andor3 {
+    class Camera::_BufferCtrlObj : public SoftBufferCtrlObj {
+      DEB_CLASS_NAMESPC(DebModCamera, "Camera", "_BufferCtrlObj");
+    public:
+      _BufferCtrlObj(Camera &aCam) : m_cam(aCam) {}
+
+      virtual void setFrameDim(const FrameDim &)
+      {
+	FrameDim sdk_frame_dim;
+	m_cam.getSdkFrameDim(sdk_frame_dim);
+	SoftBufferCtrlObj::setFrameDim(sdk_frame_dim);
+      }
+    private:
+      Camera& m_cam;
+    };
+  }
+}
 
 lima::Andor3::Camera::Camera(const std::string& bitflow_path, int camera_number) :
-m_buffer_ctrl_obj(),
 m_acq_thread(NULL),
 m_cond(),
 m_acq_thread_waiting(true),
@@ -165,6 +193,10 @@ m_destride_active(true),
 m_maximage_size_cb_active(false)
 {
   DEB_CONSTRUCTOR();
+
+  // Create the camera buffer
+  m_buffer_ctrl_obj = new _BufferCtrlObj(*this),
+
   // Initing the maps that serves for error string generation :
   _mapAndor3Error();
   
@@ -281,7 +313,9 @@ lima::Andor3::Camera::~Camera()
   _stopAcq(true);
   delete m_acq_thread;
   m_acq_thread = NULL;
-  
+ 
+  delete m_buffer_ctrl_obj;
+
   // Close camera
   if (m_cooler) {
     DEB_ERROR() <<"Please stop the cooling before shuting dowm the camera\n"
@@ -355,22 +389,21 @@ lima::Andor3::Camera::prepareAcq()
   // Setting the next image index to 0 (since we are starting at 0):
   m_image_index = 0;
   
-  // Retrieving useful information from the camera :
-  AT_64			the_image_size;
-  int				the_pixel_encoding;
+
+  int the_alloc_frames;
+  m_buffer_ctrl_obj->getNbBuffers(the_alloc_frames);
+  m_buffer_ringing = int(m_nb_frames_to_collect) > the_alloc_frames;
+  StdBufferCbMgr& the_buffer = m_buffer_ctrl_obj->getBuffer();
   
-  DEB_TRACE() << "Getting the basic information from the camera : image size (in bytes) and pixel encoding.";
-  getInt(andor3::ImageSizeBytes, &the_image_size);
-  getEnumIndex(andor3::PixelEncoding, &the_pixel_encoding);
-  
-  DEB_TRACE() << "The image size in bytes is " << the_image_size
-  << ", and the pixel encoding index is " << the_pixel_encoding;
-  
+  FrameDim the_frame_mem_dim;
+  getSdkFrameDim(the_frame_mem_dim);
+  int the_frame_mem_size = the_frame_mem_dim.getMemSize();
+
   // Since LIMA knows only an integer number of bytes per pixel
   // Make sure that the BytesPerPixel is 2 ...
-  AT_WC								the_bit_depth_wc[256];
-  std::string					the_bit_depth;
-  int									the_bit_depth_index;
+  AT_WC			the_bit_depth_wc[256];
+  std::string		the_bit_depth;
+  int			the_bit_depth_index;
   
   getEnumString(andor3::BitDepth, the_bit_depth_wc, 255);
   the_bit_depth = WStringToString(std::wstring(the_bit_depth_wc));
@@ -383,88 +416,15 @@ lima::Andor3::Camera::prepareAcq()
     // Make sure that we are not in the 12b/packed mode (1.5 byte per pixe, not handled by LIMA).
     setEnumString(andor3::PixelEncoding, L"Mono12");
   }
-  
-  // Releasing the previously used buffers :
-  
-  // Getting the SoftBufferCtlMgr to allocate the proper frame buffers :
-  AT_64       the_width, the_height, the_stride;
-  double			the_byte_p_px;
-  
-  // Indeed it seems LIMA is not having the difference between width and stride.
-  // So we have to compute the width provided to LIMA from the stride and the
-  // byte per pixel settings.
+ 
 
-  getInt(andor3::AOIWidth, &the_width);
-  getInt(andor3::AOIHeight, &the_height);
-  getInt(andor3::AOIStride, &the_stride);
-  getFloat(andor3::BytesPerPixel, &the_byte_p_px);
-  DEB_TRACE() << "Image size parameters are : width " << the_width
-  << ", height " << the_height
-  << ", stride " << the_stride
-  << " and finaly byte per pixel " << the_byte_p_px;
-  
-  the_width = the_stride>>1; // Dividing by 2, we are for sure in a mode with 2.0 byte per pixel
-  DEB_TRACE() << "To ensure that the LIMA image width corresponds to the stride, set it to "
-  << the_width;
-  lima::Size	the_frame_size(static_cast<int>(the_width), static_cast<int>(the_height)); // Including the full row (that is Stride, not only width)
-  FrameDim		the_frame_dim;  // Adding the information from the image/pixel format/depth
-  the_frame_dim.setSize(the_frame_size);
-
-  if ( 2.0 != the_byte_p_px ) {
-    THROW_HW_ERROR(Error) << "Andor3 SDK : managed to get a setting where there is not exactly 2 Bytes per pixel ! (currently " << the_byte_p_px << "B/px)";
-  }
-  
-  // Setting the other information of the frame :
-  switch (the_bit_depth_index) {
-    case b11:
-      the_frame_dim.setImageType(Bpp12);
-      break;
-    case b16:
-      the_frame_dim.setImageType(Bpp16);
-      break;
-    default:
-      DEB_ERROR() << "Trouble: the_bit_depth_index=" << the_bit_depth_index
-		  << "(b11=" << b11 << ", b16=" << b16 << ")";
-      //! TODO : again trouble (signal to user), we don't know how to do that.
-      break;
-  }
-
-  int 				the_max_frames;
-  int					the_alloc_frames;
-  
-  the_alloc_frames = (0 == m_nb_frames_to_collect) ? 128 : static_cast<int>(m_nb_frames_to_collect);
-  DEB_TRACE() << "The number of frames to be collected is set to : " << the_alloc_frames << ", before testing the memory available";
-  
-  m_buffer_ctrl_obj.setFrameDim(the_frame_dim);
-  m_buffer_ctrl_obj.getMaxNbBuffers(the_max_frames);
-  DEB_TRACE() << "Given above parameters, maximum numbe of frames in memory is "
-  << the_max_frames;
-  if (( the_max_frames < the_alloc_frames ) || ( 0 == m_nb_frames_to_collect )) {
-    // If not enough memory or continuous acquisition we go into ring buffer mode :
-    the_alloc_frames = ( the_max_frames < the_alloc_frames ) ? the_max_frames : the_alloc_frames ;
-    m_buffer_ringing = true;
-    DEB_TRACE() << "Setting ring mode, since we are either in continuous acquisition or not enough memory";
-  }
-  else {
-    // Otherwise we allocate exactly th number of buffers necessary :
-    the_alloc_frames = static_cast<int>(m_nb_frames_to_collect);
-    m_buffer_ringing = false;
-    DEB_TRACE() << "Setting the buffer single use mode";
-  }
-
-  DEB_TRACE() << "After testing available memory (and continuous acquisition), the mode is " << m_buffer_ringing << " and the number of frame to be allocated is : " << the_alloc_frames;
-  
-  StdBufferCbMgr& the_buffer = m_buffer_ctrl_obj.getBuffer();
-  DEB_TRACE() << "Getting StdBufferCbMgr to allocate the buffers that we want to have";
-  the_buffer.allocBuffers(the_alloc_frames, 1, the_frame_dim);
-  int				the_frame_mem_size = the_frame_dim.getMemSize();
-  
   // Handing the frame buffers to the SDK :
   // As proposed by the SDK, we make sure that we start from an empty queue :
   DEB_TRACE() << "Flushing the queue of the framegrabber";
   AT_Flush(m_camera_handle);
   
   // Then queue all the buffers allocated by StdBufferCbMgr
+  
   DEB_TRACE() << "Pushing all the frame buffers to the frame grabber SDK";
   for ( int i=0; the_alloc_frames != i; ++i) {
     void*		the_buffer_ptr = the_buffer.getFrameBufferPtr(i);
@@ -478,23 +438,25 @@ lima::Andor3::Camera::prepareAcq()
 
   if ( 0 == m_nb_frames_to_collect ) {
     // We are in continuous acquisition mode : set the camera appropriately
-    DEB_TRACE() << "m_nb_frames_to_collect=0 : this means we want continuous acquisition. Trying to set teh camera accrodingly";
+    DEB_TRACE() << "m_nb_frames_to_collect=0 : this means we want continuous acquisition. Trying to set the camera accordingly";
     setEnumString(andor3::CycleMode, L"Continuous");
   }
   else {
-    AT_64        the_frame_count = static_cast<AT_64>(m_nb_frames_to_collect);
     DEB_TRACE() << "m_nb_frames_to_collect=" << m_nb_frames_to_collect << " : setting the camera in fixed number of frame mode";
-    setEnumString(andor3::CycleMode, L"Fixed");
-    DEB_TRACE() << "Then setting the number of frame appropriatly";
-    setInt(andor3::FrameCount, the_frame_count);
-    getInt(andor3::FrameCount, &the_frame_count);
-    AT_64        max_frame_count;
-    getIntMax(andor3::FrameCount, &max_frame_count);
-    DEB_TRACE() << "SDK3 says max_frame_count = "<< max_frame_count;
-    DEB_TRACE() << "Now proof-reading the number of frames to collect : " << the_frame_count << " (was requested :" << m_nb_frames_to_collect << ")";
-    if ( the_frame_count != m_nb_frames_to_collect ) {
-      DEB_ERROR() << "Got erreo !!! Required to collect : " << m_nb_frames_to_collect << " frames, but the SDK is thinking it should collect " << the_frame_count << " frames!!!";
-    }
+    //setEnumString(andor3::CycleMode, L"Fixed");
+    // LOLO TEST
+    // Try in continuous mode 
+    setEnumString(andor3::CycleMode, L"Continuous");    
+    //DEB_TRACE() << "Then setting the number of frame appropriatly";
+    //setInt(andor3::FrameCount, the_frame_count);
+    //getInt(andor3::FrameCount, &the_frame_count);
+    //AT_64        max_frame_count;
+    //getIntMax(andor3::FrameCount, &max_frame_count);
+    //DEB_TRACE() << "SDK3 says max_frame_count = "<< max_frame_count;
+    //DEB_TRACE() << "Now proof-reading the number of frames to collect : " << the_frame_count << " (was requested :" << m_nb_frames_to_collect << ")";
+    //if ( the_frame_count != m_nb_frames_to_collect ) {
+    //  DEB_ERROR() << "Got erreo !!! Required to collect : " << m_nb_frames_to_collect << " frames, but the SDK is thinking it should collect " << the_frame_count << " frames!!!";
+    //}
   }
   AT_WC          the_string[256];
   getEnumString(andor3::CycleMode, the_string, 255); 
@@ -526,7 +488,7 @@ lima::Andor3::Camera::startAcq()
 
   if ( 0 == m_image_index ) {
     // Setting the start timestamp of the buffer :
-    m_buffer_ctrl_obj.getBuffer().setStartTimestamp(Timestamp::now());
+    m_buffer_ctrl_obj->getBuffer().setStartTimestamp(Timestamp::now());
     // Sending the start command to the SDK :
     sendCommand(andor3::AcquisitionStart);
   }
@@ -646,7 +608,7 @@ lima::HwBufferCtrlObj*
 lima::Andor3::Camera::getBufferCtrlObj()
 {
   DEB_MEMBER_FUNCT();
-  return &m_buffer_ctrl_obj;
+  return m_buffer_ctrl_obj;
 }
 
 //-- Synch control object
@@ -2521,6 +2483,67 @@ int lima::Andor3::Camera::getPixelStride() const
   return int(the_stride / the_byte_p_px);
 }
 
+void lima::Andor3::Camera::getSdkFrameDim(FrameDim &frame_dim)
+{
+  DEB_MEMBER_FUNCT();
+  
+  // Retrieving useful information from the camera :
+  AT_64			the_image_size;
+  int	       		the_pixel_encoding;
+  
+  DEB_TRACE() << "Getting the basic information from the camera : image size (in bytes) and pixel encoding.";
+  getInt(andor3::ImageSizeBytes, &the_image_size);
+  getEnumIndex(andor3::PixelEncoding, &the_pixel_encoding);
+  
+  DEB_TRACE() << "The image size in bytes is " << the_image_size
+  << ", and the pixel encoding index is " << the_pixel_encoding;
+  
+  int the_bit_depth_index;
+  getHwBitDepth(&the_bit_depth_index);
+  
+  AT_64  the_width, the_height, the_stride;
+  double the_byte_p_px;
+  
+  // Indeed it seems LIMA is not having the difference between width and stride.
+  // So we have to compute the width provided to LIMA from the stride and the
+  // byte per pixel settings.
+
+  getInt(andor3::AOIWidth, &the_width);
+  getInt(andor3::AOIHeight, &the_height);
+  getInt(andor3::AOIStride, &the_stride);
+  getFloat(andor3::BytesPerPixel, &the_byte_p_px);
+  DEB_TRACE() << "Image size parameters are : width " << the_width
+  << ", height " << the_height
+  << ", stride " << the_stride
+  << " and finaly byte per pixel " << the_byte_p_px;
+  
+  the_width = the_stride>>1; // Dividing by 2, we are for sure in a mode with 2.0 byte per pixel
+  DEB_TRACE() << "To ensure that the LIMA image width corresponds to the stride, set it to "
+  << the_width;
+  lima::Size	the_frame_size(static_cast<int>(the_width), static_cast<int>(the_height)); // Including the full row (that is Stride, not only width)
+
+  frame_dim.setSize(the_frame_size);
+
+  if ( 2.0 != the_byte_p_px ) {
+    THROW_HW_ERROR(Error) << "Andor3 SDK : managed to get a setting where there is not exactly 2 Bytes per pixel ! (currently " << the_byte_p_px << "B/px)";
+  }
+  
+  // Setting the other information of the frame :
+  switch (the_bit_depth_index) {
+    case b11:
+      frame_dim.setImageType(Bpp12);
+      break;
+    case b16:
+      frame_dim.setImageType(Bpp16);
+      break;
+    default:
+      DEB_ERROR() << "Trouble: the_bit_depth_index=" << the_bit_depth_index
+		  << "(b11=" << b11 << ", b16=" << b16 << ")";
+      //! TODO : again trouble (signal to user), we don't know how to do that.
+      break;
+  }
+}
+
 void lima::Andor3::Camera::setMaxImageSizeCallbackActive(bool cb_active)
 {
     DEB_MEMBER_FUNCT();
@@ -2563,7 +2586,7 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
 {
   DEB_MEMBER_FUNCT();
   AutoMutex					the_lock(m_cam.m_cond.mutex());
-  StdBufferCbMgr		&the_buffer = m_cam.m_buffer_ctrl_obj.getBuffer();
+  StdBufferCbMgr		&the_buffer = m_cam.m_buffer_ctrl_obj->getBuffer();
 
   while (! m_cam.m_acq_thread_should_quit ) {
     DEB_TRACE() << "[andor3 acquisition thread] Top of the loop";
