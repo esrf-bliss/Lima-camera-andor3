@@ -328,7 +328,6 @@ lima::Andor3::Camera::~Camera()
     << "to rise above 5C before conitnuing the shutdown.";
     //    setTemperatureSP(6.0);
     double			the_sensor_temperature;
-    size_t			the_sensor_temp_wait = 0;
     
     DEB_TRACE() << "While leaving the camera, the temperature provided by the cooler is " << the_sensor_temperature;
     getTemperature(the_sensor_temperature);
@@ -698,6 +697,7 @@ void
 lima::Andor3::Camera::setExpTime(double  exp_time)
 {
   DEB_MEMBER_FUNCT();
+
   setFloat(andor3::ExposureTime, exp_time);
 }
 
@@ -710,37 +710,6 @@ lima::Andor3::Camera::getExpTime(double& exp_time)
   exp_time = the_exp_time;
 }
 
-void
-lima::Andor3::Camera::setLatTime(double  lat_time)
-{
-  DEB_MEMBER_FUNCT();
-  double			the_exp_time;
-  double			the_rate;
-  //  double			the_readout_time;
-  
-  getFloat(andor3::ExposureTime, &the_exp_time);
-//  getFloat(andor3::ReadoutTime, &the_readout_time);
-//  lat_time = ( lat_time > the_readout_time ) ? lat_time : the_readout_time;
-//  if ( lat_time < the_readout_time ) {
-//    lat_time = the_readout_time;
-//    THROW_HW_ERROR(Error) << "You have requested a latency "
-//  }
-  the_rate = 1.0 / (the_exp_time + lat_time);
-  setFloat(andor3::FrameRate, the_rate);
-}
-
-void
-lima::Andor3::Camera::getLatTime(double& lat_time)
-{
-  DEB_MEMBER_FUNCT();
-  double			the_exp_time;
-  double			the_rate;
-
-  getFloat(andor3::ExposureTime, &the_exp_time);
-  getFloat(andor3::FrameRate, &the_rate);
-  
-  lat_time = (1.0 / the_rate) - the_exp_time;
-}
 
 void
 lima::Andor3::Camera::getExposureTimeRange(double& min_expo, double& max_expo) const
@@ -755,20 +724,6 @@ lima::Andor3::Camera::getExposureTimeRange(double& min_expo, double& max_expo) c
   max_expo = the_max;
 }
 
-void
-lima::Andor3::Camera::getLatTimeRange(double& min_lat, double& max_lat) const
-{
-  DEB_MEMBER_FUNCT();
-  double			the_exp_time;
-  double			the_rate_min, the_rate_max;
-
-  getFloat(andor3::ExposureTime, &the_exp_time);
-  getFloatMin(andor3::FrameRate, &the_rate_min);
-  getFloatMax(andor3::FrameRate, &the_rate_max);
-
-  min_lat = (1.0 / the_rate_max) - the_exp_time;
-  max_lat = (1.0 / the_rate_min) - the_exp_time;
-}
 
 void
 lima::Andor3::Camera::setNbFrames(int nb_frames)
@@ -1813,6 +1768,13 @@ lima::Andor3::Camera::getFirmwareVersion(std::string &o_fwv) const
   o_fwv = WStringToString(the_fwv);
 }
 
+
+void
+lima::Andor3::Camera::setFrameRate(double i_frame_rate)
+{
+  DEB_MEMBER_FUNCT();
+  setFloat(andor3::FrameRate, i_frame_rate);
+}
 
 void
 lima::Andor3::Camera::getFrameRate(double &o_frame_rate) const

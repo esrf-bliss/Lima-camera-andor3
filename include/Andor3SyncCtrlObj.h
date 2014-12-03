@@ -62,10 +62,16 @@ namespace lima
 	    virtual void getNbHwFrames(int& nb_frames);
       
 	    virtual void getValidRanges(ValidRangesType& valid_ranges);
-      virtual void updateValidRanges();
+	    virtual void updateValidRanges();
       
     private:
 	    Camera& m_cam;
+	    double m_exp_time;
+	    double m_lat_time;
+	    double m_readout_time;
+	    double m_max_acq_period;
+	    ValidRangesType m_valid_ranges;
+	    void adjustFrameRate();
     };
     
   } // namespace Andor3

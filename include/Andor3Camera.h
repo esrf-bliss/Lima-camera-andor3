@@ -115,12 +115,9 @@ namespace lima
       void setExpTime(double  exp_time);
       void getExpTime(double& exp_time);
       
-      void setLatTime(double  lat_time);
-      void getLatTime(double& lat_time);
-      
       void getExposureTimeRange(double& min_expo, double& max_expo) const;
       void getLatTimeRange(double& min_lat, double& max_lat) const;
-      
+            
       void setNbFrames(int  nb_frames);
       void getNbFrames(int& nb_frames);
       void getNbHwAcquiredFrames(int &nb_acq_frames);
@@ -191,6 +188,7 @@ namespace lima
       // -- some readonly attributes :
       void getBytesPerPixel(double &o_value) const;
       void getFirmwareVersion(std::string &o_fwv) const;
+      void setFrameRate(double i_frame_rate);
       void getFrameRate(double &o_frame_rate) const;
       void getFrameRateRange(double& o_min_lat, double& o_max_lat) const;
       void getFullRoiControl(bool &o_fullROIcontrol) const;

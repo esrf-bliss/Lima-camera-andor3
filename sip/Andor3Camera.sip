@@ -63,11 +63,7 @@ namespace Andor3
     void setExpTime(double  exp_time /In/ );
     void getExpTime(double& exp_time /Out/ );
 
-    void setLatTime(double  lat_time /In/ );
-    void getLatTime(double& lat_time /Out/ );
-
     void getExposureTimeRange(double& min_expo /Out/, double& max_expo /Out/) const;
-    void getLatTimeRange(double& min_lat /Out/, double& max_lat /Out/) const;
 
     void setNbFrames(int  nb_frames /In/ );
     void getNbFrames(int& nb_frames /Out/ );
@@ -139,6 +135,7 @@ namespace Andor3
    void getBytesPerPixel(double &o_value /Out/ ) const;
    void getFirmwareVersion(std::string &o_fwv /Out/ ) const;
    void getFrameRate(double &o_frame_rate /Out/ ) const;
+   void setFrameRate(double i_frame_rate);
    void getFrameRateRange(double& o_min_lat /Out/, double& o_max_lat /Out/) const;
    void getFullRoiControl(bool &o_fullROIcontrol /Out/ ) const;
    void getImageSize(int &o_frame_size /Out/ ) const;
