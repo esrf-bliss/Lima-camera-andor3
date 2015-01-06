@@ -23,7 +23,7 @@
 #include "Andor3ReconstructionCtrlObj.h"
 #include "Andor3Camera.h"
 
-#include "SoftRoi.h"
+#include "processlib/SoftRoi.h"
 
 using namespace lima;
 using namespace lima::Andor3;

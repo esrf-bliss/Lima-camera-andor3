@@ -19,7 +19,7 @@
  * License along with this file. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "HwInterface.h"
+#include "lima/HwInterface.h"
 #include "Andor3Camera.h"
 
 

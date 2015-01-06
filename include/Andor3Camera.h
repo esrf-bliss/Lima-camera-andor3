@@ -33,8 +33,8 @@
 #include <atcore.h>
 
 // LImA headers :
-#include "HwMaxImageSizeCallback.h"
-#include "HwBufferMgr.h"
+#include "lima/HwMaxImageSizeCallback.h"
+#include "lima/HwBufferMgr.h"
 
 // Andor3 plugin headers :
 

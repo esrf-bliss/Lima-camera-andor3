@@ -22,7 +22,7 @@
 #ifndef ANDOR3RECONSTRUCTIONCTRLOBJ_H
 #define ANDOR3RECONSTRUCTIONCTRLOBJ_H
 
-#include "HwReconstructionCtrlObj.h"
+#include "lima/HwReconstructionCtrlObj.h"
 
 namespace Tasks
 {

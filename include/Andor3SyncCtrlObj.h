@@ -24,7 +24,7 @@
 // Camera SDK headers :
 
 // LImA headers :
-#include "HwSyncCtrlObj.h"
+#include "lima/HwSyncCtrlObj.h"
 
 // Andor3 plugin headers :
 #include "Andor3Camera.h"
