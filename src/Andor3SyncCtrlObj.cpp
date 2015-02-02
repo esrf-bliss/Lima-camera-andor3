@@ -42,6 +42,26 @@ lima::Andor3::SyncCtrlObj::SyncCtrlObj(lima::Andor3::Camera& cam) :
 m_cam(cam)
 {
   DEB_CONSTRUCTOR();
+  double min_exp_time, max_exp_time;
+  double min_frame_rate, max_frame_rate;
+
+  m_cam.getExpTime(m_exp_time);
+  m_cam.getExposureTimeRange(min_exp_time, max_exp_time);
+  m_cam.getFrameRateRange(min_frame_rate, max_frame_rate);
+  m_cam.getReadoutTime(m_readout_time);
+
+  m_lat_time = 0;
+  m_max_acq_period = 1.0/ min_frame_rate;
+  
+  m_valid_ranges.min_exp_time = min_exp_time;
+  m_valid_ranges.max_exp_time = max_exp_time;
+
+  // Latency is a total elpased time between two exposure, which
+  // include the readout time + a delay time.
+  // So the minimum latency is equal to the readout time
+  m_valid_ranges.min_lat_time = m_readout_time;
+  m_valid_ranges.max_lat_time = m_max_acq_period - m_exp_time + m_readout_time;
+  
 }
 
 //---------------------------
@@ -80,14 +100,19 @@ void
 lima::Andor3::SyncCtrlObj::setExpTime(double  exp_time)
 {
   DEB_MEMBER_FUNCT();
+  DEB_PARAM() << DEB_VAR1(exp_time);
+  m_exp_time = exp_time;
+
   m_cam.setExpTime(exp_time);
+  adjustFrameRate();
+
   updateValidRanges();
 }
 void
 lima::Andor3::SyncCtrlObj::getExpTime(double& exp_time)
 {
   DEB_MEMBER_FUNCT();
-  m_cam.getExpTime(exp_time);
+  exp_time = m_exp_time;
 }
 
 #pragma mark -
@@ -96,14 +121,50 @@ void
 lima::Andor3::SyncCtrlObj::setLatTime(double  lat_time)
 {
   DEB_MEMBER_FUNCT();
-  m_cam.setLatTime(lat_time);
-  updateValidRanges();
+  DEB_PARAM() << DEB_VAR1(lat_time);
+
+  m_lat_time = lat_time;
 }
+
 void
 lima::Andor3::SyncCtrlObj::getLatTime(double& lat_time)
 {
   DEB_MEMBER_FUNCT();
-  m_cam.getLatTime(lat_time);
+  lat_time = m_lat_time;
+}
+
+void 
+lima::Andor3::SyncCtrlObj::adjustFrameRate()
+{
+  DEB_MEMBER_FUNCT();
+
+  double min_frame_rate, max_frame_rate;
+  double frame_rate;
+
+  // If the exposure_time is less than readout_time the SDK
+  // set the frame rate to the maximum which is 1.0/readout_time,
+  // so in that case the latency_time is null and cannot be ajusted
+  // readout_time can evolve according to ADC speed and  hw roi/bin.
+
+  m_cam.getReadoutTime(m_readout_time);
+  m_cam.getFrameRateRange(min_frame_rate, max_frame_rate);
+
+  // update the min latency_time it can change with other hw parameters.
+  m_valid_ranges.min_lat_time = m_readout_time;
+
+  m_max_acq_period = 1.0/min_frame_rate;
+
+  // here the latency_time is disabled
+  if (m_exp_time < m_readout_time*1.001) {
+    m_lat_time = 0;
+  } else {
+    frame_rate = 1.0/(m_exp_time + m_lat_time - m_readout_time);
+    if (frame_rate > max_frame_rate) frame_rate = max_frame_rate;
+  
+    m_cam.setFrameRate(frame_rate);
+    m_valid_ranges.max_lat_time = m_max_acq_period - m_exp_time - m_readout_time;
+  }
+
 }
 
 #pragma mark -
@@ -125,15 +186,9 @@ void
 lima::Andor3::SyncCtrlObj::getValidRanges(ValidRangesType& valid_ranges)
 {
   DEB_MEMBER_FUNCT();
-  double min_time;
-  double max_time;
-  m_cam.getExposureTimeRange(min_time, max_time);
-  valid_ranges.min_exp_time = min_time;
-  valid_ranges.max_exp_time = max_time;
-  
-  m_cam.getLatTimeRange(min_time, max_time);
-  valid_ranges.min_lat_time = min_time;
-  valid_ranges.max_lat_time = max_time; 
+
+  valid_ranges = m_valid_ranges;
+
 
   DEB_RETURN() << DEB_VAR2(valid_ranges.min_exp_time, valid_ranges.max_exp_time);
   DEB_RETURN() << DEB_VAR2(valid_ranges.min_lat_time, valid_ranges.max_lat_time);
@@ -146,7 +201,7 @@ void
 lima::Andor3::SyncCtrlObj::updateValidRanges()
 {
   DEB_MEMBER_FUNCT();
-  DEB_ALWAYS() << "about to update the valid range for exposure and latency times...";
+
   ValidRangesType		the_v_range;
   getValidRanges(the_v_range);
   validRangesChanged(the_v_range);
