@@ -147,9 +147,11 @@ namespace lima
       // -- andor3 specific, LIMA don't worry about it !
       void initialiseController();
 
-      void setAdcGain(A3_Gain iGain);					// à exporter (avec le get)
+      // AdcGain is deprecated, should use SimpleGain (Zyla does not have AdcGain feature).
+      void setAdcGain(A3_Gain iGain);					
       void getAdcGain(A3_Gain &oGain) const;
       void getAdcGainString(std::string &oGainString) const;
+
       void setAdcRate(A3_ReadOutRate iRate);  // à exporter (avec le get)
       void getAdcRate(A3_ReadOutRate &oRate) const;
       void getAdcRateString(std::string &oRateString) const;
@@ -257,27 +259,27 @@ namespace lima
 
       // -- Members
       // LIMA / Acquisition (thread) related :
-      _BufferCtrlObj*						m_buffer_ctrl_obj;
+      _BufferCtrlObj*             m_buffer_ctrl_obj;
       // Pure thread and signals :
-      _AcqThread*                 m_acq_thread;						// The thread retieving frame buffers from the SDK
-      Cond                        m_cond;									// Waiting condition for inter thread signaling
-      volatile bool								m_acq_thread_waiting;   // The m_acq_thread is waiting (main uses it to tell it to stop waiting)
-      volatile bool								m_acq_thread_running;		// The m_acq_thread is running (main uses it to accept stopAcq)
-      volatile bool								m_acq_thread_should_quit; // The main thread signals to m_acq_thread that it should quit.
+      _AcqThread*                 m_acq_thread;		   // The thread retieving frame buffers from the SDK
+      Cond                        m_cond;		   // Waiting condition for inter thread signaling
+      volatile bool               m_acq_thread_waiting;    // The m_acq_thread is waiting (main uses it to tell it to stop waiting)
+      volatile bool               m_acq_thread_running;	   // The m_acq_thread is running (main uses it to accept stopAcq)
+      volatile bool	          m_acq_thread_should_quit;// The main thread signals to m_acq_thread that it should quit.
 
       // A bit more general :
-      size_t											m_nb_frames_to_collect; // The number of frames to collect in current sequence
-      size_t											m_image_index;					// The index in the current sequence of the next image to retrieve
-      bool												m_buffer_ringing;				// Should the buffer be considered as a ring buffer rather than a single use buffer.
-      Status											m_status;								// The current status of the camera
+      size_t                      m_nb_frames_to_collect;  // The number of frames to collect in current sequence
+      size_t                      m_image_index;	   // The index in the current sequence of the next image to retrieve
+      bool                        m_buffer_ringing;	   // Should the buffer be considered as a ring buffer rather than a single use buffer.
+      Status                      m_status;	           // The current status of the camera
       
       // LIMA / Not directly acquisition related :
-      bool												m_real_camera;					// Set to false for CameraModel == "SIMCAM CMOS"
+      bool                        m_real_camera;	   // Set to false for CameraModel == "SIMCAM CMOS"
       std::string                 m_detector_model;
       std::string                 m_detector_type;
-      std::string									m_detector_serial;
-      Size												m_detector_size;
-      double											m_exp_time;
+      std::string		  m_detector_serial;
+      Size			  m_detector_size;
+      double		          m_exp_time;
 
       // -- andor3 SDK stuff
       std::string                 m_bitflow_path;
@@ -285,17 +287,18 @@ namespace lima
       AT_H                        m_camera_handle;
       mutable std::string         m_camera_error_str;
       mutable int                 m_camera_error;
-      A3_Gain											m_adc_gain;
-      A3_ReadOutRate							m_adc_rate;
-      A3_ShutterMode							m_electronic_shutter_mode;
+      A3_Gain                     m_adc_gain;
+      A3_SimpleGain               m_simple_gain;
+      A3_ReadOutRate	          m_adc_rate;
+      A3_ShutterMode		  m_electronic_shutter_mode;
       A3_BitDepth                 m_bit_depth;
-      A3_TriggerMode							m_trig_mode;
+      A3_TriggerMode              m_trig_mode;
       bool                        m_cooler;
       double                      m_temperature_sp;
       // std::map<TrigMode, int>     m_trig_mode_maps;
       std::map<int, std::string>  m_andor3_error_maps;
 
-      static bool						sAndorSDK3Initted;
+      static bool                 sAndorSDK3Initted;
       
       bool m_destride_active;
       bool m_maximage_size_cb_active;

@@ -183,6 +183,7 @@ m_bitflow_path(bitflow_path),
 m_camera_number(camera_number),
 m_camera_handle(AT_HANDLE_UNINITIALISED),
 m_adc_gain(Gain1_Gain4),
+m_simple_gain(b16_lh_gain),
 m_adc_rate(MHz100),
 m_electronic_shutter_mode(Rolling),
 m_bit_depth(b16),
@@ -443,7 +444,7 @@ lima::Andor3::Camera::prepareAcq()
   else {
     DEB_TRACE() << "m_nb_frames_to_collect=" << m_nb_frames_to_collect << " : setting the camera in fixed number of frame mode";
     //setEnumString(andor3::CycleMode, L"Fixed");
-    // LOLO TEST
+    // Better to use continuous mode, smaller ring-buffer allocated by SDK. L.Claustre
     // Try in continuous mode 
     setEnumString(andor3::CycleMode, L"Continuous");    
     //DEB_TRACE() << "Then setting the number of frame appropriatly";
@@ -1130,14 +1131,14 @@ void
 lima::Andor3::Camera::initialiseController()
 {
   DEB_MEMBER_FUNCT();
-  A3_BitDepth			the_bd = m_bit_depth;
-  A3_Gain 				the_gain = m_adc_gain;
+  A3_BitDepth		the_bd = m_bit_depth;
+  A3_SimpleGain 	the_simple_gain = m_simple_gain;
   A3_ReadOutRate	the_rate = m_adc_rate;
   
   // Carefully crafting the order, since some are affecting others...
   setElectronicShutterMode(m_electronic_shutter_mode);
   setTriggerMode(m_trig_mode);
-  setAdcGain(the_gain);
+  setSimpleGain(the_simple_gain);
   setAdcRate(the_rate);
   setBitDepth(the_bd);
   setCooler(m_cooler);
@@ -1288,9 +1289,9 @@ lima::Andor3::Camera::setElectronicShutterMode(A3_ShutterMode iMode)
   // Setting the trigger mode might change the ADCGain and ADCRate :
   int		the_gain, the_rate;
   
-  getEnumIndex(andor3::PreAmpGainControl, &the_gain);
+  getEnumIndex(andor3::SimplePreAmpGainControl, &the_gain);
   getEnumIndex(andor3::PixelReadoutRate, &the_rate);
-  setAdcGain(static_cast<A3_Gain>(the_gain));
+  setSimpleGain(static_cast<A3_SimpleGain>(the_gain));
   setAdcRate(static_cast<A3_ReadOutRate>(the_rate));
 }
 
@@ -1424,13 +1425,19 @@ void
 lima::Andor3::Camera::setTemperatureSP(double temp)
 {
   DEB_MEMBER_FUNCT();
-  setFloat(andor3::TargetSensorTemperature, temp);
-  getFloat(andor3::TargetSensorTemperature, &m_temperature_sp);
-  if ( abs(m_temperature_sp - temp) > 0.1) {
-    DEB_ERROR() << "Proof-reading temperature set-point : "
-    << "\n\tproof-read = " << m_temperature_sp
-    << "\n\twhile asked to be = " << temp;
-    THROW_HW_ERROR(Error) << "Failed on setting temperature set-point";
+  // Zyla-5.5 camera is supposed to not have this feature, but propImplemented returned True !!!
+  if ( propImplemented(andor3::TargetSensorTemperature) && m_detector_model.find("ZYLA5.5")==std::string::npos ) {
+    setFloat(andor3::TargetSensorTemperature, temp);
+    getFloat(andor3::TargetSensorTemperature, &m_temperature_sp);
+    if ( abs(m_temperature_sp - temp) > 0.1) {
+      DEB_ERROR() << "Proof-reading temperature set-point : "
+		  << "\n\tproof-read = " << m_temperature_sp
+		  << "\n\twhile asked to be = " << temp;
+      THROW_HW_ERROR(Error) << "Failed on setting temperature set-point";
+    }
+  }
+  else {
+    DEB_ALWAYS() << "The camera has no temperature control... Do nothing !";
   }
 }
 
