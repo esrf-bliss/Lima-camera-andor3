@@ -251,14 +251,21 @@ m_maximage_size_cb_active(false)
   // DC-152 -> Neo
   if ( ! m_detector_model.compare(0, 6, "DC-152 ")) {
     m_detector_model += "/Neo";
+    m_detector_type = std::string("Neo");
   }
   // DG-152 -> Zyla-5.5
   if ( ! m_detector_model.compare(0, 6, "DG-152 ")) {
     m_detector_model += "/Zyla-5.5";
+    m_detector_type = std::string("Zyla-5.5");
   }
   // ZYLA-4.2 -> Zyla-4.2
   if ( ! m_detector_model.compare(0, 6, "ZYLA-4.2 ")) {
     m_detector_model += "/Zyla-4.2";
+    m_detector_type = std::string("Zyla-4.2");
+  }
+  // With latest (2014) firmware model is more human readable !!
+  if (! m_detector_model.compare(0, 7, "ZYLA5.5")) {
+    m_detector_type = std::string("Zyla-5.5");    
   }
   
   
@@ -272,14 +279,12 @@ m_maximage_size_cb_active(false)
   }
   else {
     m_real_camera = false;
+    m_detector_type = std::string("Simulator");
+    
     DEB_TRACE() << "The camera is indeed the SIMULATED camera, all exception for invalid parameter name will be ignored!!!";
     DEB_ALWAYS() << "BE VERY CAREFULL : The andor SDK3 camera that you are connected to is a SIMULATED CAMERA !!!";
   }
 
-  // --- Get Camera Type
-  // @TODO This one would be better with a map converting from model to type !!!
-  m_detector_type = std::string("sCMOS");
-  
   // --- Get Camera Serial number
   AT_WC	serial[1024];
   if ( AT_SUCCESS != getString(andor3::SerialNumber, serial, 1024) ) {
@@ -2587,9 +2592,11 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
     while ( the_acq_goon && ((0 == m_cam.m_nb_frames_to_collect) || (m_cam.m_nb_frames_to_collect != m_cam.m_image_index)) ) {
 #warning Changing to have a finite timeout (around 1-5s ?)
       unsigned char  		*the_returned_image;
-      int								the_returned_image_size;
-      unsigned int			the_wait_timeout = AT_INFINITE;
-      int               the_wait_queue_res;
+      int			the_returned_image_size;
+      // OK for a finite timeout, otherwise we get the thread blocked when frame rate is too high for
+      // the transfer card, most of cameras have max. exposure time = 30s. Quiz of external gate acquisition?
+      unsigned int		the_wait_timeout = 30000;
+      int                       the_wait_queue_res;
       
 
       //DEB_ALWAYS() << "[andor3 acquisition thread] Waiting for buffer index " << m_cam.m_image_index << " (AT_WaitBuffer)";
