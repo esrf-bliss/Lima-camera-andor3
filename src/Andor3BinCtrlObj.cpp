@@ -63,9 +63,7 @@ void
 lima::Andor3::BinCtrlObj::setBin(const Bin& aBin)
 {
   DEB_MEMBER_FUNCT();
-  Bin		real_bin = aBin;
-  m_cam.checkBin(real_bin);
-  m_cam.setBin(real_bin);
+  m_cam.setBin(aBin);
   m_interface->updateValidRanges();
 }
 

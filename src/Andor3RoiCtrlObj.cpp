@@ -66,9 +66,7 @@ void
 lima::Andor3::RoiCtrlObj::setRoi(const Roi& roi)
 {
   DEB_MEMBER_FUNCT();
-  Roi real_roi;
-  checkRoi(roi,real_roi);
-  m_cam.setRoi(real_roi);
+  m_cam.setRoi(roi);
   m_interface->updateValidRanges();
 }
 

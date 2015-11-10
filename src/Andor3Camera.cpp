@@ -153,6 +153,7 @@ namespace lima {
 
       virtual void setFrameDim(const FrameDim &)
       {
+	DEB_MEMBER_FUNCT();
 	FrameDim sdk_frame_dim;
 	m_cam.getSdkFrameDim(sdk_frame_dim);
 	SoftBufferCtrlObj::setFrameDim(sdk_frame_dim);
@@ -761,7 +762,7 @@ lima::Andor3::Camera::checkRoi(const Roi& set_roi, Roi& hw_roi)
   DEB_MEMBER_FUNCT();
   DEB_PARAM() << DEB_VAR1(set_roi);
   bool 			the_fullaoi_control;
-  Bin				the_binning;
+  Bin			the_binning;
   
   // For andor3 SDK : the height and width are in super-pixels (eg. width is the number of data point by line at acquisition)
   // Conversely the top and left are set in physical pixels
@@ -785,7 +786,6 @@ lima::Andor3::Camera::checkRoi(const Roi& set_roi, Roi& hw_roi)
   Roi				the_phys_test_roi;
   Roi				the_phys_hw_roi;
   
-  //  the_phys_set_roi = Roi(set_roi.getTopLeft()*the_bin_nb, set_roi.getSize()*the_bin_nb);
   the_phys_set_roi = set_roi.getUnbinned(Bin(the_bin_nb, the_bin_nb));
   Point phy_ori = the_phys_set_roi.getTopLeft();
   phy_ori += 1;
@@ -796,19 +796,15 @@ lima::Andor3::Camera::checkRoi(const Roi& set_roi, Roi& hw_roi)
   // First : check that we are smaller than the maximum AOI for the current binning
   if ( ! the_phys_test_roi.containsRoi(the_phys_set_roi) ) {
     the_phys_set_roi = the_phys_test_roi;
-    // the_phys_hw_roi = the_phys_test_roi; // Taken care of later :
   }
 
   DEB_TRACE() << "After testing if this is included in the max area of the detector, got " << the_phys_set_roi << " in term of physical pixel";
-  if ( the_fullaoi_control ) { // If full control : accept the requested ROI.
-    the_phys_hw_roi = the_phys_set_roi;
-  }
-  else {
+  if (!the_fullaoi_control ) {
     
     DEB_TRACE() << "Testing a roi while the camera has only limited support for ROI (FullAOIControl==false)";
     DEB_TRACE() << "We will now scan the possible camera ROIs, selecting the smallest one that include the requested one (lower number of lines)";
     
-    // If there is no FullAOIControll, then we should resort to one of the proposition of § 3.5 of the SDK manual (page 42) :
+    // If there is no FullAOIControl, then we should resort to one of the proposition of § 3.5 of the SDK manual (page 42) :
     struct andor3_roi {
       int width;
       int height;
@@ -865,43 +861,78 @@ lima::Andor3::Camera::checkRoi(const Roi& set_roi, Roi& hw_roi)
       }
     }
     
-    DEB_TRACE() << "The selected hardware ROI is now : " << the_phys_set_roi << " in term of physical pixel";
-//    THROW_HW_ERROR(Error) << "Though it is feasible, we currently do not support hardware ROI"
-//    << " for devices not having the FullAOIControl set";
-    //    hw_roi...;
+    DEB_TRACE() << "The selected hardware ROI is now : " << the_phys_hw_roi << " in term of physical pixel";
+
+    // Lima Roi starts at <0,0> Andor3 starts at <1,1>, so -1 for topleft
+    Point topLeft = the_phys_hw_roi.getTopLeft();
+    topLeft+=1;
+    the_phys_hw_roi.setTopLeft(topLeft);
+    hw_roi = the_phys_hw_roi.getBinned(Bin(the_bin_nb, the_bin_nb));
   }
+  else { // the full AOI control accepted    
+    the_phys_hw_roi = the_phys_set_roi;
+    // Now need to apply the Bin AND Roi in order to get the stride width and return a correct hw Roi.
+    
+    int the_new_stride = getPixelStride();
+    DEB_TRACE() << "What's the stride before:" << the_new_stride;
+    setRoi(set_roi);
+    the_new_stride = getPixelStride();
 
-  hw_roi = the_phys_hw_roi.getBinned(Bin(the_bin_nb, the_bin_nb));
+    hw_roi = set_roi;
 
+    if (the_new_stride != hw_roi.getSize().getWidth()) {
+      DEB_TRACE() << "Apply stride width to the roi:" << the_new_stride;
+      hw_roi.setSize(Size(the_new_stride, hw_roi.getSize().getHeight()));
+    }
+
+    // Pb with Odd height Zyla does not support, set nearest even height size (+1)
+    // then Lima will apply a good SoftRoi (-1)
+    if (hw_roi.getSize().getHeight() & 1) {
+      DEB_TRACE() << "Odd number of raw ("<< hw_roi.getSize().getHeight() << ") not supported, increase the size by +1";
+      Size hw_size = hw_roi.getSize();
+
+      hw_roi.setSize(Size(hw_size.getWidth(),hw_size.getHeight()+1));
+    }    
+  }  
+  
   DEB_TRACE() << "hw_roi = " << hw_roi;
-
-  // Lima Roi starts at <0,0> Andor3 starts at <1,1>, so -1 for topleft
-  Point topleft = hw_roi.getTopLeft();
-  Size  size = hw_roi.getSize();
-  if (topleft.x >0) topleft.x -=1;
-  if (topleft.y >0) topleft.y -=1;
-  hw_roi = Roi(topleft, size);
-
-  //  hw_roi = Roi(the_left, the_top, the_width, the_height);
 }
 
 void
 lima::Andor3::Camera::setRoi(const Roi& set_roi)
 {
   DEB_MEMBER_FUNCT();
-  Bin			the_binning;
+  Bin		the_binning;
   AT_64		the_left, the_width, the_top, the_height;
   AT_64		the_bin_nb;
+  Roi           hw_roi, max_roi;
+  Size          max_size;
 
+  DEB_TRACE() << "set_roi = " << set_roi;
   getBin(the_binning);
   the_bin_nb = the_binning.getX();
-  the_left = static_cast<AT_64>(set_roi.getTopLeft().x) * the_bin_nb;
-  the_width = static_cast<AT_64>(set_roi.getSize().getWidth());
-  the_top = static_cast<AT_64>(set_roi.getTopLeft().y) * the_bin_nb;
-  the_height = static_cast<AT_64>(set_roi.getSize().getHeight());
-  
+
+  // full size Roi with Binning of course
+  max_roi = Roi(0,0,m_detector_size.getWidth(), m_detector_size.getHeight()).getBinned(the_binning);
+
+  if (set_roi.isActive() && set_roi !=max_roi) {
+    // --- a real roi requested
+    hw_roi = set_roi;
+    
+  } else {
+    // --- either no roi or max size
+    hw_roi = max_roi;
+  }
+
+  the_left = static_cast<AT_64>(hw_roi.getTopLeft().x) * the_bin_nb;
+  the_width = static_cast<AT_64>(hw_roi.getSize().getWidth());
+  the_top = static_cast<AT_64>(hw_roi.getTopLeft().y) * the_bin_nb;
+  the_height = static_cast<AT_64>(hw_roi.getSize().getHeight());
+  // Pb with Odd height Zyla does not support, set nearest even height size (+1)
+  if (the_height & 1) the_height++;
+
   // Performing the settings in the order prescribed by the SDK's documentation:
-  // Binning, width, left, heigh, top :
+  // Binning, width, left, heigh, top :  
   setBin(the_binning);
   // Lima Roi starts at <0,0> Andor3 starts at <1,1>
   setInt(andor3::AOIWidth, the_width);
@@ -916,13 +947,26 @@ lima::Andor3::Camera::getRoi(Roi& hw_roi)
   DEB_MEMBER_FUNCT();
   
   AT_64		the_left, the_width, the_top, the_height;
+  Bin the_binning;
+  getBin(the_binning);
+
   getInt(andor3::AOIWidth, &the_width);
   getInt(andor3::AOILeft, &the_left);
+  the_left -=1;
+  the_left/=the_binning.getX();
   getInt(andor3::AOIHeight, &the_height);
   getInt(andor3::AOITop, &the_top);
+  the_top -=1;
+  the_top /= the_binning.getY();
 
   // Lima Roi starts at <0,0> Andor3 starts at <1,1>
-  hw_roi = Roi(static_cast<int>(the_left-1), static_cast<int>(the_top-1), static_cast<int>(the_width), static_cast<int>(the_height));
+  Roi the_roi;
+  the_roi.setTopLeft(Point(static_cast<int>(the_left), static_cast<int>(the_top)));
+  the_roi.setSize(Size(static_cast<int>(the_width), static_cast<int>(the_height)));
+		     
+
+  hw_roi = the_roi;
+  DEB_TRACE() << "hw_roi = " << hw_roi;
 }
 
 bool

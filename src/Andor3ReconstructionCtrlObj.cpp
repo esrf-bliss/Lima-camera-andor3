@@ -54,20 +54,25 @@ void ReconstructionCtrlObj::prepareAcq()
   DEB_MEMBER_FUNCT();
   
   Roi roi;
+  Size detectorSize;
 
   if (m_active) {    
     m_cam.getRoi(roi);
-
+    m_cam.getDetectorImageSize(detectorSize);
     DEB_TRACE() << DEB_VAR1(roi);
-
-    if (m_cam.getPixelStride() != roi.getSize().getWidth()) {
-      const Point& topLeft = roi.getTopLeft();
-      const Point& bottomRight = roi.getBottomRight();
-      m_task->setRoi(topLeft.x, bottomRight.x, topLeft.y, bottomRight.y);
-       
-      reconstructionChange(m_task);
-   } else {
-      reconstructionChange(NULL);
+    DEB_TRACE() << DEB_VAR1(detectorSize);
+    // do nothing if a roi is set, checkRoi return the hw_roi with stride to get a SoftRoi to be applied.
+    if (roi.getSize().getWidth() == detectorSize.getWidth() && roi.getSize().getHeight() == detectorSize.getHeight()) {
+      if (m_cam.getPixelStride() != roi.getSize().getWidth()) {
+	const Point& topLeft = roi.getTopLeft();
+	const Point& bottomRight = roi.getBottomRight();
+	m_task->setRoi(topLeft.x, bottomRight.x, topLeft.y, bottomRight.y);	
+	reconstructionChange(m_task);
+      } else {
+	reconstructionChange(NULL);
+      }
+    } else {
+      reconstructionChange(NULL);      
     }
   }
 }

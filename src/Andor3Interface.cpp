@@ -40,11 +40,7 @@
 //---------------------------
 lima::Andor3::Interface::Interface(lima::Andor3::Camera& cam, bool destride_active) :
 m_cam(cam),
-m_cap_list() // ,
-//m_det_info(cam),
-//m_sync(cam),
-//m_bin(cam),
-//m_roi(cam),
+m_cap_list()
 {
   DEB_CONSTRUCTOR();
   

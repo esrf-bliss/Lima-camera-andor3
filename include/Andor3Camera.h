@@ -72,7 +72,7 @@ namespace lima
       // The camera trigger mode (in the enum order) :
       enum A3_TriggerMode { Internal = 0, ExternalLevelTransition = 1, ExternalStart = 2, ExternalExposure = 3, Software = 4, Advanced = 5, External = 6 };
       // The binning system of andor3 :
-      enum A3_Binning { B1x1=0, B2x2=1, B4x4=2, B8x8=3};
+      enum A3_Binning { B1x1=0, B2x2=1, B3x3=2, B4x4=3, B8x8=4};
       // The fan speed
       enum A3_FanSpeed { Off=0, Low=1, On=2};
       
