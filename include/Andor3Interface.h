@@ -51,7 +51,7 @@ namespace lima
 	    DEB_CLASS_NAMESPC(DebModCamera, "Andor3Interface", "Andor3");
       
     public:
-	    Interface(Camera& cam, bool destride_active = true);
+	    Interface(Camera& cam);
 	    virtual ~Interface();
       
 	    //- From HwInterface
@@ -86,21 +86,16 @@ namespace lima
       virtual void setSyncTriggering(bool i_sync);
       virtual void getSyncTriggering(bool &o_sync) const;
 
-      void setDestrideActive(bool active);
-      void getDestrideActive(bool& active);
-
-#warning Later should also have overlap and synctriggering ?
-
       // Giving the possibility to get directly the camera object :
       Camera& getCamera()
       { return m_cam; }
         
       
     private:
-	    Camera&         m_cam;
+      Camera&         m_cam;
       CapList         m_cap_list;
-	    DetInfoCtrlObj  *m_det_info;
-	    SyncCtrlObj     *m_sync;
+      DetInfoCtrlObj  *m_det_info;
+      SyncCtrlObj     *m_sync;
       RoiCtrlObj			*m_roi;
       BinCtrlObj			*m_bin;
       ReconstructionCtrlObj *m_reconstruction;

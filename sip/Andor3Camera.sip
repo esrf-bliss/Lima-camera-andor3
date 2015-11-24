@@ -37,8 +37,9 @@ namespace Andor3
     enum A3_ReadOutRate { MHz10 = 0, MHz100 = 1, MHz200 = 2, MHz280 = 3 };
     enum A3_BitDepth { b11 = 0, b16= 1 };
     enum A3_TriggerMode { Internal = 0, ExternalLevelTransition = 1, ExternalStart = 2, ExternalExposure = 3, Software = 4, Advanced = 5, External = 6 };
-    enum A3_Binning { B1x1=0, B2x2=1, B4x4=2, B8x8=3};
+    enum A3_Binning { B1x1=0, B2x2=1, B3x3=2, B4x4=3, B8x8=4};
     enum A3_FanSpeed { Off=0, Low=1, On=2};
+    enum A3_PixelEncoding {Mono12=0, Mono12Packed = 1, Mono16=2, Mono32=3};
 
     Camera(const std::string& bitflow_path, int camera_number=0);
     ~Camera();
@@ -143,6 +144,9 @@ namespace Andor3
    void getReadoutTime(double &o_time /Out/ ) const;
    void getSerialNumber(std::string &o_sn /Out/ ) const;
    int  getPixelStride() const;
+    bool isDestrideNeeded() const;
+    bool isDecodeNeeded() const;
+
   };
 
 };

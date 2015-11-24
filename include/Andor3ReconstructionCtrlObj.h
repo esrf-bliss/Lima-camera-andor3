@@ -24,10 +24,8 @@
 
 #include "lima/HwReconstructionCtrlObj.h"
 
-namespace Tasks
-{
-  class SoftRoi;
-}
+
+class _ReconstructionTask;
 
 namespace lima
 {
@@ -40,17 +38,16 @@ namespace lima
       DEB_CLASS_NAMESPC(DebModCamera, "Andor3ReconstructionCtrlObj", "Andor3");
 
     public:
-      ReconstructionCtrlObj(Camera& cam, bool active);
+      ReconstructionCtrlObj(Camera& cam);
       ~ReconstructionCtrlObj();
       virtual LinkTask* getReconstructionTask();      
-      void setActive(bool active);
       void getActive(bool& active) const;
       void prepareAcq();
 
     private:
-      Camera&		m_cam;
-      bool		m_active;
-      Tasks::SoftRoi*	m_task;
+      Camera&		    m_cam;
+      _ReconstructionTask*  m_task;
+      bool                  m_active;
     };
   }
 }

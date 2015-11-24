@@ -38,7 +38,7 @@
 //---------------------------
 //- @brief constructor
 //---------------------------
-lima::Andor3::Interface::Interface(lima::Andor3::Camera& cam, bool destride_active) :
+lima::Andor3::Interface::Interface(lima::Andor3::Camera& cam) :
 m_cam(cam),
 m_cap_list()
 {
@@ -48,7 +48,7 @@ m_cap_list()
   m_sync = new SyncCtrlObj(m_cam);
   m_roi = new RoiCtrlObj(m_cam, this);
   m_bin = new BinCtrlObj(m_cam, this);
-  m_reconstruction = new ReconstructionCtrlObj(m_cam, destride_active);
+  m_reconstruction = new ReconstructionCtrlObj(m_cam);
 
   // Taking care of the content of the CapList, once for all :
   m_cap_list.push_back(HwCap(m_det_info));
@@ -90,7 +90,7 @@ lima::Andor3::Interface::reset(ResetLevel reset_level)
   DEB_PARAM() << DEB_VAR1(reset_level);
 
   stopAcq();
-#warning Should make sure that within finite time the camera returns to status Ready !!!
+  //#warning Should make sure that within finite time the camera returns to status Ready !!!
   // Should be done now...
 }
 
@@ -286,21 +286,6 @@ lima::Andor3::Interface::getSyncTriggering(bool &o_sync) const
   DEB_MEMBER_FUNCT();
   m_cam.getSyncTriggering(o_sync);
 }
-
-void lima::Andor3::Interface::setDestrideActive(bool active)
-{
-  DEB_MEMBER_FUNCT();
-  m_reconstruction->setActive(active);
-  m_cam.setDestrideActive(active);
-
-}
-
-void lima::Andor3::Interface::getDestrideActive(bool& active)
-{
-  DEB_MEMBER_FUNCT();
-  m_reconstruction->getActive(active);
-}
-
 
 /*
  Local Variables:

@@ -29,13 +29,11 @@ namespace Andor3
   protected:
 
   public:
-    Interface(Andor3::Camera& cam /In,KeepReference/, bool destride_active = true );
+    Interface(Andor3::Camera& cam /In,KeepReference/);
     virtual ~Interface();
 
 
     //- From HwInterface
-// SIP is not knowing what is CapList ... We have to use the native type rather than the typedef :
-//    virtual void    getCapList(CapList& /Out/ ) const;
     virtual void    getCapList(std::vector<HwCap> &cap_list /Out/) const;
     virtual void    reset(ResetLevel reset_level /In/ );
     virtual void    prepareAcq();
@@ -66,9 +64,5 @@ namespace Andor3
     virtual void getOverlap(bool &o_overlap /Out/ ) const;
     virtual void setSyncTriggering(bool i_sync /In/ );
     virtual void getSyncTriggering(bool &o_sync /Out/ ) const;
-
-   void setDestrideActive(bool active /In/);
-   void getDestrideActive(bool& active /Out/);
-
   };
 };

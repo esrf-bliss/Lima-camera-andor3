@@ -61,7 +61,6 @@ namespace lima
       // In the same order/index as "PreAmpGainControl"
       enum A3_Gain { Gain1 = 0, Gain2 = 1, Gain3 = 2, Gain4 = 3, Gain1_Gain3 = 4, Gain1_Gain4 = 5, Gain2_Gain3 = 6, Gain2_Gain4 = 7 };
       // The "simple" version :
-#warning Should verify the order of these on a camera which implements it :
       enum A3_SimpleGain { b11_hi_gain=0, b11_low_gain=1, b16_lh_gain=2, none=31};
       // In the same order/index as "ElectronicShutteringMode"
       enum A3_ShutterMode { Rolling = 0, Global = 1 };
@@ -75,6 +74,7 @@ namespace lima
       enum A3_Binning { B1x1=0, B2x2=1, B3x3=2, B4x4=3, B8x8=4};
       // The fan speed
       enum A3_FanSpeed { Off=0, Low=1, On=2};
+      enum A3_PixelEncoding {Mono12=0, Mono12Packed = 1, Mono16=2, Mono32=3};
       
 /*
       // In the order of the menu, the status of the cooling unit :
@@ -199,6 +199,8 @@ namespace lima
       void getReadoutTime(double &o_time) const;
       void getSerialNumber(std::string &o_sn) const;
       int getPixelStride() const;
+      bool isDestrideNeeded() const {return m_destride_active;};
+      bool isDecodeNeeded() const {return m_decode_active;};
 
     protected:
       virtual void setMaxImageSizeCallbackActive(bool cb_active);
@@ -300,8 +302,9 @@ namespace lima
 
       static bool                 sAndorSDK3Initted;
       
-      bool m_destride_active;
       bool m_maximage_size_cb_active;
+      bool m_destride_active;
+      bool m_decode_active;
     };
     
     // Some inline utility functions; used all-over in Andor3 plugin :

@@ -23,7 +23,7 @@ SRCS = $(andor3-objs:.o=.cpp)
 
 CXXFLAGS += -I../include -I../../../hardware/include -I../../../common/include \
 	-I/usr/local/include -I../../../third-party/Processlib/core/include -I../../../third-party/Processlib/tasks/include \
-			-Wall -pthread -fPIC -g
+			-Wall -pthread -fPIC -g -O2
 
 all:	Andor3.o
 
