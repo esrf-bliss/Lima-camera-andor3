@@ -106,7 +106,7 @@ namespace Andor3
    void setBitDepth(A3_BitDepth iMode /In/ );
    void getBitDepth(A3_BitDepth &oMode /Out/ ) const;
    void getBitDepthString(std::string &oDepthString /Out/ ) const;
-   void getPxEncoding(std::string &oPxEncoding /Out/ ) const;
+   void getPxEncodingString(std::string &oPxEncoding /Out/ ) const;
    void setTriggerMode(A3_TriggerMode iMode /In/ );
    void getTriggerMode(A3_TriggerMode &oMode /Out/ ) const;
    void getTriggerModeString(std::string &oModeString /Out/ ) const;
@@ -144,9 +144,6 @@ namespace Andor3
    void getReadoutTime(double &o_time /Out/ ) const;
    void getSerialNumber(std::string &o_sn /Out/ ) const;
    int  getPixelStride() const;
-    bool isDestrideNeeded() const;
-    bool isDecodeNeeded() const;
-
   };
 
 };

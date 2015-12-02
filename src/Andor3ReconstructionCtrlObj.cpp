@@ -1,7 +1,7 @@
 //###########################################################################
 // This file is part of LImA, a Library for Image Acquisition
 //
-// Copyright (C) : 2009-2013
+// Copyright (C) : 2009-2015
 // European Synchrotron Radiation Facility
 // BP 220, Grenoble 38043
 // FRANCE
@@ -35,83 +35,100 @@ class _ReconstructionTask : public LinkTask
 {
   DEB_CLASS_NAMESPC(DebModCameraCom, "_ReconstructionTask", "Andor3");
 public:
-  _ReconstructionTask(): m_decode_active(false), m_destride_active(false) {}
+  _ReconstructionTask()
+  {
+    AT_InitialiseUtilityLibrary();
+  }
+
+  ~_ReconstructionTask()
+  {
+    AT_FinaliseUtilityLibrary();
+  }
+
+  void setSdkFrameDim(Camera::SdkFrameDim& frame_dim){m_sdk_frame_dim = frame_dim;};
+  void setBuffer( HwBufferCtrlObj* buffer_ctrl_obj) {m_buffer_ctrl_obj= (SoftBufferCtrlObj *)buffer_ctrl_obj;};
+
   virtual Data process(Data&);
-  void setDecodeActive(bool flag) {m_decode_active = flag;};
-  void setDestrideActive(bool flag){m_destride_active = flag;};
-  void setRoi(Roi& roi) {m_roi=roi;};
 private:
-  bool m_decode_active;
-  bool m_destride_active;
-  Roi m_roi;
+  Camera::SdkFrameDim m_sdk_frame_dim;
+  SoftBufferCtrlObj* m_buffer_ctrl_obj;
 };
 
 Data  _ReconstructionTask::process(Data& src)
 {
   DEB_MEMBER_FUNCT();
 
-  if (m_decode_active)
+  StdBufferCbMgr &the_buffer_mgr = m_buffer_ctrl_obj->getBuffer();
+  if (src.depth() != 2) 
     {
-      if (src.depth() != 2) 
-	{
-	  char ErrorBuff[1024];
-	  snprintf(ErrorBuff,sizeof(ErrorBuff),
-		   "_ReconstructionTask: can't decode data only for 12bit packed, 2 bytes and data depth is %d",
-		   src.depth());
-	  throw ProcessException(ErrorBuff);     
-	}
-
-      // Mono12Packed encoding: 3 bytes for 2 pixels
-      //   ----------------------------------------------------------------------------------
-      //  |Bits 11:4 = Most Significant Bits (MSB) | Bits 3:0 = Least Significant Bits (LSB) |
-      //   ----------------------------------------------------------------------------------
-      //  In buffer memory (ImageBuffer)
-      //  -----------------------------------------------
-      // | ImageBuffer+0 |           Pixel A (MSB)       |
-      //  -----------------------------------------------
-      // | ImageBuffer+1 | Pixel B (LSB) | Pixel A (LSB) |
-      //  -----------------------------------------------
-      // | ImageBuffer+2 |           Pixel B (MSB)       |
-      //  -----------------------------------------------
-      // | ImageBuffer+3 |           Pixel C (MSB)       |
-      //  -----------------------------------------------
-      // | ImageBuffer+4 | Pixel D (LSB) | Pixel C (LSB) |
-      //  -----------------------------------------------
-      // | ImageBuffer+5 |           Pixel D (MSB)       |
-      //  -----------------------------------------------
-      //
-      int nb_pixels = src.size()/src.depth();
-      // for this unpacking algorithm we seek memory from bottom to top address
-      // this is not super efficient but a choice to not use 2 buffer systems for memory copies.
-      // move to the latest pixel memory position
-      unsigned short* dst_data = (unsigned short*)src.data()+nb_pixels-1;
-      // move the packed ptr to the last byte as well
-      int coded_size = (int) (nb_pixels * 1.5);
-      unsigned char* coded_ptr = (unsigned char*) src.data() + coded_size;
-      
-      
-      unsigned short msb_byte1, msb_byte2, lsb_byte;
-      while (nb_pixels)
-      	{
-	  msb_byte2 = *(--coded_ptr); lsb_byte= *(--coded_ptr); msb_byte1 = *(--coded_ptr);
-
-	  *dst_data = (msb_byte2 << 4) + (lsb_byte >> 4);
-	  *(--dst_data) = (msb_byte1 << 4) + (lsb_byte & 0xF);
-	  nb_pixels-=2;
-	  --dst_data;
-	}
-    } // if (m_decode_active)
-  
-  if (m_destride_active)
-    {
-      Tasks::SoftRoi roi_task;
-      Point top_left = m_roi.getTopLeft();
-      Point bottom_right = m_roi.getBottomRight();
-      roi_task.setRoi(top_left.x, bottom_right.x,top_left.y, bottom_right.y);
-      return roi_task.process(src);
+      char ErrorBuff[1024];
+      snprintf(ErrorBuff,sizeof(ErrorBuff),
+	       "_ReconstructionTask: can't decode data only for 12bit packed, 2 bytes and data depth is %d",
+	       src.depth());
+      throw ProcessException(ErrorBuff);     
     }
-  else 
-    return src;
+  
+  int frame_number = src.frameNumber;
+  void * dest_buffer_ptr = src.data();
+  void * src_buffer_ptr = the_buffer_mgr.getFrameBufferPtr(frame_number);
+  
+  int res = AT_ConvertBuffer(static_cast<AT_U8*>(src_buffer_ptr), 
+			     static_cast<AT_U8*>(dest_buffer_ptr),
+			     m_sdk_frame_dim.width,
+			     m_sdk_frame_dim.height, 
+			     m_sdk_frame_dim.stride,
+			     m_sdk_frame_dim.input_encoding,
+			     m_sdk_frame_dim.output_encoding);
+
+  if (! res == AT_SUCCESS)
+    {
+      THROW_HW_ERROR(Error) << "Cannot convert buffer to Mono16";
+      
+    }
+  
+  // Mono12Packed encoding: 3 bytes for 2 pixels
+  //   ----------------------------------------------------------------------------------
+  //  |Bits 11:4 = Most Significant Bits (MSB) | Bits 3:0 = Least Significant Bits (LSB) |
+  //   ----------------------------------------------------------------------------------
+  //  In buffer memory (ImageBuffer)
+  //  -----------------------------------------------
+  // | ImageBuffer+0 |           Pixel A (MSB)       |
+  //  -----------------------------------------------
+  // | ImageBuffer+1 | Pixel B (LSB) | Pixel A (LSB) |
+  //  -----------------------------------------------
+  // | ImageBuffer+2 |           Pixel B (MSB)       |
+  //  -----------------------------------------------
+  // | ImageBuffer+3 |           Pixel C (MSB)       |
+  //  -----------------------------------------------
+  // | ImageBuffer+4 | Pixel D (LSB) | Pixel C (LSB) |
+  //  -----------------------------------------------
+  // | ImageBuffer+5 |           Pixel D (MSB)       |
+  //  -----------------------------------------------
+  //
+
+  /***
+  int nb_pixels = src.size()/src.depth();
+  // for this unpacking algorithm we seek memory from bottom to top address
+  // this is not super efficient but a choice to not use 2 buffer systems for memory copies.
+  // move to the latest pixel memory position
+  unsigned short* dst_data = (unsigned short*)src.data()+nb_pixels-1;
+  // move the packed ptr to the last byte as well
+  int coded_size = (int) (nb_pixels * 1.5);
+  unsigned char* coded_ptr = (unsigned char*) src.data() + coded_size;
+  
+  
+  unsigned short msb_byte1, msb_byte2, lsb_byte;
+  while (nb_pixels)
+    {
+      msb_byte2 = *(--coded_ptr); lsb_byte= *(--coded_ptr); msb_byte1 = *(--coded_ptr);
+      
+      *dst_data = (msb_byte2 << 4) + (lsb_byte >> 4);
+      *(--dst_data) = (msb_byte1 << 4) + (lsb_byte & 0xF);
+      nb_pixels-=2;
+      --dst_data;
+    }
+  ***/  
+  return src;
 }
 
 //-----------------------------------------------------
@@ -138,10 +155,9 @@ ReconstructionCtrlObj::~ReconstructionCtrlObj()
 void ReconstructionCtrlObj::prepareAcq()
 {
   DEB_MEMBER_FUNCT();
-  
-  bool destride_needed = m_cam.isDestrideNeeded();
-  bool decode_needed   = m_cam.isDecodeNeeded();
-  if (!destride_needed && ! decode_needed)
+  Camera::SdkFrameDim the_sdk_frame_dim;
+  m_cam.getSdkFrameDim(the_sdk_frame_dim, true);
+  if (!the_sdk_frame_dim.is_encoded && ! the_sdk_frame_dim.is_strided)
     {
       m_active = false;
       reconstructionChange(NULL);
@@ -149,15 +165,8 @@ void ReconstructionCtrlObj::prepareAcq()
   else
     {
       m_active = true;
-      m_task->setDestrideActive(destride_needed);
-      if (destride_needed) 
-	{
-	  Size detector_size;
-	  m_cam.getDetectorImageSize(detector_size);
-	  Roi roi(0,0,detector_size.getWidth(),detector_size.getHeight());
-	  m_task->setRoi(roi);
-	}
-      m_task->setDecodeActive(decode_needed);
+      m_task->setSdkFrameDim(the_sdk_frame_dim);
+      m_task->setBuffer(m_cam.getTempBufferCtrlObj());
       reconstructionChange(m_task);
     }
 }

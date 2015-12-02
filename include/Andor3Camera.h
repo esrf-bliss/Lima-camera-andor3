@@ -31,6 +31,7 @@
 
 // Camera SDK headers :
 #include <atcore.h>
+#include <atutility.h>
 
 // LImA headers :
 #include "lima/HwMaxImageSizeCallback.h"
@@ -76,15 +77,20 @@ namespace lima
       enum A3_FanSpeed { Off=0, Low=1, On=2};
       enum A3_PixelEncoding {Mono12=0, Mono12Packed = 1, Mono16=2, Mono32=3};
       
-/*
-      // In the order of the menu, the status of the cooling unit :
-      enum A3_TemperatureStatus {	Cooler_Off=0,
-        Stabilised = 1,
-        Cooling = 2,
-        Drift = 3,
-        Not_Stabilised = 4,
-        T_Fault = 5 };
- */
+      struct SdkFrameDim {       
+	AT_64 width;
+	AT_64 height;
+	AT_64 stride;
+	double bytes_per_pixel;
+	AT_64 size;
+	A3_PixelEncoding encoding;
+	const AT_WC* input_encoding;
+	const AT_WC* output_encoding;
+	bool is_encoded;
+	bool is_strided;
+      };
+      
+      int getHwBitDepth(int *bit_depth);
       
       Camera(const std::string& bitflow_path, int camera_number=0);
       ~Camera();
@@ -136,8 +142,6 @@ namespace lima
       
       void getPixelSize(double& sizex, double& sizey);
 
-      void getSdkFrameDim(FrameDim &frame_dim);
-
       void getStatus(Camera::Status& status);
       
       // --- Acquisition interface
@@ -161,7 +165,8 @@ namespace lima
       void setBitDepth(A3_BitDepth iMode);
       void getBitDepth(A3_BitDepth &oMode) const;
       void getBitDepthString(std::string &oDepthString) const;
-      void getPxEncoding(std::string &oPxEncoding) const;
+      void getPxEncoding(A3_PixelEncoding &oPxEncoding) const;
+      void getPxEncodingString(std::string &oPxEncoding) const;
       void setTriggerMode(A3_TriggerMode iMode);
       void getTriggerMode(A3_TriggerMode &oMode) const;
       void getTriggerModeString(std::string &oModeString) const;
@@ -199,16 +204,15 @@ namespace lima
       void getReadoutTime(double &o_time) const;
       void getSerialNumber(std::string &o_sn) const;
       int getPixelStride() const;
-      bool isDestrideNeeded() const {return m_destride_active;};
-      bool isDecodeNeeded() const {return m_decode_active;};
+      void getSdkFrameDim(SdkFrameDim &frame_dim,bool last);
+      HwBufferCtrlObj* getTempBufferCtrlObj();
+
 
     protected:
       virtual void setMaxImageSizeCallbackActive(bool cb_active);
 
     private:
-      int getHwBitDepth(int *bit_depth);
-      void setDestrideActive(bool active);
-      
+       
       // -- some internals :
       // Stopping an acquisition, iForce : without waiting the end of frame buffer retrieval by m_acq_thread
       void _stopAcq(bool iImmediate);
@@ -261,7 +265,8 @@ namespace lima
 
       // -- Members
       // LIMA / Acquisition (thread) related :
-      _BufferCtrlObj*             m_buffer_ctrl_obj;
+      SoftBufferCtrlObj*          m_buffer_ctrl_obj;
+      SoftBufferCtrlObj*          m_temp_buffer_ctrl_obj;
       // Pure thread and signals :
       _AcqThread*                 m_acq_thread;		   // The thread retieving frame buffers from the SDK
       Cond                        m_cond;		   // Waiting condition for inter thread signaling
@@ -297,14 +302,15 @@ namespace lima
       A3_TriggerMode              m_trig_mode;
       bool                        m_cooler;
       double                      m_temperature_sp;
+      bool                        m_temperature_control_available;
+
       // std::map<TrigMode, int>     m_trig_mode_maps;
       std::map<int, std::string>  m_andor3_error_maps;
 
       static bool                 sAndorSDK3Initted;
-      
-      bool m_maximage_size_cb_active;
-      bool m_destride_active;
-      bool m_decode_active;
+    
+      bool  m_maximage_size_cb_active;
+      Camera::SdkFrameDim m_sdk_frame_dim;
     };
     
     // Some inline utility functions; used all-over in Andor3 plugin :
