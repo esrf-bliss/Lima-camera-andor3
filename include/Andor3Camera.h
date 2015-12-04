@@ -221,9 +221,6 @@ namespace lima
       
     private:
       // -- andor3 Lower level functions
-      int andor3Error(int code) const;
-      void _mapAndor3Error();
-      
       int printInfoForProp(const AT_WC * iPropName, A3_TypeInfo iPropType) const;
       bool propImplemented(const AT_WC * iPropName) const;
       
@@ -292,8 +289,6 @@ namespace lima
       std::string                 m_bitflow_path;
       int                         m_camera_number;
       AT_H                        m_camera_handle;
-      mutable std::string         m_camera_error_str;
-      mutable int                 m_camera_error;
       A3_Gain                     m_adc_gain;
       A3_SimpleGain               m_simple_gain;
       A3_ReadOutRate	          m_adc_rate;
@@ -305,7 +300,6 @@ namespace lima
       bool                        m_temperature_control_available;
 
       // std::map<TrigMode, int>     m_trig_mode_maps;
-      std::map<int, std::string>  m_andor3_error_maps;
 
       static bool                 sAndorSDK3Initted;
     

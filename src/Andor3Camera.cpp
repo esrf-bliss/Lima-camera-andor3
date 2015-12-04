@@ -29,6 +29,15 @@
 // Andor3 plugin headers :
 #include "Andor3Camera.h"
 
+//static methods predefinition
+static const char* error_code(int error_code);
+
+#define THROW_IF_NOT_SUCCESS(command,error_prefix)			\
+{									\
+  int ret_code = command;						\
+  if ( AT_SUCCESS != ret_code )						\
+    THROW_HW_ERROR(Error) << error_prefix << DEB_VAR1(error_code(ret_code)); \
+}
 
 // Defining the parameter names of the andor3 SDK :
 namespace lima {
@@ -171,9 +180,6 @@ m_maximage_size_cb_active(false)
   // temporary buffer when the reconstruction task is active for decoding and destriding
   m_temp_buffer_ctrl_obj = new SoftBufferCtrlObj();
 
-  // Initing the maps that serves for error string generation :
-  _mapAndor3Error();
-  
   // Initialisation of the atcore library :
   if ( ! sAndorSDK3Initted ) {
     if ( m_bitflow_path != "" ) {
@@ -183,44 +189,38 @@ m_maximage_size_cb_active(false)
       setenv("BITFLOW_INSTALL_DIRS", "/usr/share/andor-3-sdk", false);
     }
     
-    if ( AT_SUCCESS != andor3Error(AT_InitialiseLibrary()) ) {
-      DEB_ERROR() << "Library initialization failed, check the config. path" << " : error code = " << m_camera_error_str;
-      THROW_HW_ERROR(Error) << "Library initialization failed, check the bitflow path";
-    }
-    if ( AT_SUCCESS != andor3Error(AT_InitialiseUtilityLibrary()) ) {
-      DEB_ERROR() << "Library Utility initialization failed, check the config. path" << " : error code = " << m_camera_error_str;
-      THROW_HW_ERROR(Error) << "Library Utility initialization failed, check the bitflow path";
-    }
+    THROW_IF_NOT_SUCCESS(AT_InitialiseLibrary(),
+			 "Library initialization failed, check the bitflow path");
+
+    THROW_IF_NOT_SUCCESS(AT_InitialiseUtilityLibrary(),
+			 "Library Utility initialization failed, check the bitflow path");
   }
 
   // --- Get available cameras and select the choosen one.
   AT_64 numCameras;
   DEB_TRACE() << "Get all attached cameras";
-  if ( AT_SUCCESS != getIntSystem(andor3::DeviceCount, &numCameras) ) {
-    DEB_ERROR() << "No camera present!";
-    THROW_HW_ERROR(Error) << "No camera present!";
-  }
+  THROW_IF_NOT_SUCCESS(getIntSystem(andor3::DeviceCount, &numCameras),
+		       "No camera present!");
+
   DEB_TRACE() << "Found "<< numCameras << " camera" << ((numCameras>1)? "s": "");
   DEB_TRACE() << "Try to set current camera to number " << m_camera_number;
   
   if ( m_camera_number < numCameras && m_camera_number >=0 ) {
     // Getting the m_camera_handle WITH some error checking :
-    if(andor3Error(AT_Open(m_camera_number, &m_camera_handle))) {
-      DEB_ERROR() << "Cannot get camera handle" << " : error code = " << m_camera_error_str;;
-      THROW_HW_ERROR(InvalidValue) << "Cannot get camera handle";
-    }
+    THROW_IF_NOT_SUCCESS(AT_Open(m_camera_number, &m_camera_handle),
+			 "Cannot get camera handle");
   }
   else {
-    DEB_ERROR() << "Invalid camera number " << m_camera_number << ", there is "<< numCameras << " available";
-    THROW_HW_ERROR(InvalidValue) << "Invalid Camera number ";
+    THROW_HW_ERROR(InvalidValue) << "Invalid camera number " 
+				 << m_camera_number << ", there is "
+				 << numCameras << " available";
   }
   
   // --- Get Camera model (and all other parameters which are not changing during camera setup and usage )
   AT_WC	model[1024];
-  if ( AT_SUCCESS != getString(andor3::CameraModel, model, 1024) ) {
-    DEB_ERROR() << "Cannot get camera model: " << m_camera_error_str;
-    THROW_HW_ERROR(Error) << "Cannot get camera model";
-  }
+  THROW_IF_NOT_SUCCESS(getString(andor3::CameraModel, model, 1024),
+		       "Cannot get camera model");
+
   m_detector_model = WStringToString(std::wstring(model));
   
   // Adding some extra information on the model (more human readable) :
@@ -265,23 +265,20 @@ m_maximage_size_cb_active(false)
 
   // --- Get Camera Serial number
   AT_WC	serial[1024];
-  if ( AT_SUCCESS != getString(andor3::SerialNumber, serial, 1024) ) {
-    DEB_ERROR() << "Cannot get camera serial number: " << m_camera_error_str;
-    THROW_HW_ERROR(Error) << "Cannot get camera serial number";
-  }
+  THROW_IF_NOT_SUCCESS(getString(andor3::SerialNumber, serial, 1024),
+		       "Cannot get camera serial number");
+
   m_detector_serial = WStringToString(std::wstring(serial));
 
   // --- Get Camera maximum image size 
   AT_64 xmax, ymax;
   // --- Get the max image size of the detector
-  if ( AT_SUCCESS != getInt(andor3::SensorWidth, &xmax)) {
-    DEB_ERROR() << "Cannot get detector X size" << " : error code = " << m_camera_error_str;
-    THROW_HW_ERROR(Error) << "Cannot get detector X size";
-  }
-  if ( AT_SUCCESS != getInt(andor3::SensorHeight, &ymax)) {
-    DEB_ERROR() << "Cannot get detector Y size" << " : error code = " << m_camera_error_str;
-    THROW_HW_ERROR(Error) << "Cannot get detector Y size";
-  }
+  THROW_IF_NOT_SUCCESS(getInt(andor3::SensorWidth, &xmax),
+		       "Cannot get detector X size");
+
+  THROW_IF_NOT_SUCCESS(getInt(andor3::SensorHeight, &ymax),
+		       "Cannot get detector Y size");
+
   m_detector_size= Size(static_cast<int>(xmax), static_cast<int>(ymax));
   
   // --- Initialise deeper parameters of the controller
@@ -328,20 +325,15 @@ lima::Andor3::Camera::~Camera()
   
   DEB_TRACE() << "Shutdown camera";
 
-  if ( AT_SUCCESS != andor3Error(AT_Close(m_camera_handle)) ) {
-    DEB_ERROR() << "Cannot close the camera" << " : error code = " << m_camera_error << ", " <<m_camera_error_str;
-    THROW_HW_ERROR(Error) << "Cannot close the camera";
-  }
+  THROW_IF_NOT_SUCCESS(AT_Close(m_camera_handle),"Cannot close the camera");
+
   m_camera_handle = AT_HANDLE_UNINITIALISED;
 
-  if ( AT_SUCCESS != andor3Error(AT_FinaliseUtilityLibrary()) ) {
-    DEB_ERROR() << "Cannot finalise Andor SDK 3 Utility library" << " : error code = " << m_camera_error << ", " <<m_camera_error_str;
-    THROW_HW_ERROR(Error) << "Cannot finalise Andor SDK 3 Utility library";
-  }
-  if ( AT_SUCCESS != andor3Error(AT_FinaliseLibrary()) ) {
-    DEB_ERROR() << "Cannot finalise Andor SDK 3 library" << " : error code = " << m_camera_error << ", " <<m_camera_error_str;
-    THROW_HW_ERROR(Error) << "Cannot finalise Andor SDK 3 library";
-  }
+  THROW_IF_NOT_SUCCESS(AT_FinaliseUtilityLibrary(),
+		       "Cannot finalise Andor SDK 3 Utility library");
+
+  THROW_IF_NOT_SUCCESS(AT_FinaliseLibrary(),
+		       "Cannot finalise Andor SDK 3 library");
 
   delete m_buffer_ctrl_obj;
   delete m_temp_buffer_ctrl_obj;
@@ -1152,7 +1144,7 @@ lima::Andor3::Camera::initialiseController()
     // Making sure the «spurious noise filter» is OFF (maybe later use the higher level setSpuriousNoiseFilter call rather than this low level one) :
     int  the_err_code = setBool(andor3::SpuriousNoiseFilter, false);
     if ( AT_SUCCESS != the_err_code ) {
-      DEB_WARNING() << "Cannot set SpuriousNoiseFilter to false" << " : error code = " << m_camera_error_str;
+      DEB_WARNING() << "Cannot set SpuriousNoiseFilter to false" << DEB_VAR1(error_code(the_err_code));
       if ( AT_ERR_NOTIMPLEMENTED == the_err_code ) {
 	DEB_WARNING() << "It seems that the feature 'SpuriousNoiseFilter' is not implemented on this hardware, we will not throw an exception this time.";
       }
@@ -1938,67 +1930,58 @@ lima::Andor3::Camera::_setStatus(Status iStatus, bool iForce)
   DEB_TRACE() << "_setStatus broadcasting and releasing soon the mutex lock.";
 }
 
-
 //-----------------------------------------------------
-// @brief handle the andor3 error codes
+// @brief just error codes to string
 //-----------------------------------------------------
-int
-lima::Andor3::Camera::andor3Error(int code) const
+static const char* error_code(int error_code)
 {
-  m_camera_error = code;
-  //  m_camera_error_str = m_andor3_error_maps[code]; // Not const !
-  m_camera_error_str = m_andor3_error_maps.at(code);
-  
-  //return ( AT_SUCCESS != code );
-  return code;
-}
-
-//-----------------------------------------------------
-// @brief just build a map of error codes
-//-----------------------------------------------------
-void
-lima::Andor3::Camera::_mapAndor3Error()
-{
-  m_andor3_error_maps[AT_SUCCESS] = "'AT_SUCCESS' : Function call has been successful";
-  m_andor3_error_maps[AT_ERR_NOTINITIALISED] = "'AT_ERR_NOTINITIALISED' : Function called with an uninitialised handle";
-  m_andor3_error_maps[AT_ERR_NOTIMPLEMENTED] = "'AT_ERR_NOTIMPLEMENTED' : Feature has not been implemented for the chosen camera";
-  m_andor3_error_maps[AT_ERR_READONLY] = "'AT_ERR_READONLY' : Feature is read only";
-  m_andor3_error_maps[AT_ERR_NOTREADABLE] = "'AT_ERR_NOTREADABLE' : Feature is currently not readable";
-  m_andor3_error_maps[AT_ERR_NOTWRITABLE] = "'AT_ERR_NOTWRITABLE' : Feature is currently not writable";
-  m_andor3_error_maps[AT_ERR_OUTOFRANGE] = "'AT_ERR_OUTOFRANGE' : Value is outside the maximum and minimum limits";
-  m_andor3_error_maps[AT_ERR_INDEXNOTAVAILABLE] = "'AT_ERR_INDEXNOTAVAILABLE' : Index is currently not available";
-  m_andor3_error_maps[AT_ERR_INDEXNOTIMPLEMENTED] = "'AT_ERR_INDEXNOTIMPLEMENTED' : Index is not implemented for the chosen camera";
-  m_andor3_error_maps[AT_ERR_EXCEEDEDMAXSTRINGLENGTH] = "'AT_ERR_EXCEEDEDMAXSTRINGLENGTH' : String value provided exceeds the maximum allowed length";
-  m_andor3_error_maps[AT_ERR_CONNECTION] = "'AT_ERR_CONNECTION' : Error connecting to or disconnecting from hardware";
-  m_andor3_error_maps[AT_ERR_NODATA] = "AT_ERR_NODATA";
-  m_andor3_error_maps[AT_ERR_INVALIDHANDLE] = "AT_ERR_INVALIDHANDLE";
-  m_andor3_error_maps[AT_ERR_TIMEDOUT] = "'AT_ERR_TIMEDOUT' : The AT_WaitBuffer function timed out while waiting for data arrive in output queue";
-  m_andor3_error_maps[AT_ERR_BUFFERFULL] = "'AT_ERR_BUFFERFULL' : The input queue has reached its capacity";
-  m_andor3_error_maps[AT_ERR_INVALIDSIZE] = "'AT_ERR_INVALIDSIZE' : The size of a queued buffer did not match the frame size";
-  m_andor3_error_maps[AT_ERR_INVALIDALIGNMENT] = "'AT_ERR_INVALIDALIGNMENT' : A queued buffer was not aligned on an 8-byte boundary";
-  m_andor3_error_maps[AT_ERR_COMM] = "'AT_ERR_COMM' : An error has occurred while communicating with hardware";
-  m_andor3_error_maps[AT_ERR_STRINGNOTAVAILABLE] = "'AT_ERR_STRINGNOTAVAILABLE' : Index / String is not available";
-  m_andor3_error_maps[AT_ERR_STRINGNOTIMPLEMENTED] = "'AT_ERR_STRINGNOTIMPLEMENTED' : Index / String is not implemented for the chosen camera";
-  m_andor3_error_maps[AT_ERR_NULL_FEATURE] = "AT_ERR_NULL_FEATURE";
-  m_andor3_error_maps[AT_ERR_NULL_HANDLE] = "AT_ERR_NULL_HANDLE";
-  m_andor3_error_maps[AT_ERR_NULL_IMPLEMENTED_VAR] = "AT_ERR_NULL_IMPLEMENTED_VAR";
-  m_andor3_error_maps[AT_ERR_NULL_READABLE_VAR] = "AT_ERR_NULL_READABLE_VAR";
-  m_andor3_error_maps[AT_ERR_NULL_READONLY_VAR] = "AT_ERR_NULL_READONLY_VAR";
-  m_andor3_error_maps[AT_ERR_NULL_WRITABLE_VAR] = "AT_ERR_NULL_WRITABLE_VAR";
-  m_andor3_error_maps[AT_ERR_NULL_MINVALUE] = "AT_ERR_NULL_MINVALUE";
-  m_andor3_error_maps[AT_ERR_NULL_MAXVALUE] = "AT_ERR_NULL_MAXVALUE";
-  m_andor3_error_maps[AT_ERR_NULL_VALUE] = "AT_ERR_NULL_VALUE";
-  m_andor3_error_maps[AT_ERR_NULL_STRING] = "AT_ERR_NULL_STRING";
-  m_andor3_error_maps[AT_ERR_NULL_COUNT_VAR] = "AT_ERR_NULL_COUNT_VAR";
-  m_andor3_error_maps[AT_ERR_NULL_ISAVAILABLE_VAR] = "AT_ERR_NULL_ISAVAILABLE_VAR";
-  m_andor3_error_maps[AT_ERR_NULL_MAXSTRINGLENGTH] = "AT_ERR_NULL_MAXSTRINGLENGTH";
-  m_andor3_error_maps[AT_ERR_NULL_EVCALLBACK] = "AT_ERR_NULL_EVCALLBACK";
-  m_andor3_error_maps[AT_ERR_NULL_QUEUE_PTR] = "AT_ERR_NULL_QUEUE_PTR";
-  m_andor3_error_maps[AT_ERR_NULL_WAIT_PTR] = "AT_ERR_NULL_WAIT_PTR";
-  m_andor3_error_maps[AT_ERR_NULL_PTRSIZE] = "AT_ERR_NULL_PTRSIZE";
-  m_andor3_error_maps[AT_ERR_NOMEMORY] = "AT_ERR_NOMEMORY";
-  m_andor3_error_maps[AT_ERR_DEVICEINUSE] = "AT_ERR_DEVICEINUSE";
-  m_andor3_error_maps[AT_ERR_HARDWARE_OVERFLOW] = "AT_ERR_HARDWARE_OVERFLOW";
+  const char *error;
+  switch(error_code)
+    {
+  case AT_SUCCESS:			error = "'AT_SUCCESS' : Function call has been successful";							 break;
+  case AT_ERR_NOTINITIALISED:		error = "'AT_ERR_NOTINITIALISED' : Function called with an uninitialised handle";				 break;
+  case AT_ERR_NOTIMPLEMENTED:		error = "'AT_ERR_NOTIMPLEMENTED' : Feature has not been implemented for the chosen camera";			 break;
+  case AT_ERR_READONLY:			error = "'AT_ERR_READONLY' : Feature is read only";								 break;
+  case AT_ERR_NOTREADABLE:		error = "'AT_ERR_NOTREADABLE' : Feature is currently not readable";						 break;
+  case AT_ERR_NOTWRITABLE:		error = "'AT_ERR_NOTWRITABLE' : Feature is currently not writable";						 break;
+  case AT_ERR_OUTOFRANGE:		error = "'AT_ERR_OUTOFRANGE' : Value is outside the maximum and minimum limits";				 break;
+  case AT_ERR_INDEXNOTAVAILABLE:	error = "'AT_ERR_INDEXNOTAVAILABLE' : Index is currently not available";					 break;
+  case AT_ERR_INDEXNOTIMPLEMENTED:	error = "'AT_ERR_INDEXNOTIMPLEMENTED' : Index is not implemented for the chosen camera";			 break;
+  case AT_ERR_EXCEEDEDMAXSTRINGLENGTH:	error = "'AT_ERR_EXCEEDEDMAXSTRINGLENGTH' : String value provided exceeds the maximum allowed length";		 break;
+  case AT_ERR_CONNECTION:		error = "'AT_ERR_CONNECTION' : Error connecting to or disconnecting from hardware";				 break;
+  case AT_ERR_NODATA:			error = "AT_ERR_NODATA";											 break;
+  case AT_ERR_INVALIDHANDLE:		error = "AT_ERR_INVALIDHANDLE";											 break;
+  case AT_ERR_TIMEDOUT:			error = "'AT_ERR_TIMEDOUT' : The AT_WaitBuffer function timed out while waiting for data arrive in output queue";break;
+  case AT_ERR_BUFFERFULL:		error = "'AT_ERR_BUFFERFULL' : The input queue has reached its capacity";					 break;
+  case AT_ERR_INVALIDSIZE:		error = "'AT_ERR_INVALIDSIZE' : The size of a queued buffer did not match the frame size";			 break;
+  case AT_ERR_INVALIDALIGNMENT:		error = "'AT_ERR_INVALIDALIGNMENT' : A queued buffer was not aligned on an 8-byte boundary";			 break;
+  case AT_ERR_COMM:			error = "'AT_ERR_COMM' : An error has occurred while communicating with hardware";				 break;
+  case AT_ERR_STRINGNOTAVAILABLE:	error = "'AT_ERR_STRINGNOTAVAILABLE' : Index / String is not available";					 break;
+  case AT_ERR_STRINGNOTIMPLEMENTED:	error = "'AT_ERR_STRINGNOTIMPLEMENTED' : Index / String is not implemented for the chosen camera";		 break;
+  case AT_ERR_NULL_FEATURE:		error = "AT_ERR_NULL_FEATURE";											 break;
+  case AT_ERR_NULL_HANDLE:		error = "AT_ERR_NULL_HANDLE";											 break;
+  case AT_ERR_NULL_IMPLEMENTED_VAR:	error = "AT_ERR_NULL_IMPLEMENTED_VAR";										 break;
+  case AT_ERR_NULL_READABLE_VAR:	error = "AT_ERR_NULL_READABLE_VAR";										 break;
+  case AT_ERR_NULL_READONLY_VAR:	error = "AT_ERR_NULL_READONLY_VAR";										 break;
+  case AT_ERR_NULL_WRITABLE_VAR:	error = "AT_ERR_NULL_WRITABLE_VAR";										 break;
+  case AT_ERR_NULL_MINVALUE:		error = "AT_ERR_NULL_MINVALUE";											 break;
+  case AT_ERR_NULL_MAXVALUE:		error = "AT_ERR_NULL_MAXVALUE";											 break;
+  case AT_ERR_NULL_VALUE:		error = "AT_ERR_NULL_VALUE";											 break;
+  case AT_ERR_NULL_STRING:		error = "AT_ERR_NULL_STRING";											 break;
+  case AT_ERR_NULL_COUNT_VAR:		error = "AT_ERR_NULL_COUNT_VAR";										 break;
+  case AT_ERR_NULL_ISAVAILABLE_VAR:	error = "AT_ERR_NULL_ISAVAILABLE_VAR";										 break;
+  case AT_ERR_NULL_MAXSTRINGLENGTH:	error = "AT_ERR_NULL_MAXSTRINGLENGTH";										 break;
+  case AT_ERR_NULL_EVCALLBACK:		error = "AT_ERR_NULL_EVCALLBACK";										 break;
+  case AT_ERR_NULL_QUEUE_PTR:		error = "AT_ERR_NULL_QUEUE_PTR";										 break;
+  case AT_ERR_NULL_WAIT_PTR:		error = "AT_ERR_NULL_WAIT_PTR";											 break;
+  case AT_ERR_NULL_PTRSIZE:		error = "AT_ERR_NULL_PTRSIZE";											 break;
+  case AT_ERR_NOMEMORY:			error = "AT_ERR_NOMEMORY";											 break;
+  case AT_ERR_DEVICEINUSE:		error = "AT_ERR_DEVICEINUSE";											 break;
+  case AT_ERR_HARDWARE_OVERFLOW:	error = "AT_ERR_HARDWARE_OVERFLOW";										 break;
+    default:
+      error = "Unknown";break;
+    }
+  return error;
 }
 
 int
@@ -2015,9 +1998,10 @@ lima::Andor3::Camera::printInfoForProp(const AT_WC * iPropName, A3_TypeInfo iPro
   
   DEB_TRACE() << "Retrieving information on property named \"" << WStringToString(iPropName) << "\".\n";
   
+  int ret_code;
   // Implemented
-  if ( AT_SUCCESS != andor3Error(AT_IsImplemented(m_camera_handle, iPropName, &b_exists)) ) {
-    DEB_TRACE() << "Error in printInfoForProp : " << m_camera_error_str;
+  if ( AT_SUCCESS != (ret_code = AT_IsImplemented(m_camera_handle, iPropName, &b_exists)) ) {
+    DEB_TRACE() << "Error in printInfoForProp : " << error_code(ret_code);
     return i_err;
   }
   DEB_TRACE() << "\tIsImplemented = " << atBoolToString(b_exists);
@@ -2028,15 +2012,15 @@ lima::Andor3::Camera::printInfoForProp(const AT_WC * iPropName, A3_TypeInfo iPro
   }
   
   // ReadOnly
-  andor3Error(AT_IsReadOnly(m_camera_handle, iPropName, &b_readonly));
+  AT_IsReadOnly(m_camera_handle, iPropName, &b_readonly);
   DEB_TRACE() << "\tIsReadOnly = " << atBoolToString(b_readonly);
   
   // Writable
-  andor3Error(AT_IsWritable(m_camera_handle, iPropName, &b_writable));
+  AT_IsWritable(m_camera_handle, iPropName, &b_writable);
   DEB_TRACE() << "\tIsWritable = " << atBoolToString(b_writable);
   
   // Readable
-  andor3Error(AT_IsReadable(m_camera_handle, iPropName, &b_readable));
+  AT_IsReadable(m_camera_handle, iPropName, &b_readable);
   DEB_TRACE() << "\tIsReadable = " << atBoolToString(b_readable);
   
   if ( ! b_readable ) {
@@ -2063,103 +2047,103 @@ lima::Andor3::Camera::printInfoForProp(const AT_WC * iPropName, A3_TypeInfo iPro
     case Camera::Int:
       DEB_TRACE() << "\tFeature of type INTEGER";
       
-      if ( AT_SUCCESS == andor3Error(AT_GetInt(m_camera_handle, iPropName, &i_Value)) )
+      if ( AT_SUCCESS == (ret_code = AT_GetInt(m_camera_handle, iPropName, &i_Value)) )
         DEB_TRACE() << "\tValue = " << i_Value;
       else
-        DEB_TRACE() << "\tError message : " << m_camera_error_str;
+        DEB_TRACE() << "\tError message : " << error_code(ret_code);
       
-      if ( AT_SUCCESS == andor3Error(AT_GetIntMax(m_camera_handle, iPropName, &i_Value)) )
+      if ( AT_SUCCESS == (ret_code = AT_GetIntMax(m_camera_handle, iPropName, &i_Value)) )
         DEB_TRACE() << "\tMax value = " << i_Value;
       else
-        DEB_TRACE() << "\tError message : " << m_camera_error_str;
+        DEB_TRACE() << "\tError message : " << error_code(ret_code);
       
-      if ( AT_SUCCESS == andor3Error(AT_GetIntMin(m_camera_handle, iPropName, &i_Value)) )
+      if ( AT_SUCCESS == (ret_code = AT_GetIntMin(m_camera_handle, iPropName, &i_Value)) )
         DEB_TRACE() << "\tMin value = " << i_Value;
       else
-        DEB_TRACE() << "\tError message : " << m_camera_error_str;
+        DEB_TRACE() << "\tError message : " << error_code(ret_code);
       break;
       
     case Camera::Float:
       DEB_TRACE() << "\tFeature of type FLOAT";
-      if ( AT_SUCCESS == andor3Error(AT_GetFloat(m_camera_handle, iPropName, &d_Value)) )
+      if ( AT_SUCCESS == (ret_code = AT_GetFloat(m_camera_handle, iPropName, &d_Value)) )
         DEB_TRACE() << "\tValue = " << d_Value;
       else
-        DEB_TRACE() << "\tError message : " << m_camera_error_str;
-      if ( AT_SUCCESS == andor3Error(AT_GetFloatMax(m_camera_handle, iPropName, &d_Value)) )
+        DEB_TRACE() << "\tError message : " << error_code(ret_code);
+      if ( AT_SUCCESS == (ret_code = AT_GetFloatMax(m_camera_handle, iPropName, &d_Value)) )
         DEB_TRACE() << "\tMax value = " << d_Value;
       else
-        DEB_TRACE() << "\tError message : " << m_camera_error_str;
-      if ( AT_SUCCESS == andor3Error(AT_GetFloatMin(m_camera_handle, iPropName, &d_Value)) )
+        DEB_TRACE() << "\tError message : " << error_code(ret_code);
+      if ( AT_SUCCESS == (ret_code = AT_GetFloatMin(m_camera_handle, iPropName, &d_Value)) )
         DEB_TRACE() << "\tMin value = " << d_Value;
       else
-        DEB_TRACE() << "\tError message : " << m_camera_error_str;
+        DEB_TRACE() << "\tError message : " << error_code(ret_code);
       break;
       
     case Camera::Bool:
       DEB_TRACE() << "\tFeature of type BOOLEAN";
-      if ( AT_SUCCESS == andor3Error(AT_GetBool(m_camera_handle, iPropName, &b_Value)) )
+      if ( AT_SUCCESS == (ret_code = AT_GetBool(m_camera_handle, iPropName, &b_Value)) )
         DEB_TRACE() << "\tValue = " << atBoolToString(b_Value);
       else
-        DEB_TRACE() << "\tError message : " << m_camera_error_str;
+        DEB_TRACE() << "\tError message : " << error_code(ret_code);
       break;
       
     case Camera::Enum:
       DEB_TRACE() << "\tFeature of type ENUM";
-      if ( AT_SUCCESS == andor3Error(AT_GetEnumIndex(m_camera_handle, iPropName, &enum_Value)) ) {
+      if ( AT_SUCCESS == (ret_code = AT_GetEnumIndex(m_camera_handle, iPropName, &enum_Value)) ) {
         DEB_TRACE() << "\tValue = (" << enum_Value << ")";
-        if ( AT_SUCCESS == andor3Error(AT_GetEnumStringByIndex(m_camera_handle, iPropName, enum_Value, s_Value, 1024)) )
+        if ( AT_SUCCESS == (ret_code = AT_GetEnumStringByIndex(m_camera_handle, iPropName, enum_Value, s_Value, 1024)) )
           DEB_TRACE() << " \"" << WStringToString(s_Value) << "\"";
         else
-          DEB_TRACE() << "\tError message : " << m_camera_error_str;
-        if ( AT_SUCCESS == andor3Error(AT_IsEnumIndexImplemented(m_camera_handle, iPropName, enum_Value, &b_Value)) )
+          DEB_TRACE() << "\tError message : " << error_code(ret_code);
+        if ( AT_SUCCESS == (ret_code = AT_IsEnumIndexImplemented(m_camera_handle, iPropName, enum_Value, &b_Value)) )
           DEB_TRACE() << "; implemented = " << atBoolToString(b_Value);
         else
-          DEB_TRACE() << "\tError message : " << m_camera_error_str;
-        if ( AT_SUCCESS == andor3Error(AT_IsEnumIndexAvailable(m_camera_handle, iPropName, enum_Value, &b_Value)) )
+          DEB_TRACE() << "\tError message : " << error_code(ret_code);
+        if ( AT_SUCCESS == (ret_code = AT_IsEnumIndexAvailable(m_camera_handle, iPropName, enum_Value, &b_Value)) )
           DEB_TRACE() << "; available = " << atBoolToString(b_Value);
         else
-          DEB_TRACE() << "\tError message : " << m_camera_error_str;
+          DEB_TRACE() << "\tError message : " << error_code(ret_code);
         DEB_TRACE() << ".";
       }
       else
-        DEB_TRACE() << "\tError message : " << m_camera_error_str;
+        DEB_TRACE() << "\tError message : " << error_code(ret_code);
       
-      if ( AT_SUCCESS == andor3Error(AT_GetEnumCount(m_camera_handle, iPropName, &enum_Count)) ) {
+      if ( AT_SUCCESS == (ret_code = AT_GetEnumCount(m_camera_handle, iPropName, &enum_Count)) ) {
         DEB_TRACE() << "\tAvailable choices are (" << enum_Count << ") :";
         for ( int i=0; enum_Count != i; ++i ) {
           DEB_TRACE() << "\t\t(" << i << ")";
-          if ( AT_SUCCESS == andor3Error(AT_GetEnumStringByIndex(m_camera_handle, iPropName, i, s_Value, 1024)) )
+          if ( AT_SUCCESS == (ret_code = AT_GetEnumStringByIndex(m_camera_handle, iPropName, i, s_Value, 1024)) )
             DEB_TRACE() << " \"" << WStringToString(s_Value) << "\"";
           else
-            DEB_TRACE() << "\tError message : " << m_camera_error_str;
-          if ( AT_SUCCESS == andor3Error(AT_IsEnumIndexImplemented(m_camera_handle, iPropName, i, &b_Value)) )
+            DEB_TRACE() << "\tError message : " << error_code(ret_code);
+          if ( AT_SUCCESS == (ret_code = AT_IsEnumIndexImplemented(m_camera_handle, iPropName, i, &b_Value)) )
             DEB_TRACE() << "; implemented = " << atBoolToString(b_Value);
           else
-            DEB_TRACE() << "\tError message : " << m_camera_error_str;
-          if ( AT_SUCCESS == andor3Error(AT_IsEnumIndexAvailable(m_camera_handle, iPropName, i, &b_Value)) )
+            DEB_TRACE() << "\tError message : " << error_code(ret_code);
+          if ( AT_SUCCESS == (ret_code = AT_IsEnumIndexAvailable(m_camera_handle, iPropName, i, &b_Value)) )
             DEB_TRACE() << "; available = " << atBoolToString(b_Value);
           else
-            DEB_TRACE() << "\tError message : " << m_camera_error_str;
+            DEB_TRACE() << "\tError message : " << error_code(ret_code);
           DEB_TRACE() << ".";
         }
       }
       else
-        DEB_TRACE() << "\tError message : " << m_camera_error_str;
+        DEB_TRACE() << "\tError message : " << error_code(ret_code);
       
       break;
       
     case Camera::String :
       DEB_TRACE() << "\tFeature of type STRING";
-      if ( AT_SUCCESS == andor3Error(AT_GetString(m_camera_handle, iPropName, s_Value, 1024)) )
+      if ( AT_SUCCESS == (ret_code = AT_GetString(m_camera_handle, iPropName, s_Value, 1024)) )
         DEB_TRACE() << "\tValue = \"" <<  WStringToString(s_Value) << "\"";
       else
-        DEB_TRACE() << "\tError message : " << m_camera_error_str;
+        DEB_TRACE() << "\tError message : " << error_code(ret_code);
       
-      if ( AT_SUCCESS == andor3Error(AT_GetStringMaxLength(m_camera_handle, iPropName, &s_MaxLen)) ) {
+      if ( AT_SUCCESS == (ret_code = AT_GetStringMaxLength(m_camera_handle, iPropName, &s_MaxLen)) ) {
         DEB_TRACE() << "\tMaximum length of this property's string = " << s_MaxLen << ".";
       }
       else
-        DEB_TRACE() << "\tError message : " << m_camera_error_str;
+        DEB_TRACE() << "\tError message : " << error_code(ret_code);
       break;
       
     default:
@@ -2175,8 +2159,9 @@ lima::Andor3::Camera::propImplemented(const AT_WC * iPropName) const
   DEB_MEMBER_FUNCT();
   AT_BOOL		b_exists;
 
-  if ( AT_SUCCESS != andor3Error(AT_IsImplemented(m_camera_handle, iPropName, &b_exists)) ) {
-    DEB_TRACE() << "Error in printInfoForProp : " << m_camera_error_str;
+  int ret_code;
+  if ( AT_SUCCESS != (ret_code = AT_IsImplemented(m_camera_handle, iPropName, &b_exists)) ) {
+    DEB_TRACE() << "Error in printInfoForProp : " << error_code(ret_code);
     return false;
   }
   DEB_TRACE() << "\tIsImplemented = " << atBoolToString(b_exists);
@@ -2209,56 +2194,56 @@ int
 lima::Andor3::Camera::setInt(const AT_WC* Feature, AT_64 Value)
 {
   DEB_MEMBER_FUNCT();
-  return andor3Error(AT_SetInt(m_camera_handle, Feature, Value));
+  return AT_SetInt(m_camera_handle, Feature, Value);
 }
 
 int
 lima::Andor3::Camera::getInt(const AT_WC* Feature, AT_64* Value) const
 {
   DEB_MEMBER_FUNCT();
-  return andor3Error(AT_GetInt(m_camera_handle, Feature, Value));
+  return AT_GetInt(m_camera_handle, Feature, Value);
 }
 
 int
 lima::Andor3::Camera::getIntMax(const AT_WC* Feature, AT_64* MaxValue) const
 {
   DEB_MEMBER_FUNCT();
-  return andor3Error(AT_GetIntMax(m_camera_handle, Feature, MaxValue));
+  return AT_GetIntMax(m_camera_handle, Feature, MaxValue);
 }
 
 int
 lima::Andor3::Camera::getIntMin(const AT_WC* Feature, AT_64* MinValue) const
 {
   DEB_MEMBER_FUNCT();
-  return andor3Error(AT_GetIntMin(m_camera_handle, Feature, MinValue));
+  return AT_GetIntMin(m_camera_handle, Feature, MinValue);
 }
 
 int
 lima::Andor3::Camera::setFloat(const AT_WC* Feature, double Value)
 {
   DEB_MEMBER_FUNCT();
-  return andor3Error(AT_SetFloat(m_camera_handle, Feature, Value));
+  return AT_SetFloat(m_camera_handle, Feature, Value);
 }
 
 int
 lima::Andor3::Camera::getFloat(const AT_WC* Feature, double* Value) const
 {
   DEB_MEMBER_FUNCT();
-  return andor3Error(AT_GetFloat(m_camera_handle, Feature, Value));
+  return AT_GetFloat(m_camera_handle, Feature, Value);
 }
 
 int
 lima::Andor3::Camera::getFloatMax(const AT_WC* Feature, double* MaxValue) const
 {
   DEB_MEMBER_FUNCT();
-  return andor3Error(AT_GetFloatMax(m_camera_handle, Feature, MaxValue));
+  return AT_GetFloatMax(m_camera_handle, Feature, MaxValue);
 }
 
 int
 lima::Andor3::Camera::getFloatMin(const AT_WC* Feature, double* MinValue) const
 {
   DEB_MEMBER_FUNCT();
-  return andor3Error(AT_GetFloatMin(m_camera_handle, Feature, MinValue));
+  return AT_GetFloatMin(m_camera_handle, Feature, MinValue);
 }
 
 int
@@ -2266,7 +2251,7 @@ lima::Andor3::Camera::setBool(const AT_WC* Feature, bool Value)
 {
   DEB_MEMBER_FUNCT();
   AT_BOOL newBool = Value;
-  return andor3Error(AT_SetBool(m_camera_handle, Feature, newBool));
+  return AT_SetBool(m_camera_handle, Feature, newBool);
 }
 
 int
@@ -2274,7 +2259,7 @@ lima::Andor3::Camera::getBool(const AT_WC* Feature, bool* Value) const
 {
   DEB_MEMBER_FUNCT();
   AT_BOOL	newBool;
-  int i_Err = andor3Error(AT_GetBool(m_camera_handle, Feature, &newBool));
+  int i_Err = AT_GetBool(m_camera_handle, Feature, &newBool);
   *Value = newBool;
   return i_Err;
 }
@@ -2283,21 +2268,21 @@ int
 lima::Andor3::Camera::setEnumIndex(const AT_WC* Feature, int Value)
 {
   DEB_MEMBER_FUNCT();
-  return andor3Error(AT_SetEnumIndex(m_camera_handle, Feature, Value));
+  return AT_SetEnumIndex(m_camera_handle, Feature, Value);
 }
 
 int
 lima::Andor3::Camera::setEnumString(const AT_WC* Feature, const AT_WC* String)
 {
   DEB_MEMBER_FUNCT();
-  return andor3Error(AT_SetEnumString(m_camera_handle, Feature, String));
+  return AT_SetEnumString(m_camera_handle, Feature, String);
 }
 
 int
 lima::Andor3::Camera::getEnumIndex(const AT_WC* Feature, int* Value) const
 {
   DEB_MEMBER_FUNCT();
-  return andor3Error(AT_GetEnumIndex(m_camera_handle, Feature, Value));
+  return AT_GetEnumIndex(m_camera_handle, Feature, Value);
 }
 
 int
@@ -2305,17 +2290,17 @@ lima::Andor3::Camera::getEnumString(const AT_WC* Feature, AT_WC* String, int Str
 {
   DEB_MEMBER_FUNCT();
   int Value;
-  int i_Err = andor3Error(AT_GetEnumIndex(m_camera_handle, Feature, &Value));
+  int i_Err = AT_GetEnumIndex(m_camera_handle, Feature, &Value);
   if ( AT_SUCCESS != i_Err )
     return i_Err;
-  return andor3Error(AT_GetEnumStringByIndex(m_camera_handle, Feature, Value, String, StringLength));
+  return AT_GetEnumStringByIndex(m_camera_handle, Feature, Value, String, StringLength);
 }
 
 int
 lima::Andor3::Camera::getEnumCount(AT_H m_camera_handle,const  AT_WC* Feature, int* Count) const
 {
   DEB_MEMBER_FUNCT();
-  return andor3Error(AT_GetEnumCount(m_camera_handle, Feature, Count));
+  return AT_GetEnumCount(m_camera_handle, Feature, Count);
 }
 
 int
@@ -2323,7 +2308,7 @@ lima::Andor3::Camera::isEnumIndexAvailable(const AT_WC* Feature, int Index, bool
 {
   DEB_MEMBER_FUNCT();
   AT_BOOL  isAvailable;
-  int i_Err = andor3Error(AT_IsEnumIndexAvailable(m_camera_handle, Feature, Index, &isAvailable));
+  int i_Err = AT_IsEnumIndexAvailable(m_camera_handle, Feature, Index, &isAvailable);
   *Available = isAvailable;
   return i_Err;
 }
@@ -2332,7 +2317,7 @@ lima::Andor3::Camera::isEnumIndexImplemented(const AT_WC* Feature, int Index, bo
 {
   DEB_MEMBER_FUNCT();
   AT_BOOL  isImplemented;
-  int i_Err = andor3Error(AT_IsEnumIndexAvailable(m_camera_handle, Feature, Index, &isImplemented));
+  int i_Err = AT_IsEnumIndexAvailable(m_camera_handle, Feature, Index, &isImplemented);
   *Implemented = isImplemented;
   return i_Err;
 }
@@ -2341,7 +2326,7 @@ int
 lima::Andor3::Camera::getEnumStringByIndex(const AT_WC* Feature, int Index, AT_WC* String, int StringLength) const
 {
   DEB_MEMBER_FUNCT();
-  return andor3Error(AT_GetEnumStringByIndex(m_camera_handle, Feature, Index, String, StringLength));
+  return AT_GetEnumStringByIndex(m_camera_handle, Feature, Index, String, StringLength);
 }
 
 int
@@ -2356,12 +2341,12 @@ lima::Andor3::Camera::getEnumIndexByString(const AT_WC* Feature, AT_WC* String, 
   AT_WC   	wcs_enumString[i_maxStringLen + 5];
   
   if ( AT_SUCCESS != (i_Err = getEnumCount(m_camera_handle, Feature, &i_enumCount)) ) {
-    DEB_ERROR() << "Failed to get Enum Count" << " : error code = " << m_camera_error_str;
+    DEB_ERROR() << "Failed to get Enum Count" << " : error code = " << error_code(i_Err);
     return i_Err;
   }
   for (i_enumIndex = 0; i_enumCount != i_enumIndex; ++i_enumIndex) {
     if ( AT_SUCCESS != getEnumStringByIndex(Feature, i_enumIndex, wcs_enumString, i_maxStringLen) ) {
-      DEB_ERROR() << "Failed to get Enum String" << " : error code = " << m_camera_error_str;
+      DEB_ERROR() << "Failed to get Enum String" << " : error code = " << error_code(i_Err);
       return i_Err;
     }
     if ( ! wcscmp(wcs_enumString, String) ) {
@@ -2384,21 +2369,21 @@ int
 lima::Andor3::Camera::setString(const AT_WC* Feature, const AT_WC* String)
 {
   DEB_MEMBER_FUNCT();
-  return andor3Error(AT_SetString(m_camera_handle, Feature, String));
+  return AT_SetString(m_camera_handle, Feature, String);
 }
 
 int
 lima::Andor3::Camera::getString(const AT_WC* Feature, AT_WC* String, int StringLength) const
 {
   DEB_MEMBER_FUNCT();
-  return andor3Error(AT_GetString(m_camera_handle, Feature, String, StringLength));
+  return AT_GetString(m_camera_handle, Feature, String, StringLength);
 }
 
 int
 lima::Andor3::Camera::sendCommand(const AT_WC* Feature)
 {
   DEB_MEMBER_FUNCT();
-  return andor3Error(AT_Command(m_camera_handle, Feature));
+  return AT_Command(m_camera_handle, Feature);
 }
 
 int lima::Andor3::Camera::getHwBitDepth(int *bit_depth)
@@ -2600,7 +2585,7 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
       else {
         DEB_ERROR() << "[andor3 acquisition thread] Problem in retrieving the frame indexed " << m_cam.m_image_index <<"!\n"
         << "\tAT_WaitBuffer returned an error " << the_wait_queue_res << "\n"
-        << "\t" << m_cam.m_andor3_error_maps[the_wait_queue_res] << "\n"
+	<< "\t" << error_code(the_wait_queue_res) << "\n"
         << "\t!!! returning to WAIT mode !!!";
         m_cam.m_acq_thread_running = the_acq_goon = false;
         m_cam._setStatus(Fault, false);
