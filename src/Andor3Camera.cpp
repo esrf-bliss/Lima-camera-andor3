@@ -119,7 +119,8 @@ namespace lima {
 //---------------------------
 //- utility variables
 //---------------------------
-bool lima::Andor3::Camera::sAndorSDK3Initted = false;
+int lima::Andor3::Camera::sAndorSDK3InittedCounter = 0;
+pthread_mutex_t sdkInitMutex = PTHREAD_MUTEX_INITIALIZER;
 
 //---------------------------
 //- utility thread
@@ -181,20 +182,30 @@ m_maximage_size_cb_active(false)
   m_temp_buffer_ctrl_obj = new SoftBufferCtrlObj();
 
   // Initialisation of the atcore library :
-  if ( ! sAndorSDK3Initted ) {
+  pthread_mutex_lock(&sdkInitMutex);
+  if ( ! sAndorSDK3InittedCounter ) {
     if ( m_bitflow_path != "" ) {
       setenv("BITFLOW_INSTALL_DIRS", m_bitflow_path.c_str(), true);
     }
     else {
       setenv("BITFLOW_INSTALL_DIRS", "/usr/share/andor-3-sdk", false);
     }
-    
-    THROW_IF_NOT_SUCCESS(AT_InitialiseLibrary(),
-			 "Library initialization failed, check the bitflow path");
-
-    THROW_IF_NOT_SUCCESS(AT_InitialiseUtilityLibrary(),
-			 "Library Utility initialization failed, check the bitflow path");
+    try
+      {
+	THROW_IF_NOT_SUCCESS(AT_InitialiseLibrary(),
+			     "Library initialization failed, check the bitflow path");
+	
+	THROW_IF_NOT_SUCCESS(AT_InitialiseUtilityLibrary(),
+			     "Library Utility initialization failed, check the bitflow path");
+      }
+    catch(...)
+      {
+	pthread_mutex_unlock(&sdkInitMutex);
+	throw;
+      }
+    ++sAndorSDK3InittedCounter;
   }
+  pthread_mutex_unlock(&sdkInitMutex);
 
   // --- Get available cameras and select the choosen one.
   AT_64 numCameras;
@@ -329,11 +340,24 @@ lima::Andor3::Camera::~Camera()
 
   m_camera_handle = AT_HANDLE_UNINITIALISED;
 
-  THROW_IF_NOT_SUCCESS(AT_FinaliseUtilityLibrary(),
-		       "Cannot finalise Andor SDK 3 Utility library");
-
-  THROW_IF_NOT_SUCCESS(AT_FinaliseLibrary(),
-		       "Cannot finalise Andor SDK 3 library");
+  pthread_mutex_lock(&sdkInitMutex);
+  if(!--sAndorSDK3InittedCounter)
+    {
+      try
+	{
+	  THROW_IF_NOT_SUCCESS(AT_FinaliseUtilityLibrary(),
+			       "Cannot finalise Andor SDK 3 Utility library");
+	  
+	  THROW_IF_NOT_SUCCESS(AT_FinaliseLibrary(),
+			       "Cannot finalise Andor SDK 3 library");
+	}
+      catch(...)
+	{
+	  pthread_mutex_unlock(&sdkInitMutex);
+	  throw;
+	}
+    }
+  pthread_mutex_unlock(&sdkInitMutex);
 
   delete m_buffer_ctrl_obj;
   delete m_temp_buffer_ctrl_obj;

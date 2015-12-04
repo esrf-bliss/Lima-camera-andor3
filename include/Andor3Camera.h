@@ -301,7 +301,7 @@ namespace lima
 
       // std::map<TrigMode, int>     m_trig_mode_maps;
 
-      static bool                 sAndorSDK3Initted;
+      static int                  sAndorSDK3InittedCounter;
     
       bool  m_maximage_size_cb_active;
       Camera::SdkFrameDim m_sdk_frame_dim;
