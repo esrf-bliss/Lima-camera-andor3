@@ -88,13 +88,13 @@ namespace lima {
     static const AT_WC* TargetSensorTemperature = L"TagetSensorTemperature";
     static const AT_WC* TemperatureStatus = L"TemperatureStatus";
     static const AT_WC* TriggerMode = L"TriggerMode";
+    static const AT_WC* FrameCount = L"FrameCount";
 
     // For future !!
     //    static const AT_WC* AccumulateCount = L"AccumulateCount";
     //    static const AT_WC* BaselineLevel = L"BaselineLevel";
     //    static const AT_WC* CameraDump = L"CameraDump";
     //    static const AT_WC* ControllerID = L"ControllerID";
-    //    static const AT_WC* FrameCount = L"FrameCount";
     //    static const AT_WC* LUTIndex = L"LUTIndex";
     //    static const AT_WC* LUTValue = L"LUTValue";
     //    static const AT_WC* MetadataEnable = L"MetadataEnable";
@@ -442,14 +442,25 @@ lima::Andor3::Camera::prepareAcq()
   DEB_TRACE() << "Pushing all the frame buffers to the frame grabber SDK";
   for ( int i=0; the_alloc_frames != i; ++i) {
     void*		the_buffer_ptr = the_buffer_mgr.getFrameBufferPtr(i);
-    AT_QueueBuffer(m_camera_handle, static_cast<AT_U8*>(the_buffer_ptr), the_frame_mem_size);
+    THROW_IF_NOT_SUCCESS(AT_QueueBuffer(m_camera_handle, static_cast<AT_U8*>(the_buffer_ptr), the_frame_mem_size),
+			 "Cannot Queue the frame buffer");
     DEB_TRACE() << "Queueing the frame buffer " << i;
   }
   DEB_TRACE() << "Finished queueing " << the_alloc_frames << " frame buffers to andor's SDK3";
  
   // Better to use continuous mode, smaller ring-buffer allocated by SDK. L.Claustre
-  // Try in continuous mode 
-  setEnumString(andor3::CycleMode, L"Continuous");    
+  // excepted if the trigger mode is IntTrigMult (e.i Software)
+  if (m_trig_mode == Software)
+    {
+      DEB_TRACE()<< "Software trigger ON, set CycleMode to Fixed mode";
+      AT_64  nb_frames = static_cast<AT_64>(m_nb_frames_to_collect);
+      setInt(andor3::FrameCount, nb_frames);
+      setEnumString(andor3::CycleMode, L"Fixed");    
+    }
+  else
+    {
+      setEnumString(andor3::CycleMode, L"Continuous");    
+    }
   
   AT_WC          the_string[256];
   getEnumString(andor3::CycleMode, the_string, 255); 
@@ -1113,6 +1124,12 @@ lima::Andor3::Camera::getStatus(Camera::Status& status)
   DEB_MEMBER_FUNCT();
   AutoMutex aLock(m_cond.mutex());
   status = m_status;
+  //Check if the camera is not waiting for soft. trigger
+  if (status == Camera::Readout && 
+      m_trig_mode == Software)
+    {
+      status = Camera::Ready;
+    }
   DEB_RETURN() << DEB_VAR1(DEB_HEX(status));
 }
 
@@ -1445,7 +1462,7 @@ lima::Andor3::Camera::setTemperatureSP(double temp)
     }
   }
   else {
-    DEB_ALWAYS() << "The camera has no temperature control... Do nothing !";
+    DEB_ALWAYS() << "This camera has no temperature set-point control !";
     m_temperature_control_available = false;
   }
 }
@@ -1917,11 +1934,6 @@ lima::Andor3::Camera::_stopAcq(bool iImmediate)
     DEB_TRACE() << "We finally got the signal that the currently exposed frame is now grabbed... We can go on for the acquisition stop";
     the_lock.unlock();
 
-    // If we were not asked for immediate leaving, let the acquisition thread end it :
-    //    if ( ! iImmediate ) {
-    //      return;
-    //    }
-    
     DEB_TRACE() << "We should now STOP the acquisition";
     sendCommand(andor3::AcquisitionStop);
     DEB_TRACE() << "Sent a AcquisitionStop in stopAcq immediate == FALSE." << "\n\t\tAnd now flushing the buffer queue since no more acquisition is in flight";
@@ -2541,7 +2553,7 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
   DEB_MEMBER_FUNCT();
   AutoMutex			the_lock(m_cam.m_cond.mutex());
   StdBufferCbMgr		&the_buffer_mgr = m_cam.m_buffer_ctrl_obj->getBuffer();
-
+  
   while (! m_cam.m_acq_thread_should_quit ) {
     DEB_TRACE() << "[andor3 acquisition thread] Top of the loop";
     // We are looping until being «signaled» that we shoul quit.
@@ -2562,7 +2574,7 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
       DEB_TRACE() << "[andor3 acquisition thread] Quitting under request from main thread (m_acq_thread_should_quit)";
       return;
     }
-
+    
     m_cam.m_status = Camera::Exposure;
     m_cam.m_cond.broadcast();
     the_lock.unlock();
@@ -2572,9 +2584,8 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
     while ( the_acq_goon && ((0 == m_cam.m_nb_frames_to_collect) || (m_cam.m_nb_frames_to_collect != m_cam.m_image_index)) ) {
       unsigned char  		*the_returned_image;
       int			the_returned_image_size;
-      // OK for a finite timeout, otherwise we get the thread blocked when frame rate is too high for
-      // the transfer card, most of cameras have max. exposure time = 30s. Quiz of external gate acquisition?
-      unsigned int		the_wait_timeout = 30000;
+      // Use active pooling on WaitBuffer()
+      unsigned int		the_wait_timeout = 100;
       int                       the_wait_queue_res;
       
 
@@ -2596,8 +2607,8 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
 	bool                    the_frame_read;
 
         the_frame_info.acq_frame_nb = static_cast<int>(m_cam.m_image_index);
-        the_frame_read = the_buffer_mgr.newFrameReady(the_frame_info);
-        DEB_TRACE() << "[andor3 acquisition thread] image " << m_cam.m_image_index <<" published with newFrameReady(), with result " << the_frame_read ;
+        the_frame_read = the_buffer_mgr.newFrameReady(the_frame_info);        
+	DEB_TRACE() << "[andor3 acquisition thread] image " << m_cam.m_image_index <<" published with newFrameReady(), with result " << the_frame_read ;
 	the_acq_goon = the_acq_goon && the_frame_read;
         
         ++m_cam.m_image_index;
@@ -2605,6 +2616,10 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
         if ( m_cam.m_buffer_ringing ) {
           AT_QueueBuffer(m_cam.m_camera_handle, the_returned_image, the_returned_image_size);
         }
+      }
+      else if (AT_ERR_TIMEDOUT){
+	// Active pooling on timeout, fine for Software trigger,i.e IntTrigMult
+	continue;
       }
       else {
         DEB_ERROR() << "[andor3 acquisition thread] Problem in retrieving the frame indexed " << m_cam.m_image_index <<"!\n"
@@ -2615,12 +2630,10 @@ lima::Andor3::Camera::_AcqThread::threadFunction()
         m_cam._setStatus(Fault, false);
 	break;
       }
-      DEB_TRACE() << "[andor3 acquisition thread] End of the iteration, next iteration will be for image index " << m_cam.m_image_index;
       
       if ( ! the_acq_goon ) {
         DEB_TRACE() << "[andor3 acquisition thread] In the middle of acquisition, got the request to stop the frame retrieving activity : m_acq_thread_waiting is " << m_cam.m_acq_thread_waiting << " and m_acq_thread_should_quit is " << m_cam.m_acq_thread_should_quit;
       }
-      
     }
     DEB_TRACE() << "[andor3 acquisition thread] Finished looping !";
     m_cam.sendCommand(andor3::AcquisitionStop);
