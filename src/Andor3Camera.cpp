@@ -428,7 +428,8 @@ lima::Andor3::Camera::prepareAcq()
       the_buffer_ctrl_obj = m_buffer_ctrl_obj;
     }
 
-  m_buffer_ringing = int(m_nb_frames_to_collect) > the_alloc_frames;
+  // ringing flag in case of short buffer or continuous acquistion (0 frame)
+  m_buffer_ringing = (m_nb_frames_to_collect == 0) || (int(m_nb_frames_to_collect) > the_alloc_frames );
   StdBufferCbMgr &the_buffer_mgr = the_buffer_ctrl_obj->getBuffer();
 
 
