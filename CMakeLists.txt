@@ -23,8 +23,6 @@
 ############################################################################
 set(NAME "andor3")
 
-set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--add-needed")
-
 set(${NAME}_srcs src/Andor3Camera.cpp  src/Andor3Interface.cpp
 	 src/Andor3DetInfoCtrlObj.cpp src/Andor3SyncCtrlObj.cpp
 	 src/Andor3BinCtrlObj.cpp src/Andor3ReconstructionCtrlObj.cpp
@@ -33,7 +31,6 @@ set(${NAME}_srcs src/Andor3Camera.cpp  src/Andor3Interface.cpp
 add_library(lima${NAME} SHARED ${${NAME}_srcs})
 
 target_include_directories(lima${NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_include_directories(lima${NAME} PUBLIC "/usr/local/include")
 
 find_library(ANDOR3_ATCORE_LIB atcore)
 find_library(ANDOR3_ATUTILITY_LIB atutility)
