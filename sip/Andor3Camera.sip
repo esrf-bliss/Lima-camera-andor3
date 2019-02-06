@@ -144,7 +144,9 @@ namespace Andor3
    void getReadoutTime(double &o_time /Out/ ) const;
    void getSerialNumber(std::string &o_sn /Out/ ) const;
    int  getPixelStride() const;
+   
+   private:
+     Camera(const Andor3::Camera&);
   };
 
 };
-
