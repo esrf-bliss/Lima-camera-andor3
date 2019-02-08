@@ -16,7 +16,7 @@ conda install -c esrf-bcu lima-camera-andor3
 
 ### Camera tango device server
 
-conda install -c esrf-bcu lima-camera-simulator-andor3
+conda install -c esrf-bcu lima-camera-andor3-tango
 
 # LImA
 
