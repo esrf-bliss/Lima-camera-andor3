@@ -105,6 +105,7 @@ class Andor3(PyTango.Device_4Impl):
                                          'readout_time': 'ReadoutTime',
                                          'overlap': 'Overlap',
                                          'spurious_noise_filter': 'SpuriousNoiseFilter',
+                                         'serial_number': 'SerialNumber',
                                          }
         self.init_device()
                                                
@@ -343,6 +344,16 @@ class Andor3Class(PyTango.DeviceClass):
              'unit': 'N/A',
              'format': '',
              'description': 'OFF or ON',
+             }],
+        'serial_number':
+        [[PyTango.DevString,
+          PyTango.SCALAR,
+          PyTango.READ],
+         {
+             'label':'Read camera serial number',
+             'unit': 'N/A',
+             'format': '',
+             'description': 'camera serial number',
              }],
         }
 

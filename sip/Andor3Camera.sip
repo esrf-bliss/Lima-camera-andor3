@@ -36,7 +36,7 @@ namespace Andor3
     enum A3_ShutterMode { Rolling = 0, Global = 1 };
     enum A3_ReadOutRate { MHz10 = 0, MHz100 = 1, MHz200 = 2, MHz280 = 3 };
     enum A3_BitDepth { b11 = 0, b16= 1 };
-    enum A3_TriggerMode { Internal = 0, ExternalLevelTransition = 1, ExternalStart = 2, ExternalExposure = 3, Software = 4, Advanced = 5, External = 6 };
+//    enum A3_TriggerMode { Internal = 0, ExternalLevelTransition = 1, ExternalStart = 2, ExternalExposure = 3, Software = 4, Advanced = 5, External = 6 };
     enum A3_Binning { B1x1=0, B2x2=1, B3x3=2, B4x4=3, B8x8=4};
     enum A3_FanSpeed { Off=0, Low=1, On=2};
     enum A3_PixelEncoding {Mono12=0, Mono12Packed = 1, Mono16=2, Mono32=3};
@@ -107,8 +107,8 @@ namespace Andor3
    void getBitDepth(A3_BitDepth &oMode /Out/ ) const;
    void getBitDepthString(std::string &oDepthString /Out/ ) const;
    void getPxEncodingString(std::string &oPxEncoding /Out/ ) const;
-   void setTriggerMode(A3_TriggerMode iMode /In/ );
-   void getTriggerMode(A3_TriggerMode &oMode /Out/ ) const;
+//   void setTriggerMode(A3_TriggerMode iMode /In/ );
+//   void getTriggerMode(A3_TriggerMode &oMode /Out/ ) const;
    void getTriggerModeString(std::string &oModeString /Out/ ) const;
    void setTemperatureSP(double temp /In/ );
    void getTemperatureSP(double& temp /Out/ ) const;

@@ -70,7 +70,8 @@ namespace lima
       // In the same order/index as 'BitDepth'
       enum A3_BitDepth { b11 = 0, b16= 1 };
       // The camera trigger mode (in the enum order) :
-      enum A3_TriggerMode { Internal = 0, ExternalLevelTransition = 1, ExternalStart = 2, ExternalExposure = 3, Software = 4, Advanced = 5, External = 6 };
+//      enum A3_TriggerMode { Internal = 0, ExternalLevelTransition = 1, ExternalStart = 2, ExternalExposure = 3, Software = 4, Advanced = 5, External = 6 };
+
       // The binning system of andor3 :
       enum A3_Binning { B1x1=0, B2x2=1, B3x3=2, B4x4=3, B8x8=4};
       // The fan speed
@@ -167,8 +168,8 @@ namespace lima
       void getBitDepthString(std::string &oDepthString) const;
       void getPxEncoding(A3_PixelEncoding &oPxEncoding) const;
       void getPxEncodingString(std::string &oPxEncoding) const;
-      void setTriggerMode(A3_TriggerMode iMode);
-      void getTriggerMode(A3_TriggerMode &oMode) const;
+      // void setTriggerMode(A3_TriggerMode iMode);
+      // void getTriggerMode(A3_TriggerMode &oMode) const;
       void getTriggerModeString(std::string &oModeString) const;
       void setTemperatureSP(double temp);  // à exporter (avec le get)
       void getTemperatureSP(double& temp) const;
@@ -220,6 +221,8 @@ namespace lima
       void _setStatus(Camera::Status iStatus, bool iForce);
       
     private:
+      void initTrigMode();
+
       // -- andor3 Lower level functions
       int printInfoForProp(const AT_WC * iPropName, A3_TypeInfo iPropType) const;
       bool propImplemented(const AT_WC * iPropName) const;
@@ -294,12 +297,13 @@ namespace lima
       A3_ReadOutRate	          m_adc_rate;
       A3_ShutterMode		  m_electronic_shutter_mode;
       A3_BitDepth                 m_bit_depth;
-      A3_TriggerMode              m_trig_mode;
       bool                        m_cooler;
       double                      m_temperature_sp;
       bool                        m_temperature_control_available;
 
-      // std::map<TrigMode, int>     m_trig_mode_maps;
+      TrigMode                    m_trig_mode;
+      // A3_TriggerMode		  m_trig_mode;
+      std::map<TrigMode, int>     m_trig_mode_map;
 
       static int                  sAndorSDK3InittedCounter;
     

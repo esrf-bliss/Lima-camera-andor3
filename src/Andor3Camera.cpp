@@ -73,6 +73,8 @@ namespace lima {
     static const AT_WC* Overlap = L"Overlap";
     static const AT_WC* PixelEncoding = L"PixelEncoding";
     static const AT_WC* PixelReadoutRate = L"PixelReadoutRate";
+    static const AT_WC* PixelHeight = L"PixelHeight";
+    static const AT_WC* PixelWidth = L"PixelWidth";
     static const AT_WC* PreAmpGainControl = L"PreAmpGainControl";
     static const AT_WC* ReadoutTime = L"ReadoutTime";
     static const AT_WC* SensorCooling = L"SensorCooling";
@@ -168,7 +170,7 @@ m_simple_gain(b16_lh_gain),
 m_adc_rate(MHz100),
 m_electronic_shutter_mode(Rolling),
 m_bit_depth(b16),
-m_trig_mode(Internal),
+m_trig_mode(IntTrig),
 m_cooler(true),
 m_temperature_sp(5.0),
 m_temperature_control_available(true),
@@ -254,7 +256,9 @@ m_maximage_size_cb_active(false)
   if (! m_detector_model.compare(0, 7, "ZYLA5.5")) {
     m_detector_type = std::string("Zyla-5.5");    
   }
-  
+  if (! m_detector_model.compare(0, 12, "MARANA-4BV11")) {
+    m_detector_type = std::string("Marana-4.2");
+  }
   
   if ( m_detector_model != "SIMCAM CMOS" ) {
     std::string		the_serial, the_fw;
@@ -291,7 +295,14 @@ m_maximage_size_cb_active(false)
 		       "Cannot get detector Y size");
 
   m_detector_size= Size(static_cast<int>(xmax), static_cast<int>(ymax));
-  
+
+  // --- init trigger modes
+  initTrigMode();
+
+  // printInfoForProp(andor3::ElectronicShutteringMode, Enum);
+  // printInfoForProp(andor3::PixelReadoutRate, Enum);
+  // printInfoForProp(andor3::PixelEncoding, Enum);
+
   // --- Initialise deeper parameters of the controller
   initialiseController();
   
@@ -451,7 +462,7 @@ lima::Andor3::Camera::prepareAcq()
  
   // Better to use continuous mode, smaller ring-buffer allocated by SDK. L.Claustre
   // excepted if the trigger mode is IntTrigMult (e.i Software)
-  if (m_trig_mode == Software)
+  if (m_trig_mode == IntTrigMult)
     {
       DEB_TRACE()<< "Software trigger ON, set CycleMode to Fixed mode";
       AT_64  nb_frames = static_cast<AT_64>(m_nb_frames_to_collect);
@@ -498,7 +509,7 @@ lima::Andor3::Camera::startAcq()
     sendCommand(andor3::AcquisitionStart);
   }
   
-  if ( Software == m_trig_mode ) {
+  if ( IntTrigMult == m_trig_mode ) {
     // If we are in software trigger mode, the call to startAcq serves as the trigger :
     sendCommand(andor3::SoftwareTrigger);
   }
@@ -614,86 +625,97 @@ lima::Andor3::Camera::getBufferCtrlObj()
 }
 
 //-- Synch control object
+
+void
+lima::Andor3::Camera::initTrigMode()
+{
+  DEB_MEMBER_FUNCT();
+  AT_BOOL	b_value;
+  int		enum_count;
+  AT_WC		s_value[1024];
+  std::string   s_mode;
+
+  AT_GetEnumCount(m_camera_handle, andor3::TriggerMode, &enum_count);
+
+  for (int idx=0; enum_count != idx; ++idx) {
+    AT_GetEnumStringByIndex(m_camera_handle, andor3::TriggerMode, idx, s_value, 1024);
+    AT_IsEnumIndexImplemented(m_camera_handle, andor3::TriggerMode, idx, &b_value);
+    if (b_value) {
+      s_mode = WStringToString(s_value);
+      if ( s_mode == "Internal" ) {
+        m_trig_mode_map.emplace(IntTrig, idx);
+        DEB_TRACE() << "Found IntTrig mode" ;
+      } else if ( s_mode == "Software" ) {
+        m_trig_mode_map.emplace(IntTrigMult, idx);
+        DEB_TRACE() << "Found IntTrigMult mode" ;
+      } else if ( s_mode == "External" ) {
+        m_trig_mode_map.emplace(ExtTrigMult, idx);
+        DEB_TRACE() << "Found ExtTrigMult mode" ;
+      } else if ( s_mode == "External Start" ) {
+        m_trig_mode_map.emplace(ExtTrigSingle, idx);
+        DEB_TRACE() << "Found ExtTrigSingle mode" ;
+      } else if ( s_mode == "External Exposure" ) {
+        m_trig_mode_map.emplace(ExtGate, idx);
+        DEB_TRACE() << "Found ExtGate mode" ;
+      }
+    }
+  }
+}
+     
 bool
 lima::Andor3::Camera::checkTrigMode(TrigMode mode)
 {
-  switch (mode) {
-    case IntTrig:
-    case IntTrigMult:
-    case ExtTrigSingle:
-    case ExtTrigMult:
-    case ExtGate:
-      return true;
-      break;
-      
-    default:
-      return false;
-      break;
-  }
+  std::map<TrigMode,int>::iterator it;
+
+  it = m_trig_mode_map.find(mode);
+  if (it != m_trig_mode_map.end())
+    return true;
+  else
+    return false;
 }
 
 void
-lima::Andor3::Camera::setTrigMode(TrigMode  mode)
+lima::Andor3::Camera::setTrigMode(TrigMode mode)
 {
   DEB_MEMBER_FUNCT();
-  A3_TriggerMode		the_trigger_mode;
-  switch (mode) {
-    case 	IntTrig:
-      the_trigger_mode = Internal;
-      break;
-    case IntTrigMult:
-      the_trigger_mode = Software;
-      break;
-    case ExtTrigSingle:
-      the_trigger_mode = ExternalStart;
-      break;
-    case ExtTrigMult:
-      the_trigger_mode = External;
-      break;
-    case ExtGate:
-      the_trigger_mode = ExternalExposure;
-      break;
-      
-    case ExtStartStop:
-    case ExtTrigReadout:
-    default:
-      the_trigger_mode = Internal;
-      THROW_HW_ERROR(Error) << "The triggering mode " << mode
-      << " is NOT implemented in this SDK";
-      break;
-  }
-  setTriggerMode(the_trigger_mode);
-}
+  std::map<TrigMode,int>::iterator it;
+  int i_setmode, i_getmode;
 
+  if (m_real_camera) {
+    it = m_trig_mode_map.find(mode);
+    if (it == m_trig_mode_map.end())
+        THROW_HW_ERROR(Error) << "The triggering mode " << mode
+        << " is NOT implemented in this SDK";
+
+    i_setmode = it->second;
+    setEnumIndex(andor3::TriggerMode, i_setmode);
+
+    getEnumIndex(andor3::TriggerMode, &i_getmode);
+    if ( i_setmode != i_getmode ) {
+        DEB_ERROR() << "Proof-reading the trigger mode :"
+        << "\n\tGot " << i_getmode << ", while requesting " << i_setmode;
+        for (it=m_trig_mode_map.begin(); it!=m_trig_mode_map.end(); ++it) {
+          if (i_getmode == it->second) {
+            m_trig_mode = it->first;
+          }
+        }
+    } else {
+        m_trig_mode = mode;
+    }
+  }
+  else {
+    setEnumString(andor3::TriggerMode, L"Advanced");
+    DEB_TRACE() << "SIMCAM - forcing trigger mode to Advanced";
+    m_trig_mode = mode;
+  }
+  DEB_TRACE() << "Trigger Mode is now : " << m_trig_mode;
+}
+  
 void
 lima::Andor3::Camera::getTrigMode(TrigMode& mode)
 {
   DEB_MEMBER_FUNCT();
-  A3_TriggerMode		the_trigger_mode;
-  getTriggerMode(the_trigger_mode);
-  
-  switch (the_trigger_mode) {
-    case Internal:
-      mode = IntTrig;
-      break;
-    case Software:
-      mode = IntTrigMult;
-      break;
-    case ExternalStart:
-      mode = ExtTrigSingle;
-      break;
-    case External:
-      mode = ExtTrigMult;
-      break;
-    case ExternalExposure:
-      mode = ExtGate;
-      break;
-    default:
-      mode = IntTrig;
-      THROW_HW_ERROR(Error) << "The triggering mode of the SDK " << the_trigger_mode
-      << " does not correspond to any mode of LIMA, returning " << mode;
-      break;
-  }
+  mode = m_trig_mode;
 }
 
 void
@@ -825,7 +847,7 @@ lima::Andor3::Camera::checkRoi(const Roi& set_roi, Roi& hw_roi)
       {2592,  304,  929,    1,    1, 1297, 1297},
       { 240,  256,  953, 1169, 1177, 1289, 1297},
       { 144,  128, 1017, 1217, 1225, 1289, 1297},
-      NULL
+    //  NULL
     };
     
     // Trying to take the smallest enclosing possible ROI (depending on the bit-depth of the image) :
@@ -1116,7 +1138,8 @@ void
 lima::Andor3::Camera::getPixelSize(double& sizex, double& sizey)
 {
   DEB_MEMBER_FUNCT();
-  sizex = sizey = 6.5; // in micron ?
+  getFloat(andor3::PixelWidth, &sizex);
+  getFloat(andor3::PixelHeight, &sizey);
 }
 
 void
@@ -1127,7 +1150,7 @@ lima::Andor3::Camera::getStatus(Camera::Status& status)
   status = m_status;
   //Check if the camera is not waiting for soft. trigger
   if (status == Camera::Readout && 
-      m_trig_mode == Software)
+      m_trig_mode == IntTrigMult)
     {
       status = Camera::Ready;
     }
@@ -1161,7 +1184,7 @@ lima::Andor3::Camera::initialiseController()
   
   // Carefully crafting the order, since some are affecting others...
   setElectronicShutterMode(m_electronic_shutter_mode);
-  setTriggerMode(m_trig_mode);
+  setTrigMode(m_trig_mode);
   setSimpleGain(the_simple_gain);
   setAdcRate(the_rate);
   setBitDepth(the_bd);
@@ -1393,52 +1416,19 @@ lima::Andor3::Camera::getPxEncoding(A3_PixelEncoding &oPxEncoding) const
   oPxEncoding = static_cast<A3_PixelEncoding>(oPxEncoding);
 }
 
-
-/*!
- @brief Setting the trigger mode of the camera through the SDK settings.
- @param iMode : the mode to select
- */
-void
-lima::Andor3::Camera::setTriggerMode(A3_TriggerMode iMode)
-{
-  DEB_MEMBER_FUNCT();
-  if ( m_real_camera ) {
-    int the_mode;
-    setEnumIndex(andor3::TriggerMode, static_cast<int>(iMode));
-    getEnumIndex(andor3::TriggerMode, &the_mode);
-    m_trig_mode = static_cast<A3_TriggerMode>(the_mode);
-    if ( m_trig_mode != iMode ) {
-      DEB_ERROR() << "Proof-reading the trigger mode :"
-      << "\n\tGot " << m_trig_mode << " back,"
-      << "\n\twhile requesting " << iMode;
-    }
-  }
-  else { // Simulated camera -> setting it forcibly to «Advanced»
-    int the_mode;
-    setEnumIndex(andor3::TriggerMode, 5);
-    getEnumIndex(andor3::TriggerMode, &the_mode);
-    m_trig_mode = static_cast<A3_TriggerMode>(the_mode);
-    DEB_TRACE() << "The SIMCAM has only one trigger-mode setting (Advanced), making sure that's what we are doing now";
-  }
-}
-
-/*!
- @brief Getting the triggering mode the camera is in
- @param oMode : the mode selected upon return
- */
-void
-lima::Andor3::Camera::getTriggerMode(A3_TriggerMode &oMode) const
-{
-  DEB_MEMBER_FUNCT();
-  oMode = m_trig_mode;
-}
-
 void
 lima::Andor3::Camera::getTriggerModeString(std::string &oModeString) const
 {
   AT_WC		the_string[256];
-  getEnumStringByIndex(andor3::TriggerMode, m_trig_mode, the_string, 255);
-  oModeString = WStringToString(std::wstring(the_string));
+  int		i_trig;
+  if (m_real_camera) {
+    i_trig = m_trig_mode_map.at(m_trig_mode);
+    getEnumStringByIndex(andor3::TriggerMode, m_trig_mode, the_string, 255);
+    oModeString = WStringToString(std::wstring(the_string));
+  }
+  else {
+    oModeString = "Advanced";
+  }
 }
 
 
@@ -2033,41 +2023,41 @@ lima::Andor3::Camera::printInfoForProp(const AT_WC * iPropName, A3_TypeInfo iPro
   AT_BOOL b_writable;
   AT_BOOL b_readable;
   
-  DEB_TRACE() << "Retrieving information on property named \"" << WStringToString(iPropName) << "\".\n";
+  DEB_ALWAYS() << "Retrieving information on property named \"" << WStringToString(iPropName) << "\".\n";
   
   int ret_code;
   // Implemented
   if ( AT_SUCCESS != (ret_code = AT_IsImplemented(m_camera_handle, iPropName, &b_exists)) ) {
-    DEB_TRACE() << "Error in printInfoForProp : " << error_code(ret_code);
+    DEB_ALWAYS() << "Error in printInfoForProp : " << error_code(ret_code);
     return i_err;
   }
-  DEB_TRACE() << "\tIsImplemented = " << atBoolToString(b_exists);
+  DEB_ALWAYS() << "\tIsImplemented = " << atBoolToString(b_exists);
   
   if ( ! b_exists ) {
-    DEB_TRACE() << "No more information to query, since the feature does not \"exists\" for this camera/driver/SDK.";
+    DEB_ALWAYS() << "No more information to query, since the feature does not \"exists\" for this camera/driver/SDK.";
     return i_err;
   }
   
   // ReadOnly
   AT_IsReadOnly(m_camera_handle, iPropName, &b_readonly);
-  DEB_TRACE() << "\tIsReadOnly = " << atBoolToString(b_readonly);
+  DEB_ALWAYS() << "\tIsReadOnly = " << atBoolToString(b_readonly);
   
   // Writable
   AT_IsWritable(m_camera_handle, iPropName, &b_writable);
-  DEB_TRACE() << "\tIsWritable = " << atBoolToString(b_writable);
+  DEB_ALWAYS() << "\tIsWritable = " << atBoolToString(b_writable);
   
   // Readable
   AT_IsReadable(m_camera_handle, iPropName, &b_readable);
-  DEB_TRACE() << "\tIsReadable = " << atBoolToString(b_readable);
+  DEB_ALWAYS() << "\tIsReadable = " << atBoolToString(b_readable);
   
   if ( ! b_readable ) {
-    DEB_TRACE() << "Since the property is not readable at this time, we will stop here.";
+    DEB_ALWAYS() << "Since the property is not readable at this time, we will stop here.";
     return i_err;
   }
   
   // Now getting the value itself : we absolutely need now to know the type of the feature :
   if ( Camera::Unknown == iPropType ) {
-    DEB_TRACE() << "Could not retrieve information on a property of unknown type !!\n"
+    DEB_ALWAYS() << "Could not retrieve information on a property of unknown type !!\n"
     << "Returning error code!!";
     return -1;
   }
@@ -2125,47 +2115,47 @@ lima::Andor3::Camera::printInfoForProp(const AT_WC * iPropName, A3_TypeInfo iPro
       break;
       
     case Camera::Enum:
-      DEB_TRACE() << "\tFeature of type ENUM";
+      DEB_ALWAYS() << "\tFeature of type ENUM";
       if ( AT_SUCCESS == (ret_code = AT_GetEnumIndex(m_camera_handle, iPropName, &enum_Value)) ) {
-        DEB_TRACE() << "\tValue = (" << enum_Value << ")";
+        DEB_ALWAYS() << "\tValue = (" << enum_Value << ")";
         if ( AT_SUCCESS == (ret_code = AT_GetEnumStringByIndex(m_camera_handle, iPropName, enum_Value, s_Value, 1024)) )
-          DEB_TRACE() << " \"" << WStringToString(s_Value) << "\"";
+          DEB_ALWAYS() << " \"" << WStringToString(s_Value) << "\"";
         else
-          DEB_TRACE() << "\tError message : " << error_code(ret_code);
+          DEB_ALWAYS() << "\tError message : " << error_code(ret_code);
         if ( AT_SUCCESS == (ret_code = AT_IsEnumIndexImplemented(m_camera_handle, iPropName, enum_Value, &b_Value)) )
-          DEB_TRACE() << "; implemented = " << atBoolToString(b_Value);
+          DEB_ALWAYS() << "; implemented = " << atBoolToString(b_Value);
         else
-          DEB_TRACE() << "\tError message : " << error_code(ret_code);
+          DEB_ALWAYS() << "\tError message : " << error_code(ret_code);
         if ( AT_SUCCESS == (ret_code = AT_IsEnumIndexAvailable(m_camera_handle, iPropName, enum_Value, &b_Value)) )
-          DEB_TRACE() << "; available = " << atBoolToString(b_Value);
+          DEB_ALWAYS() << "; available = " << atBoolToString(b_Value);
         else
-          DEB_TRACE() << "\tError message : " << error_code(ret_code);
-        DEB_TRACE() << ".";
+          DEB_ALWAYS() << "\tError message : " << error_code(ret_code);
+        DEB_ALWAYS() << ".";
       }
       else
-        DEB_TRACE() << "\tError message : " << error_code(ret_code);
+        DEB_ALWAYS() << "\tError message : " << error_code(ret_code);
       
       if ( AT_SUCCESS == (ret_code = AT_GetEnumCount(m_camera_handle, iPropName, &enum_Count)) ) {
-        DEB_TRACE() << "\tAvailable choices are (" << enum_Count << ") :";
+        DEB_ALWAYS() << "\tAvailable choices are (" << enum_Count << ") :";
         for ( int i=0; enum_Count != i; ++i ) {
-          DEB_TRACE() << "\t\t(" << i << ")";
+          DEB_ALWAYS() << "\t\t(" << i << ")";
           if ( AT_SUCCESS == (ret_code = AT_GetEnumStringByIndex(m_camera_handle, iPropName, i, s_Value, 1024)) )
-            DEB_TRACE() << " \"" << WStringToString(s_Value) << "\"";
+            DEB_ALWAYS() << " \"" << WStringToString(s_Value) << "\"";
           else
-            DEB_TRACE() << "\tError message : " << error_code(ret_code);
+            DEB_ALWAYS() << "\tError message : " << error_code(ret_code);
           if ( AT_SUCCESS == (ret_code = AT_IsEnumIndexImplemented(m_camera_handle, iPropName, i, &b_Value)) )
-            DEB_TRACE() << "; implemented = " << atBoolToString(b_Value);
+            DEB_ALWAYS() << "; implemented = " << atBoolToString(b_Value);
           else
-            DEB_TRACE() << "\tError message : " << error_code(ret_code);
+            DEB_ALWAYS() << "\tError message : " << error_code(ret_code);
           if ( AT_SUCCESS == (ret_code = AT_IsEnumIndexAvailable(m_camera_handle, iPropName, i, &b_Value)) )
-            DEB_TRACE() << "; available = " << atBoolToString(b_Value);
+            DEB_ALWAYS() << "; available = " << atBoolToString(b_Value);
           else
-            DEB_TRACE() << "\tError message : " << error_code(ret_code);
-          DEB_TRACE() << ".";
+            DEB_ALWAYS() << "\tError message : " << error_code(ret_code);
+          DEB_ALWAYS() << ".";
         }
       }
       else
-        DEB_TRACE() << "\tError message : " << error_code(ret_code);
+        DEB_ALWAYS() << "\tError message : " << error_code(ret_code);
       
       break;
       
