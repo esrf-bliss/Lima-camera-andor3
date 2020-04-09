@@ -69,14 +69,16 @@ namespace lima
       enum A3_ReadOutRate { MHz10 = 0, MHz100 = 1, MHz200 = 2, MHz280 = 3 };
       // In the same order/index as 'BitDepth'
       enum A3_BitDepth { b11 = 0, b16= 1 };
-      // The camera trigger mode (in the enum order) :
-//      enum A3_TriggerMode { Internal = 0, ExternalLevelTransition = 1, ExternalStart = 2, ExternalExposure = 3, Software = 4, Advanced = 5, External = 6 };
+      // Gain Mode for Marana detector
+      enum A3_GainMode { FastFrameRate=0, HighDynamicRange=1 };
 
       // The binning system of andor3 :
       enum A3_Binning { B1x1=0, B2x2=1, B3x3=2, B4x4=3, B8x8=4};
       // The fan speed
       enum A3_FanSpeed { Off=0, Low=1, On=2};
       enum A3_PixelEncoding {Mono12=0, Mono12Packed = 1, Mono16=2, Mono32=3};
+
+      enum A3_SignalLevel { Normal=0, Inverted=1};
       
       struct SdkFrameDim {       
 	AT_64 width;
@@ -157,6 +159,11 @@ namespace lima
       void getAdcGain(A3_Gain &oGain) const;
       void getAdcGainString(std::string &oGainString) const;
 
+      void setGateLevel(A3_SignalLevel iLevel);
+      void getGateLevel(A3_SignalLevel &iLevel);
+      void setTriggerLevel(A3_SignalLevel iLevel);
+      void getTriggerLevel(A3_SignalLevel &iLevel);
+
       void setAdcRate(A3_ReadOutRate iRate);  // à exporter (avec le get)
       void getAdcRate(A3_ReadOutRate &oRate) const;
       void getAdcRateString(std::string &oRateString) const;
@@ -168,8 +175,6 @@ namespace lima
       void getBitDepthString(std::string &oDepthString) const;
       void getPxEncoding(A3_PixelEncoding &oPxEncoding) const;
       void getPxEncodingString(std::string &oPxEncoding) const;
-      // void setTriggerMode(A3_TriggerMode iMode);
-      // void getTriggerMode(A3_TriggerMode &oMode) const;
       void getTriggerModeString(std::string &oModeString) const;
       void setTemperatureSP(double temp);  // à exporter (avec le get)
       void getTemperatureSP(double& temp) const;

@@ -92,6 +92,9 @@ namespace lima {
     static const AT_WC* TriggerMode = L"TriggerMode";
     static const AT_WC* FrameCount = L"FrameCount";
 
+    static const AT_WC* IOSelector = L"IOSelector";
+    static const AT_WC* IOInvert = L"IOInvert";
+
     // For future !!
     //    static const AT_WC* AccumulateCount = L"AccumulateCount";
     //    static const AT_WC* BaselineLevel = L"BaselineLevel";
@@ -299,9 +302,13 @@ m_maximage_size_cb_active(false)
   // --- init trigger modes
   initTrigMode();
 
-  // printInfoForProp(andor3::ElectronicShutteringMode, Enum);
-  // printInfoForProp(andor3::PixelReadoutRate, Enum);
-  // printInfoForProp(andor3::PixelEncoding, Enum);
+// --- to investiagte cam features
+//  printInfoForProp(andor3::ElectronicShutteringMode, Enum);
+//  printInfoForProp(andor3::PixelReadoutRate, Enum);
+//  printInfoForProp(andor3::PixelEncoding, Enum);
+//  printInfoForProp(andor3::SimplePreAmpGainControl, Enum);
+//  printInfoForProp(andor3::FanSpeed, Enum);
+//  printInfoForProp(andor3::BitDepth, Enum);
 
   // --- Initialise deeper parameters of the controller
   initialiseController();
@@ -1431,6 +1438,53 @@ lima::Andor3::Camera::getTriggerModeString(std::string &oModeString) const
   }
 }
 
+void
+lima::Andor3::Camera::setGateLevel(A3_SignalLevel iLevel)
+{
+  DEB_MEMBER_FUNCT();
+  bool flag;
+  if (iLevel == Inverted) flag= true;
+  else flag= false;
+  setEnumString(andor3::IOSelector, L"External Exposure");
+  setBool(andor3::IOInvert, flag);
+}
+
+void
+lima::Andor3::Camera::getGateLevel(A3_SignalLevel &iLevel)
+{
+  DEB_MEMBER_FUNCT();
+  bool flag;
+  setEnumString(andor3::IOSelector, L"External Exposure");
+  getBool(andor3::IOInvert, &flag);
+  if (flag)
+    iLevel = Inverted;
+  else
+    iLevel = Normal;
+}
+
+void
+lima::Andor3::Camera::setTriggerLevel(A3_SignalLevel iLevel)
+{
+  DEB_MEMBER_FUNCT();
+  bool flag;
+  if (iLevel == Inverted) flag= true;
+  else flag= false;
+  setEnumString(andor3::IOSelector, L"External Trigger");
+  setBool(andor3::IOInvert, flag);
+}
+
+void
+lima::Andor3::Camera::getTriggerLevel(A3_SignalLevel &iLevel)
+{
+  DEB_MEMBER_FUNCT();
+  bool flag;
+  setEnumString(andor3::IOSelector, L"External Trigger");
+  getBool(andor3::IOInvert, &flag);
+  if (flag)
+    iLevel = Inverted;
+  else
+    iLevel = Normal;
+}
 
 //-----------------------------------------------------
 // @brief	set the temperature set-point // DONE
@@ -1620,7 +1674,11 @@ lima::Andor3::Camera::setSimpleGain(A3_SimpleGain i_gain)
 {
   DEB_MEMBER_FUNCT();
   if ( propImplemented(andor3::SimplePreAmpGainControl) ) {
-    setEnumIndex(andor3::SimplePreAmpGainControl, i_gain);
+    int the_err_code = setEnumIndex(andor3::SimplePreAmpGainControl, i_gain);
+    if ( AT_SUCCESS != the_err_code ) {
+      DEB_ERROR() << "Cannot set SimplePreAmpGainControl to " << i_gain
+                  << " - " << DEB_VAR1(error_code(the_err_code));
+    }
   }
   else {
     DEB_TRACE() << "SimplePreAmpGainControl not implemented, emulating it in software";

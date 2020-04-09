@@ -92,6 +92,13 @@ class Andor3(PyTango.Device_4Impl):
                          'OFF': False}
         self.__SpuriousNoiseFilter = {'ON':  True,
                          'OFF': False}
+        self.__GateLevel = { 'NORMAL': _Andor3Camera.Normal,
+                             'INVERTED': _Andor3Camera.Inverted,
+                           }
+        self.__TriggerLevel = { 'NORMAL': _Andor3Camera.Normal,
+                                'INVERTED': _Andor3Camera.Inverted,
+                              }
+
         self.__Attribute2FunctionBase = {'adc_gain': 'SimpleGain',
                                          'adc_rate': 'AdcRate',
                                          'temperature': 'Temperature',
@@ -106,6 +113,8 @@ class Andor3(PyTango.Device_4Impl):
                                          'overlap': 'Overlap',
                                          'spurious_noise_filter': 'SpuriousNoiseFilter',
                                          'serial_number': 'SerialNumber',
+                                         'gate_level': 'GateLevel',
+                                         'trigger_level': 'TriggerLevel',
                                          }
         self.init_device()
                                                
@@ -354,6 +363,26 @@ class Andor3Class(PyTango.DeviceClass):
              'unit': 'N/A',
              'format': '',
              'description': 'camera serial number',
+             }],
+        'trigger_level':
+        [[PyTango.DevString,
+          PyTango.SCALAR,
+          PyTango.READ_WRITE],
+         {
+             'label':'External trigger level',
+             'unit': 'N/A',
+             'format': '',
+             'description': 'NORMAl or INVERTED'
+             }],
+        'gate_level':
+        [[PyTango.DevString,
+          PyTango.SCALAR,
+          PyTango.READ_WRITE],
+         {
+             'label':'External gate level',
+             'unit': 'N/A',
+             'format': '',
+             'description': 'NORMAl or INVERTED'
              }],
         }
 

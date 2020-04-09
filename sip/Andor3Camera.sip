@@ -40,6 +40,7 @@ namespace Andor3
     enum A3_Binning { B1x1=0, B2x2=1, B3x3=2, B4x4=3, B8x8=4};
     enum A3_FanSpeed { Off=0, Low=1, On=2};
     enum A3_PixelEncoding {Mono12=0, Mono12Packed = 1, Mono16=2, Mono32=3};
+    enum A3_SignalLevel {Normal=0, Inverted=1};
 
     Camera(const std::string& bitflow_path, int camera_number=0);
     ~Camera();
@@ -93,6 +94,11 @@ namespace Andor3
 
 // -- andor3 specific, LIMA don't worry about it !
    void initialiseController();
+
+   void setGateLevel(A3_SignalLevel iLevel /In/ );
+   void getGateLevel(A3_SignalLevel &iLevel /Out/ );
+   void setTriggerLevel(A3_SignalLevel iLevel /In/ );
+   void getTriggerLevel(A3_SignalLevel &iLevel /Out/ );
 
    void setAdcGain(A3_Gain iGain /In/ );
    void getAdcGain(A3_Gain &oGain /Out/ ) const;
