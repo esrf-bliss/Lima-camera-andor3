@@ -78,7 +78,11 @@ namespace lima
       enum A3_FanSpeed { Off=0, Low=1, On=2};
       enum A3_PixelEncoding {Mono12=0, Mono12Packed = 1, Mono16=2, Mono32=3};
 
+      // trigger / gate level
       enum A3_SignalLevel { Normal=0, Inverted=1};
+
+      // output signal
+      enum A3_OutputSignal { FireRow1=0, FireRowN=1, FireAll=2, FireAny=3 };
       
       struct SdkFrameDim {       
 	AT_64 width;
@@ -163,6 +167,9 @@ namespace lima
       void getGateLevel(A3_SignalLevel &iLevel);
       void setTriggerLevel(A3_SignalLevel iLevel);
       void getTriggerLevel(A3_SignalLevel &iLevel);
+
+      void setOutputSignal(A3_OutputSignal iSignal);
+      void getOutputSignal(A3_OutputSignal &oSignal) const;
 
       void setAdcRate(A3_ReadOutRate iRate);  // à exporter (avec le get)
       void getAdcRate(A3_ReadOutRate &oRate) const;

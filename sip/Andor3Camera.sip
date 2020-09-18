@@ -41,6 +41,7 @@ namespace Andor3
     enum A3_FanSpeed { Off=0, Low=1, On=2};
     enum A3_PixelEncoding {Mono12=0, Mono12Packed = 1, Mono16=2, Mono32=3};
     enum A3_SignalLevel {Normal=0, Inverted=1};
+    enum A3_OutputSignal {FireRow1=0, FireRowN=1, FireAll=2, FireAny=3};
 
     Camera(const std::string& bitflow_path, int camera_number=0);
     ~Camera();
@@ -99,6 +100,8 @@ namespace Andor3
    void getGateLevel(A3_SignalLevel &iLevel /Out/ );
    void setTriggerLevel(A3_SignalLevel iLevel /In/ );
    void getTriggerLevel(A3_SignalLevel &iLevel /Out/ );
+   void setOutputSignal(A3_OutputSignal iSignal /In/ );
+   void getOutputSignal(A3_OutputSignal &oSignal /Out/ ) const;
 
    void setAdcGain(A3_Gain iGain /In/ );
    void getAdcGain(A3_Gain &oGain /Out/ ) const;

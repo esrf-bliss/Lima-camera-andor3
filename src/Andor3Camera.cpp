@@ -94,6 +94,7 @@ namespace lima {
 
     static const AT_WC* IOSelector = L"IOSelector";
     static const AT_WC* IOInvert = L"IOInvert";
+    static const AT_WC* AuxiliaryOutSource = L"AuxiliaryOutSource";
 
     // For future !!
     //    static const AT_WC* AccumulateCount = L"AccumulateCount";
@@ -1484,6 +1485,32 @@ lima::Andor3::Camera::getTriggerLevel(A3_SignalLevel &iLevel)
     iLevel = Inverted;
   else
     iLevel = Normal;
+}
+
+void
+lima::Andor3::Camera::setOutputSignal(A3_OutputSignal iSignal)
+{
+  DEB_MEMBER_FUNCT();
+  if ( propImplemented(andor3::AuxiliaryOutSource) ) {
+    setEnumIndex(andor3::AuxiliaryOutSource, iSignal);
+  }
+  else {
+    DEB_TRACE() << "The camera has no fan speed setting... Do nothing !";
+  }
+}
+
+void
+lima::Andor3::Camera::getOutputSignal(A3_OutputSignal &oSignal) const
+{
+  DEB_MEMBER_FUNCT();
+  if ( propImplemented(andor3::AuxiliaryOutSource) ) {
+    int  value;
+    getEnumIndex(andor3::AuxiliaryOutSource, &value);
+    oSignal = static_cast<A3_OutputSignal>(value);
+  }
+  else {
+    DEB_TRACE() << "The camera has no fan speed setting... Do nothing !";
+  }  
 }
 
 //-----------------------------------------------------

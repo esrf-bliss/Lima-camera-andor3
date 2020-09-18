@@ -98,6 +98,11 @@ class Andor3(PyTango.Device_4Impl):
         self.__TriggerLevel = { 'NORMAL': _Andor3Camera.Normal,
                                 'INVERTED': _Andor3Camera.Inverted,
                               }
+        self.__OutputSignal = { 'FIREROW1': _Andor3Camera.FireRow1,
+                                'FIREROWN': _Andor3Camera.FireRowN,
+                                'FIREALL': _Andor3Camera.FireAll,
+                                'FIREANY': _Andor3Camera.FireAny,
+                              }
 
         self.__Attribute2FunctionBase = {'adc_gain': 'SimpleGain',
                                          'adc_rate': 'AdcRate',
@@ -115,6 +120,7 @@ class Andor3(PyTango.Device_4Impl):
                                          'serial_number': 'SerialNumber',
                                          'gate_level': 'GateLevel',
                                          'trigger_level': 'TriggerLevel',
+                                         'output_signal': 'OutputSignal',
                                          }
         self.init_device()
                                                
@@ -383,6 +389,16 @@ class Andor3Class(PyTango.DeviceClass):
              'unit': 'N/A',
              'format': '',
              'description': 'NORMAl or INVERTED'
+             }],
+        'output_signal':
+        [[PyTango.DevString,
+          PyTango.SCALAR,
+          PyTango.READ_WRITE],
+         {
+             'label':'Output signal selection',
+             'unit': 'N/A',
+             'format': '',
+             'description': 'FireRow1, FireRowN, FireAny, FireAll',
              }],
         }
 
