@@ -143,16 +143,19 @@ class Andor3(PyTango.Device_4Impl):
 
         # Apply properties if any
         if self.adc_gain:
-            _Andor3Interface.setAdcGain(self.__AdcGain[self.adc_gain])
+            _Andor3Camera.setSimpleGain(self.__AdcGain[self.adc_gain])
             
         if self.adc_rate:
-            _Andor3Interface.setAdcRate(self.__AdcRate[self.adc_rate])
+            _Andor3Camera.setAdcRate(self.__AdcRate[self.adc_rate])
             
         if self.temperature_sp:            
             _Andor3Camera.setTemperatureSP(self.temperature_sp)
             
         if self.cooler:
             _Andor3Camera.setCooler(self.__Cooler[self.cooler])
+
+        if self.overlap:
+            _Andor3Camera.setOverlap(self.__Overlap[self.overlap])
             
 
 #==================================================================
@@ -217,6 +220,9 @@ class Andor3Class(PyTango.DeviceClass):
         'cooler':
         [PyTango.DevString,
          'Start or stop the cooler ("ON"/"OFF")', []],
+        'overlap':
+        [PyTango.DevString,
+         'Overlap mode', []],
         }
 
 
