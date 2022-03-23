@@ -107,8 +107,6 @@ namespace lima {
     //    static const AT_WC* MetadataFrame = L"MetadataFrame";
     //    static const AT_WC* MetadataTimestamp = L"MetadataTimestamp";
     //    static const AT_WC* PixelCorrection = L"PixelCorrection";
-    //    static const AT_WC* PixelHeight = L"PixelHeight";
-    //    static const AT_WC* PixelWidth = L"PixelWidth";
     //    static const AT_WC* PreAmpGain = L"PreAmpGain"; // Deprecated
     //    static const AT_WC* PreAmpGainChannel = L"PreAmpGainChannel"; // Deprecated
     //    static const AT_WC* PreAmpGainSelector = L"PreAmpGainSelector"; // Deprecated
@@ -1681,11 +1679,26 @@ lima::Andor3::Camera::getBufferOverflow(bool &o_overflow) const
 
 
 void
-lima::Andor3::Camera::setFanSpeed(A3_FanSpeed iFS)
+lima::Andor3::Camera::getFanSpeedList(std::vector<std::string> &fan_speed_list) const
+{
+  int		enum_count;
+  AT_WC		s_value[1024];
+  
+  AT_GetEnumCount(m_camera_handle, andor3::FanSpeed, &enum_count);
+
+  for (int idx=0; enum_count != idx; ++idx) {
+    AT_GetEnumStringByIndex(m_camera_handle, andor3::FanSpeed, idx, s_value, 1024);
+    fan_speed_list.push_back(WStringToString(s_value));
+  }
+}
+
+void
+lima::Andor3::Camera::setFanSpeed(std::string fan_speed)
 {
   DEB_MEMBER_FUNCT();
   if ( propImplemented(andor3::FanSpeed) ) {
-    setEnumIndex(andor3::FanSpeed, iFS);
+    const std::wstring fan_set = StringToWString(fan_speed);
+    setEnumString(andor3::FanSpeed, fan_set.c_str());
   }
   else {
     DEB_TRACE() << "The camera has no fan speed setting... Do nothing !";
@@ -1693,35 +1706,19 @@ lima::Andor3::Camera::setFanSpeed(A3_FanSpeed iFS)
 }
 
 void
-lima::Andor3::Camera::getFanSpeed(A3_FanSpeed &oFS) const
+lima::Andor3::Camera::getFanSpeed(std::string &fan_speed) const
 {
   DEB_MEMBER_FUNCT();
   if ( propImplemented(andor3::FanSpeed) ) {
-    int  the_fs;
-    getEnumIndex(andor3::FanSpeed, &the_fs);
-    oFS = static_cast<A3_FanSpeed>(the_fs);
+    AT_WC fan_string[256];
+    getEnumString(andor3::FanSpeed, fan_string, 255);
+    fan_speed = WStringToString(fan_string);
   }
   else {
     DEB_TRACE() << "The camera has no fan speed setting... Do nothing !";
+    fan_speed = "not implemented";
   }  
 }
-
-
-void
-lima::Andor3::Camera::getFanSpeedString(std::string &oFSString) const
-{
-  DEB_MEMBER_FUNCT();
-  if ( propImplemented(andor3::FanSpeed) ) {
-    AT_WC		the_string[256];
-    getEnumString(andor3::FanSpeed, the_string, 255);
-    oFSString = WStringToString(std::wstring(the_string));
-  }
-  else {
-    DEB_TRACE() << "The camera has no fan speed setting... Do nothing !";
-    oFSString = "not implemented";
-  }
-}
-
 
 void
 lima::Andor3::Camera::setOverlap(bool i_overlap)

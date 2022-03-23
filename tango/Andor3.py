@@ -48,6 +48,15 @@ from Lima import Andor3 as Andor3Module
 # and Lima interfaces.
 from Lima.Server import AttrHelper
 
+def andor_list2dict(alist):
+     adict = dict()
+     for name in alist:
+         newname = name.upper().strip()
+         newname = newname.replace("(", "").replace(")", "").replace("-", "_").replace(" ", "_")
+         adict[newname] = name
+     return adict
+
+         
 class Andor3(PyTango.Device_4Impl):
 
     Core.DEB_CLASS(Core.DebModApplication, 'LimaCCDs')
@@ -81,10 +90,6 @@ class Andor3(PyTango.Device_4Impl):
                           }
         self.__Cooler = {'ON':  True,
                          'OFF': False}
-        self.__FanSpeed = {'OFF':  _Andor3Camera.Off,
-                           'LOW':  _Andor3Camera.Low,
-                           'HIGH': _Andor3Camera.On,
-                           }
         self.__ElectronicShutterMode = {'ROLLING': _Andor3Camera.Rolling,
                                         'GLOBAL': _Andor3Camera.Global,
                                         }
@@ -103,6 +108,7 @@ class Andor3(PyTango.Device_4Impl):
                                 'FIREALL': _Andor3Camera.FireAll,
                                 'FIREANY': _Andor3Camera.FireAny,
                               }
+        self.__FanSpeed = andor_list2dict(_Andor3Camera.getFanSpeedList())
 
         self.__Attribute2FunctionBase = {'adc_gain': 'SimpleGain',
                                          'adc_rate': 'AdcRate',
@@ -122,6 +128,8 @@ class Andor3(PyTango.Device_4Impl):
                                          'trigger_level': 'TriggerLevel',
                                          'output_signal': 'OutputSignal',
                                          }
+
+
         self.init_device()
                                                
 #------------------------------------------------------------------

@@ -38,7 +38,6 @@ namespace Andor3
     enum A3_BitDepth { b11 = 0, b16= 1 };
 //    enum A3_TriggerMode { Internal = 0, ExternalLevelTransition = 1, ExternalStart = 2, ExternalExposure = 3, Software = 4, Advanced = 5, External = 6 };
     enum A3_Binning { B1x1=0, B2x2=1, B3x3=2, B4x4=3, B8x8=4};
-    enum A3_FanSpeed { Off=0, Low=1, On=2};
     enum A3_PixelEncoding {Mono12=0, Mono12Packed = 1, Mono16=2, Mono32=3};
     enum A3_SignalLevel {Normal=0, Inverted=1};
     enum A3_OutputSignal {FireRow1=0, FireRowN=1, FireAll=2, FireAny=3};
@@ -128,9 +127,11 @@ namespace Andor3
 
    void setBufferOverflow(bool i_overflow /In/ );
    void getBufferOverflow(bool &o_overflow /Out/ ) const;
-   void setFanSpeed(A3_FanSpeed iFS /In/ );
-   void getFanSpeed(A3_FanSpeed &oFS /Out/ ) const;
-   void getFanSpeedString(std::string &oFSString /Out/ ) const;
+
+   void setFanSpeed(std::string fan_speed /In/ );
+   void getFanSpeed(std::string &fan_speed /Out/ ) const;
+   void getFanSpeedList(std::vector<std::string> &fs_list /Out/ ) const;
+
    void setOverlap(bool i_overlap /In/ );
    void getOverlap(bool &o_overlap /Out/ ) const;
    void setSimpleGain(A3_SimpleGain i_gain /In/ );

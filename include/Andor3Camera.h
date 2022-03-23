@@ -75,8 +75,6 @@ namespace lima
 
       // The binning system of andor3 :
       enum A3_Binning { B1x1=0, B2x2=1, B3x3=2, B4x4=3, B8x8=4};
-      // The fan speed
-      enum A3_FanSpeed { Off=0, Low=1, On=2};
       enum A3_PixelEncoding {Mono12=0, Mono12Packed = 1, Mono16=2, Mono32=3};
 
       // trigger / gate level
@@ -193,9 +191,11 @@ namespace lima
       
       void setBufferOverflow(bool i_overflow);
       void getBufferOverflow(bool &o_overflow) const;
-      void setFanSpeed(A3_FanSpeed iFS);
-      void getFanSpeed(A3_FanSpeed &oFS) const;
-      void getFanSpeedString(std::string &oFSString) const;
+
+      void setFanSpeed(std::string fan_speed);
+      void getFanSpeed(std::string &fan_speed) const;
+      void getFanSpeedList(std::vector<std::string> &fan_speed_list) const;
+
       void setOverlap(bool i_overlap);
       void getOverlap(bool &o_overlap) const;
       void setSimpleGain(A3_SimpleGain i_gain);
