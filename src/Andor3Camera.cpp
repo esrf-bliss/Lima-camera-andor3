@@ -115,7 +115,7 @@ namespace lima {
     //    static const AT_WC* RowNExposureEndEvent = L"RowNExposureEndEvent";
     //    static const AT_WC* RowNExposureStartEvent = L"RowNExposureStartEvent";
     //    static const AT_WC* SoftwareVersion = L"SoftwareVersion";
-    //    static const AT_WC* TemperatureControl = L"TemperatureControl";
+        static const AT_WC* TemperatureControl = L"TemperatureControl";
     //    static const AT_WC* TimestampClock = L"TimestampClock";
     //    static const AT_WC* TimestampClockFrequency = L"TimestampClockFrequency";
     //    static const AT_WC* TimestampClockReset = L"TimestampClockReset";
@@ -176,8 +176,9 @@ m_electronic_shutter_mode(Rolling),
 m_bit_depth(b16),
 m_trig_mode(IntTrig),
 m_cooler(true),
-m_temperature_sp(5.0),
-m_temperature_control_available(true),
+m_temperature_sp(999.99),
+m_has_temperature_sp(false),
+m_has_temperature_control(false),
 m_maximage_size_cb_active(false)
 {
   DEB_CONSTRUCTOR();
@@ -310,6 +311,8 @@ m_maximage_size_cb_active(false)
 //  printInfoForProp(andor3::SimplePreAmpGainControl, Enum);
 //  printInfoForProp(andor3::FanSpeed, Enum);
 //  printInfoForProp(andor3::BitDepth, Enum);
+//  printInfoForProp(andor3::TemperatureControl, Enum);
+//  printInfoForProp(andor3::AuxiliaryOutSource, Enum);
 
   // --- Initialise deeper parameters of the controller
   initialiseController();
@@ -326,7 +329,7 @@ lima::Andor3::Camera::~Camera()
   m_acq_thread = NULL;
  
   // Close camera
-  if (m_cooler && m_temperature_control_available) {
+  if (m_cooler && m_has_temperature_sp) {
     DEB_ERROR() <<"Please stop the cooling before shuting dowm the camera\n"
     << "brutale heating could damage the sensor.\n"
     << "And wait until temperature rises above 5 deg, before shuting down.";
@@ -1197,7 +1200,7 @@ lima::Andor3::Camera::initialiseController()
   setAdcRate(the_rate);
   setBitDepth(the_bd);
   setCooler(m_cooler);
-  setTemperatureSP(m_temperature_sp);
+  initTemperature();
   setExpTime(m_exp_time);
   
   setSpuriousNoiseFilter(false);
@@ -1514,6 +1517,36 @@ lima::Andor3::Camera::getOutputSignal(A3_OutputSignal &oSignal) const
 }
 
 //-----------------------------------------------------
+// @brief	retrieve temperature capabilities
+//-----------------------------------------------------
+void
+lima::Andor3::Camera::initTemperature()
+{
+  DEB_MEMBER_FUNCT();
+  if ( propImplemented(andor3::TargetSensorTemperature) && m_detector_model.find("ZYLA5.5")==std::string::npos ) {
+    m_has_temperature_sp = true;
+    getFloat(andor3::TargetSensorTemperature, &m_temperature_sp);
+  } 
+  else if ( propImplemented(andor3::TemperatureControl) ) {
+    int ntemp, current_idx;
+    AT_WC at_string[256];
+    float value;
+
+    m_has_temperature_control = true;
+    DEB_ALWAYS() << "Camera has temperature setpoints pre-defined";
+    getEnumCount(m_camera_handle, andor3::TemperatureControl, &ntemp);
+    for (int idx=0; idx != ntemp; ++idx) {
+      AT_GetEnumStringByIndex(m_camera_handle, andor3::TemperatureControl, idx, at_string, 255);
+      value = std::stof(WStringToString(at_string));
+      m_temperature_control_values.push_back(value);
+      DEB_ALWAYS() << "Index " << idx << " Setpoint " << value;
+    }
+    getEnumIndex(andor3::TemperatureControl, &current_idx);
+    m_temperature_sp = m_temperature_control_values[current_idx];
+  }
+}
+  
+//-----------------------------------------------------
 // @brief	set the temperature set-point // DONE
 // @param	temperature in centigrade
 //
@@ -1522,8 +1555,8 @@ void
 lima::Andor3::Camera::setTemperatureSP(double temp)
 {
   DEB_MEMBER_FUNCT();
-  // Zyla-5.5 camera is supposed to not have this feature, but propImplemented returned True !!!
-  if ( propImplemented(andor3::TargetSensorTemperature) && m_detector_model.find("ZYLA5.5")==std::string::npos ) {
+
+  if (m_has_temperature_sp) {
     setFloat(andor3::TargetSensorTemperature, temp);
     getFloat(andor3::TargetSensorTemperature, &m_temperature_sp);
     if ( abs(m_temperature_sp - temp) > 0.1) {
@@ -1533,9 +1566,23 @@ lima::Andor3::Camera::setTemperatureSP(double temp)
       THROW_HW_ERROR(Error) << "Failed on setting temperature set-point";
     }
   }
+  else if (m_has_temperature_control) {
+    float temp_idx = 0;
+    int size = m_temperature_control_values.size();
+    int current_idx;
+    for (int idx=size-1; idx>= 0; --idx) {
+      if (temp <= m_temperature_control_values[idx]) {
+         temp_idx = idx;
+         break;
+      }
+    }
+    setEnumIndex(andor3::TemperatureControl, temp_idx);
+    getEnumIndex(andor3::TemperatureControl, &current_idx);
+    m_temperature_sp = m_temperature_control_values[current_idx];
+  }
   else {
-    DEB_ALWAYS() << "This camera has no temperature set-point control !";
-    m_temperature_control_available = false;
+    DEB_ERROR() << "Camera has no temperature set-point control";
+    THROW_HW_ERROR(Error) << "Camera has no temperature set-point control";
   }
 }
 
@@ -2108,41 +2155,41 @@ lima::Andor3::Camera::printInfoForProp(const AT_WC * iPropName, A3_TypeInfo iPro
   AT_BOOL b_writable;
   AT_BOOL b_readable;
   
-  DEB_ALWAYS() << "Retrieving information on property named \"" << WStringToString(iPropName) << "\".\n";
+  std::cout << "\nRetrieving information on property named \"" << WStringToString(iPropName) << "\".\n";
   
   int ret_code;
   // Implemented
   if ( AT_SUCCESS != (ret_code = AT_IsImplemented(m_camera_handle, iPropName, &b_exists)) ) {
-    DEB_ALWAYS() << "Error in printInfoForProp : " << error_code(ret_code);
+    std::cout << "Error in printInfoForProp : " << error_code(ret_code);
     return i_err;
   }
-  DEB_ALWAYS() << "\tIsImplemented = " << atBoolToString(b_exists);
+  std::cout << "\tIsImplemented = " << atBoolToString(b_exists);
   
   if ( ! b_exists ) {
-    DEB_ALWAYS() << "No more information to query, since the feature does not \"exists\" for this camera/driver/SDK.";
+    std::cout << "No more information to query, since the feature does not \"exists\" for this camera/driver/SDK.";
     return i_err;
   }
   
   // ReadOnly
   AT_IsReadOnly(m_camera_handle, iPropName, &b_readonly);
-  DEB_ALWAYS() << "\tIsReadOnly = " << atBoolToString(b_readonly);
+  std::cout << "\tIsReadOnly = " << atBoolToString(b_readonly);
   
   // Writable
   AT_IsWritable(m_camera_handle, iPropName, &b_writable);
-  DEB_ALWAYS() << "\tIsWritable = " << atBoolToString(b_writable);
+  std::cout << "\tIsWritable = " << atBoolToString(b_writable);
   
   // Readable
   AT_IsReadable(m_camera_handle, iPropName, &b_readable);
-  DEB_ALWAYS() << "\tIsReadable = " << atBoolToString(b_readable);
+  std::cout << "\tIsReadable = " << atBoolToString(b_readable);
   
   if ( ! b_readable ) {
-    DEB_ALWAYS() << "Since the property is not readable at this time, we will stop here.";
+    std::cout << "Since the property is not readable at this time, we will stop here.";
     return i_err;
   }
   
   // Now getting the value itself : we absolutely need now to know the type of the feature :
   if ( Camera::Unknown == iPropType ) {
-    DEB_ALWAYS() << "Could not retrieve information on a property of unknown type !!\n"
+    std::cout << "Could not retrieve information on a property of unknown type !!\n"
     << "Returning error code!!";
     return -1;
   }
@@ -2200,47 +2247,47 @@ lima::Andor3::Camera::printInfoForProp(const AT_WC * iPropName, A3_TypeInfo iPro
       break;
       
     case Camera::Enum:
-      DEB_ALWAYS() << "\tFeature of type ENUM";
+      std::cout << "\n\tFeature of type ENUM";
       if ( AT_SUCCESS == (ret_code = AT_GetEnumIndex(m_camera_handle, iPropName, &enum_Value)) ) {
-        DEB_ALWAYS() << "\tValue = (" << enum_Value << ")";
+        std::cout << "\n\tValue = (" << enum_Value << ")";
         if ( AT_SUCCESS == (ret_code = AT_GetEnumStringByIndex(m_camera_handle, iPropName, enum_Value, s_Value, 1024)) )
-          DEB_ALWAYS() << " \"" << WStringToString(s_Value) << "\"";
+          std::cout << " \"" << WStringToString(s_Value) << "\"";
         else
-          DEB_ALWAYS() << "\tError message : " << error_code(ret_code);
+          std::cout << "\tError message : " << error_code(ret_code);
         if ( AT_SUCCESS == (ret_code = AT_IsEnumIndexImplemented(m_camera_handle, iPropName, enum_Value, &b_Value)) )
-          DEB_ALWAYS() << "; implemented = " << atBoolToString(b_Value);
+          std::cout << "; implemented = " << atBoolToString(b_Value);
         else
-          DEB_ALWAYS() << "\tError message : " << error_code(ret_code);
+          std::cout << "\tError message : " << error_code(ret_code);
         if ( AT_SUCCESS == (ret_code = AT_IsEnumIndexAvailable(m_camera_handle, iPropName, enum_Value, &b_Value)) )
-          DEB_ALWAYS() << "; available = " << atBoolToString(b_Value);
+          std::cout << "; available = " << atBoolToString(b_Value);
         else
-          DEB_ALWAYS() << "\tError message : " << error_code(ret_code);
-        DEB_ALWAYS() << ".";
+          std::cout << "\tError message : " << error_code(ret_code);
+        std::cout << ".";
       }
       else
-        DEB_ALWAYS() << "\tError message : " << error_code(ret_code);
+        std::cout << "\tError message : " << error_code(ret_code);
       
       if ( AT_SUCCESS == (ret_code = AT_GetEnumCount(m_camera_handle, iPropName, &enum_Count)) ) {
-        DEB_ALWAYS() << "\tAvailable choices are (" << enum_Count << ") :";
+        std::cout << "\n\tAvailable choices are (" << enum_Count << ") :";
         for ( int i=0; enum_Count != i; ++i ) {
-          DEB_ALWAYS() << "\t\t(" << i << ")";
+          std::cout << "\n\t\t(" << i << ")";
           if ( AT_SUCCESS == (ret_code = AT_GetEnumStringByIndex(m_camera_handle, iPropName, i, s_Value, 1024)) )
-            DEB_ALWAYS() << " \"" << WStringToString(s_Value) << "\"";
+            std::cout << " \"" << WStringToString(s_Value) << "\"";
           else
-            DEB_ALWAYS() << "\tError message : " << error_code(ret_code);
+            std::cout << "\tError message : " << error_code(ret_code);
           if ( AT_SUCCESS == (ret_code = AT_IsEnumIndexImplemented(m_camera_handle, iPropName, i, &b_Value)) )
-            DEB_ALWAYS() << "; implemented = " << atBoolToString(b_Value);
+            std::cout << "; implemented = " << atBoolToString(b_Value);
           else
-            DEB_ALWAYS() << "\tError message : " << error_code(ret_code);
+            std::cout << "\tError message : " << error_code(ret_code);
           if ( AT_SUCCESS == (ret_code = AT_IsEnumIndexAvailable(m_camera_handle, iPropName, i, &b_Value)) )
-            DEB_ALWAYS() << "; available = " << atBoolToString(b_Value);
+            std::cout << "; available = " << atBoolToString(b_Value);
           else
-            DEB_ALWAYS() << "\tError message : " << error_code(ret_code);
-          DEB_ALWAYS() << ".";
+            std::cout << "\tError message : " << error_code(ret_code);
+          std::cout << ".";
         }
       }
       else
-        DEB_ALWAYS() << "\tError message : " << error_code(ret_code);
+        std::cout << "\tError message : " << error_code(ret_code);
       
       break;
       

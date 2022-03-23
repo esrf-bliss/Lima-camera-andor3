@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <limits>
 #include <ostream>
+#include <vector>
 
 // Camera SDK headers :
 #include <atcore.h>
@@ -234,6 +235,7 @@ namespace lima
       
     private:
       void initTrigMode();
+      void initTemperature();
 
       // -- andor3 Lower level functions
       int printInfoForProp(const AT_WC * iPropName, A3_TypeInfo iPropType) const;
@@ -311,7 +313,9 @@ namespace lima
       A3_BitDepth                 m_bit_depth;
       bool                        m_cooler;
       double                      m_temperature_sp;
-      bool                        m_temperature_control_available;
+      bool			  m_has_temperature_sp;
+      bool                        m_has_temperature_control;
+      std::vector<float>	  m_temperature_control_values;
 
       TrigMode                    m_trig_mode;
       // A3_TriggerMode		  m_trig_mode;
