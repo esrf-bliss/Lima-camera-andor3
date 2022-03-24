@@ -63,7 +63,10 @@ namespace lima
       // In the same order/index as "PreAmpGainControl"
       enum A3_Gain { Gain1 = 0, Gain2 = 1, Gain3 = 2, Gain4 = 3, Gain1_Gain3 = 4, Gain1_Gain4 = 5, Gain2_Gain3 = 6, Gain2_Gain4 = 7 };
       // The "simple" version :
-      enum A3_SimpleGain { b11_hi_gain=0, b11_low_gain=1, b16_lh_gain=2, none=31};
+      // enum A3_SimpleGain { b11_hi_gain=0, b11_low_gain=1, b16_lh_gain=2, none=31};
+
+      const std::vector<std::string> A3_SimpleGainString = {"b11_hi_gain", "b11_low_gain", "b16_lh_gain"};
+
       // In the same order/index as "ElectronicShutteringMode"
       enum A3_ShutterMode { Rolling = 0, Global = 1 };
       // In the same order/index as "PixelReadoutRate"
@@ -196,9 +199,11 @@ namespace lima
 
       void setOverlap(bool i_overlap);
       void getOverlap(bool &o_overlap) const;
-      void setSimpleGain(A3_SimpleGain i_gain);
-      void getSimpleGain(A3_SimpleGain &o_gain) const;
-      void getSimpleGainString(std::string &o_gainString) const;
+
+      void setSimpleGain(std::string i_gain);
+      void getSimpleGain(std::string &o_gain) const;
+      void getSimpleGainList(std::vector<std::string> &gain_list) const;
+
       void setSpuriousNoiseFilter(bool i_filter);
       void getSpuriousNoiseFilter(bool &o_filter) const;
       void setSyncTriggering(bool i_sync);
@@ -306,7 +311,6 @@ namespace lima
       int                         m_camera_number;
       AT_H                        m_camera_handle;
       A3_Gain                     m_adc_gain;
-      A3_SimpleGain               m_simple_gain;
       A3_ReadOutRate	          m_adc_rate;
       A3_ShutterMode		  m_electronic_shutter_mode;
       A3_BitDepth                 m_bit_depth;
@@ -317,7 +321,6 @@ namespace lima
       std::vector<float>	  m_temperature_control_values;
 
       TrigMode                    m_trig_mode;
-      // A3_TriggerMode		  m_trig_mode;
       std::map<TrigMode, int>     m_trig_mode_map;
 
       static int                  sAndorSDK3InittedCounter;

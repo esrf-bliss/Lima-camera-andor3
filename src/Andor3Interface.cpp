@@ -190,7 +190,7 @@ lima::Andor3::Interface::getAdcGainString(std::string &oGainString) const
 }
 
 void
-lima::Andor3::Interface::setSimpleGain(Camera::A3_SimpleGain iGain)
+lima::Andor3::Interface::setSimpleGain(std::string iGain)
 {
   DEB_MEMBER_FUNCT();
   m_cam.setSimpleGain(iGain);
@@ -198,17 +198,17 @@ lima::Andor3::Interface::setSimpleGain(Camera::A3_SimpleGain iGain)
 }
 
 void
-lima::Andor3::Interface::getSimpleGain(Camera::A3_SimpleGain &oGain) const
+lima::Andor3::Interface::getSimpleGain(std::string &oGain) const
 {
   DEB_MEMBER_FUNCT();
   m_cam.getSimpleGain(oGain);
 }
 
 void
-lima::Andor3::Interface::getSimpleGainString(std::string &oGainString) const
+lima::Andor3::Interface::getSimpleGainList(std::vector<std::string> &gain_list) const
 {
   DEB_MEMBER_FUNCT();
-  m_cam.getSimpleGainString(oGainString);
+  m_cam.getSimpleGainList(gain_list);
 }
 
 

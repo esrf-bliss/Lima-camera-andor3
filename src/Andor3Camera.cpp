@@ -168,7 +168,6 @@ m_bitflow_path(bitflow_path),
 m_camera_number(camera_number),
 m_camera_handle(AT_HANDLE_UNINITIALISED),
 m_adc_gain(Gain1_Gain4),
-m_simple_gain(b16_lh_gain),
 m_adc_rate(MHz100),
 m_electronic_shutter_mode(Rolling),
 m_bit_depth(b16),
@@ -1182,13 +1181,12 @@ lima::Andor3::Camera::initialiseController()
 {
   DEB_MEMBER_FUNCT();
   A3_BitDepth		the_bd = m_bit_depth;
-  A3_SimpleGain 	the_simple_gain = m_simple_gain;
   A3_ReadOutRate	the_rate = m_adc_rate;
   
   // Carefully crafting the order, since some are affecting others...
   setElectronicShutterMode(m_electronic_shutter_mode);
   setTrigMode(m_trig_mode);
-  setSimpleGain(the_simple_gain);
+  //setSimpleGain(the_simple_gain);
   setAdcRate(the_rate);
   setBitDepth(the_bd);
   setCooler(m_cooler);
@@ -1330,11 +1328,12 @@ lima::Andor3::Camera::setElectronicShutterMode(A3_ShutterMode iMode)
     << "\n\twhile requesting " << iMode;
   }
   // Setting the trigger mode might change the ADCGain and ADCRate :
-  int		the_gain, the_rate;
-  
-  getEnumIndex(andor3::SimplePreAmpGainControl, &the_gain);
+  int		the_rate;
+  std::string	the_gain;
+ 
+  getSimpleGain(the_gain); 
   getEnumIndex(andor3::PixelReadoutRate, &the_rate);
-  setSimpleGain(static_cast<A3_SimpleGain>(the_gain));
+  setSimpleGain(the_gain);
   setAdcRate(static_cast<A3_ReadOutRate>(the_rate));
 }
 
@@ -1715,50 +1714,42 @@ lima::Andor3::Camera::getOverlap(bool &o_overlap) const
 }
 
 void
-lima::Andor3::Camera::setSimpleGain(A3_SimpleGain i_gain)
+lima::Andor3::Camera::setSimpleGain(std::string i_gain)
 {
   DEB_MEMBER_FUNCT();
   if ( propImplemented(andor3::SimplePreAmpGainControl) ) {
-    int the_err_code = setEnumIndex(andor3::SimplePreAmpGainControl, i_gain);
-    if ( AT_SUCCESS != the_err_code ) {
-      DEB_ERROR() << "Cannot set SimplePreAmpGainControl to " << i_gain
-                  << " - " << DEB_VAR1(error_code(the_err_code));
-    }
+    THROW_IF_NOT_SUCCESS(setEnumString(andor3::SimplePreAmpGainControl, i_gain), \
+                         "failed to set simple gain");
   }
   else {
     DEB_TRACE() << "SimplePreAmpGainControl not implemented, emulating it in software";
     A3_ShutterMode		the_shutter;
     
     getElectronicShutterMode(the_shutter);
-    
-    switch (i_gain) {
-      case b11_low_gain:
-        setAdcGain(Gain1);
-        break;
-        
-      case b11_hi_gain:
-        if ( Rolling == the_shutter )
-          setAdcGain(Gain4);
-        else
-          setAdcGain(Gain3);
-        break;
-        
-      case b16_lh_gain:
-        if ( Rolling == the_shutter )
-          setAdcGain(Gain1_Gain4);
-        else
-          setAdcGain(Gain1_Gain3);
-        break;
-        
-      default:
-        DEB_TRACE() << "Not performing any settings since you provided an unavailable value";
-        break;
+
+    if (i_gain == "b11_low_gain") {
+      setAdcGain(Gain1);
+    }
+    else if (i_gain == "b11_hi_gain") {
+      if ( Rolling == the_shutter )
+        setAdcGain(Gain4);
+      else
+        setAdcGain(Gain3);
+    }
+    else if (i_gain == "b16_lh_gain") {
+      if ( Rolling == the_shutter )
+        setAdcGain(Gain1_Gain4);
+      else
+        setAdcGain(Gain1_Gain3);
+    }
+    else {
+      THROW_HW_ERROR(Error)<<"Invalid emulated simple gain";
     }
   }
 }
 
 void
-lima::Andor3::Camera::getSimpleGain(A3_SimpleGain &o_gain) const
+lima::Andor3::Camera::getSimpleGain(std::string &o_gain) const
 {
   DEB_MEMBER_FUNCT();
 
@@ -1771,14 +1762,12 @@ lima::Andor3::Camera::getSimpleGain(A3_SimpleGain &o_gain) const
   //  (6) "Gain 2 Gain 3 (16 bit)"; implemented = true; available = true.
   //  (7) "Gain 2 Gain 4 (16 bit)"; implemented = true; available = true.
   if ( propImplemented(andor3::SimplePreAmpGainControl) ) {
-    int			the_gain;
-    getEnumIndex(andor3::SimplePreAmpGainControl, &the_gain);
-    o_gain = static_cast<A3_SimpleGain>(the_gain);
+    getEnumString(andor3::SimplePreAmpGainControl, o_gain);
   }
   else {
     DEB_TRACE() << "SimplePreAmpGainControl not implemented, emulating it in software";
 
-    A3_Gain					the_gain;
+    A3_Gain		the_gain;
     A3_ShutterMode	the_shutter;
     
     getAdcGain(the_gain);
@@ -1787,34 +1776,34 @@ lima::Andor3::Camera::getSimpleGain(A3_SimpleGain &o_gain) const
     if ( Rolling == the_shutter ) {
       switch (the_gain) {
         case Gain1:
-          o_gain = b11_low_gain;
+          o_gain = "b11_low_gain";
           break;
         case Gain4:
-          o_gain = b11_hi_gain;
+          o_gain = "b11_hi_gain";
           break;
         case Gain1_Gain4:
-          o_gain = b16_lh_gain;
+          o_gain = "b16_lh_gain";
           break;
           
         default:
-          o_gain = none;
+          o_gain = "none";
           break;
       }
     }
     else {
       switch (the_gain) {
         case Gain1:
-          o_gain = b11_low_gain;
+          o_gain = "b11_low_gain";
           break;
         case Gain3:
-          o_gain = b11_hi_gain;
+          o_gain = "b11_hi_gain";
           break;
         case Gain1_Gain3:
-          o_gain = b16_lh_gain;
+          o_gain = "b16_lh_gain";
           break;
           
         default:
-          o_gain = none;
+          o_gain = "none";
           break;
       }      
     }
@@ -1823,15 +1812,24 @@ lima::Andor3::Camera::getSimpleGain(A3_SimpleGain &o_gain) const
 
 
 void
-lima::Andor3::Camera::getSimpleGainString(std::string &o_gainString) const
+lima::Andor3::Camera::getSimpleGainList(std::vector<std::string> &gain_list) const
 {
   DEB_MEMBER_FUNCT();
   if ( propImplemented(andor3::SimplePreAmpGainControl) ) {
-    getEnumString(andor3::SimplePreAmpGainControl, o_gainString);
+    int		enum_count;
+    std::string	s_value;
+    AT_GetEnumCount(m_camera_handle, andor3::SimplePreAmpGainControl, &enum_count);
+
+    for (int idx=0; enum_count != idx; ++idx) {
+      getEnumStringByIndex(andor3::SimplePreAmpGainControl, idx, s_value);
+      gain_list.push_back(s_value);
+    }
   }
   else {
-    DEB_TRACE() << "The camera has no simple gain control setting... Do nothing !";
-    o_gainString = "not implemented";
+    DEB_TRACE() << "SimplePreAmpGainControl not implemented, emulating it in software";
+    gain_list.push_back("b11_low_gain");
+    gain_list.push_back("b11_hi_gain");
+    gain_list.push_back("b16_lh_gain");
   }
 }
 

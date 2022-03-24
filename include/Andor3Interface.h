@@ -71,9 +71,9 @@ namespace lima
       virtual void		setAdcGain(Camera::A3_Gain iGain);
       virtual void		getAdcGain(Camera::A3_Gain &oGain) const;
       virtual void		getAdcGainString(std::string &oGainString) const;
-      virtual void		setSimpleGain(Camera::A3_SimpleGain iGain);
-      virtual void		getSimpleGain(Camera::A3_SimpleGain &oGain) const;
-      virtual void		getSimpleGainString(std::string &oGainString) const;
+      virtual void		setSimpleGain(std::string iGain);
+      virtual void		getSimpleGain(std::string &oGain) const;
+      virtual void		getSimpleGainList(std::vector<std::string> &gain_list) const;
       virtual void		setAdcRate(Camera::A3_ReadOutRate iRate);
       virtual void		getAdcRate(Camera::A3_ReadOutRate &oRate) const;
       virtual void		getAdcRateString(std::string &oRateString) const;

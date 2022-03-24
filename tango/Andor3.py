@@ -79,10 +79,7 @@ class Andor3(PyTango.Device_4Impl):
     def __init__(self,cl, name):
         PyTango.Device_4Impl.__init__(self,cl,name)
         # dictionnaries to be used with AttrHelper.get_attr_4u
-        self.__AdcGain = {'B11_HI_GAIN':  _Andor3Camera.b11_hi_gain,
-                             'B11_LOW_GAIN': _Andor3Camera.b11_low_gain,
-                             'B16_LH_GAIN':  _Andor3Camera.b16_lh_gain,
-                          }
+        self.__AdcGain = andor_list2dict(_Andor3Camera.getSimpleGainList())
         self.__AdcRate = {'MHZ10':  _Andor3Camera.MHz10,
                           'MHZ100': _Andor3Camera.MHz100,
                           'MHZ200': _Andor3Camera.MHz200,

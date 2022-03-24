@@ -32,7 +32,6 @@ namespace Andor3
     enum A3_TypeInfo { Unknown, Int, Float, Bool, Enum, String };
 
     enum A3_Gain { Gain1 = 0, Gain2 = 1, Gain3 = 2, Gain4 = 3, Gain1_Gain3 = 4, Gain1_Gain4 = 5, Gain2_Gain3 = 6, Gain2_Gain4 = 7 };
-    enum A3_SimpleGain { b11_hi_gain=0, b11_low_gain=1, b16_lh_gain=2, none=31};
     enum A3_ShutterMode { Rolling = 0, Global = 1 };
     enum A3_ReadOutRate { MHz10 = 0, MHz100 = 1, MHz200 = 2, MHz280 = 3 };
     enum A3_BitDepth { b11 = 0, b16= 1 };
@@ -132,9 +131,11 @@ namespace Andor3
 
    void setOverlap(bool i_overlap /In/ );
    void getOverlap(bool &o_overlap /Out/ ) const;
-   void setSimpleGain(A3_SimpleGain i_gain /In/ );
-   void getSimpleGain(A3_SimpleGain &o_gain /Out/ ) const;
-   void getSimpleGainString(std::string &o_gainString /Out/ ) const;
+
+   void setSimpleGain(std::string i_gain /In/ );
+   void getSimpleGain(std::string &o_gain /Out/ ) const;
+   void getSimpleGainList(std::vector<std::string> &gain_list /Out/ ) const;
+
    void setSpuriousNoiseFilter(bool i_filter /In/ );
    void getSpuriousNoiseFilter(bool &o_filter /Out/ ) const;
    void setSyncTriggering(bool i_sync /In/ );
