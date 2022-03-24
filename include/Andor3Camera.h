@@ -258,17 +258,18 @@ namespace lima
       int getBool(const AT_WC* Feature, bool* Value) const;
       
       int setEnumIndex(const AT_WC* Feature, int Value);
-      int setEnumString(const AT_WC* Feature, const AT_WC* String);
       int getEnumIndex(const AT_WC* Feature, int* Value) const;
-      int getEnumString(const AT_WC* Feature, AT_WC* String, int StringLength) const;
+      int setEnumString(const AT_WC* Feature, std::string Value);
+      int getEnumString(const AT_WC* Feature, std::string& Value) const;
       int getEnumCount(AT_H Hndl,const  AT_WC* Feature, int* Count) const;
       int isEnumIndexAvailable(const AT_WC* Feature, int Index, bool* Available) const;
       int isEnumIndexImplemented(const AT_WC* Feature, int Index, bool* Implemented) const;
-      int getEnumStringByIndex(const AT_WC* Feature, int Index, AT_WC* String, int StringLength) const;
-      int getEnumIndexByString(const AT_WC* Feature, AT_WC* String, int *Index) const;
+
+      int getEnumStringByIndex(const AT_WC* Feature, int Index, std::string& Value) const;
+      int getEnumIndexByString(const AT_WC* Feature, std::string Value, int *Index) const;
       
-      int setString(const AT_WC* Feature, const AT_WC* String);
-      int getString(const AT_WC* Feature, AT_WC* String, int StringLength) const;
+      int setString(const AT_WC* Feature, std::string Value);
+      int getString(const AT_WC* Feature, std::string& Value) const;
       
       int sendCommand(const AT_WC* Feature);
 
