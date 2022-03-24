@@ -39,8 +39,6 @@ namespace Andor3
 //    enum A3_TriggerMode { Internal = 0, ExternalLevelTransition = 1, ExternalStart = 2, ExternalExposure = 3, Software = 4, Advanced = 5, External = 6 };
     enum A3_Binning { B1x1=0, B2x2=1, B3x3=2, B4x4=3, B8x8=4};
     enum A3_PixelEncoding {Mono12=0, Mono12Packed = 1, Mono16=2, Mono32=3};
-    enum A3_SignalLevel {Normal=0, Inverted=1};
-    enum A3_OutputSignal {FireRow1=0, FireRowN=1, FireAll=2, FireAny=3};
 
     Camera(const std::string& bitflow_path, int camera_number=0);
     ~Camera();
@@ -95,12 +93,14 @@ namespace Andor3
 // -- andor3 specific, LIMA don't worry about it !
    void initialiseController();
 
-   void setGateLevel(A3_SignalLevel iLevel /In/ );
-   void getGateLevel(A3_SignalLevel &iLevel /Out/ );
-   void setTriggerLevel(A3_SignalLevel iLevel /In/ );
-   void getTriggerLevel(A3_SignalLevel &iLevel /Out/ );
-   void setOutputSignal(A3_OutputSignal iSignal /In/ );
-   void getOutputSignal(A3_OutputSignal &oSignal /Out/ ) const;
+   void setGateInverted(bool inverted /In/ );
+   void getGateInverted(bool &inverted /Out/ );
+   void setTriggerInverted(bool inverted /In/ );
+   void getTriggerInverted(bool &inverted /Out/ );
+
+   void setOutputSignal(std::string signal /In/ );
+   void getOutputSignal(std::string &signal /Out/ ) const;
+   void getOutputSignalList(std::vector<std::string> &signal_list /Out/ ) const;
 
    void setAdcGain(A3_Gain iGain /In/ );
    void getAdcGain(A3_Gain &oGain /Out/ ) const;
@@ -115,8 +115,6 @@ namespace Andor3
    void getBitDepth(A3_BitDepth &oMode /Out/ ) const;
    void getBitDepthString(std::string &oDepthString /Out/ ) const;
    void getPxEncodingString(std::string &oPxEncoding /Out/ ) const;
-//   void setTriggerMode(A3_TriggerMode iMode /In/ );
-//   void getTriggerMode(A3_TriggerMode &oMode /Out/ ) const;
    void getTriggerModeString(std::string &oModeString /Out/ ) const;
    void setTemperatureSP(double temp /In/ );
    void getTemperatureSP(double& temp /Out/ ) const;

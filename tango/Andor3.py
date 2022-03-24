@@ -88,26 +88,15 @@ class Andor3(PyTango.Device_4Impl):
                           'MHZ200': _Andor3Camera.MHz200,
                           'MHZ280': _Andor3Camera.MHz280,
                           }
-        self.__Cooler = {'ON':  True,
-                         'OFF': False}
+        self.__Cooler = {'ON':  True, 'OFF': False}
         self.__ElectronicShutterMode = {'ROLLING': _Andor3Camera.Rolling,
                                         'GLOBAL': _Andor3Camera.Global,
                                         }
-        self.__Overlap = {'ON':  True,
-                         'OFF': False}
-        self.__SpuriousNoiseFilter = {'ON':  True,
-                         'OFF': False}
-        self.__GateLevel = { 'NORMAL': _Andor3Camera.Normal,
-                             'INVERTED': _Andor3Camera.Inverted,
-                           }
-        self.__TriggerLevel = { 'NORMAL': _Andor3Camera.Normal,
-                                'INVERTED': _Andor3Camera.Inverted,
-                              }
-        self.__OutputSignal = { 'FIREROW1': _Andor3Camera.FireRow1,
-                                'FIREROWN': _Andor3Camera.FireRowN,
-                                'FIREALL': _Andor3Camera.FireAll,
-                                'FIREANY': _Andor3Camera.FireAny,
-                              }
+        self.__Overlap = {'ON':  True, 'OFF': False}
+        self.__SpuriousNoiseFilter = {'ON':  True, 'OFF': False}
+        self.__GateInverted = { 'YES': True, 'NO': False }
+        self.__TriggerInverted = { 'YES': True, 'NO': False }
+        self.__OutputSignal = andor_list2dict(_Andor3Camera.getOutputSignalList())
         self.__FanSpeed = andor_list2dict(_Andor3Camera.getFanSpeedList())
 
         self.__Attribute2FunctionBase = {'adc_gain': 'SimpleGain',
@@ -124,8 +113,8 @@ class Andor3(PyTango.Device_4Impl):
                                          'overlap': 'Overlap',
                                          'spurious_noise_filter': 'SpuriousNoiseFilter',
                                          'serial_number': 'SerialNumber',
-                                         'gate_level': 'GateLevel',
-                                         'trigger_level': 'TriggerLevel',
+                                         'gate_inverted': 'GateInverted',
+                                         'trigger_inverted': 'TriggerInverted',
                                          'output_signal': 'OutputSignal',
                                          }
 
@@ -384,25 +373,25 @@ class Andor3Class(PyTango.DeviceClass):
              'format': '',
              'description': 'camera serial number',
              }],
-        'trigger_level':
+        'trigger_inverted':
         [[PyTango.DevString,
           PyTango.SCALAR,
           PyTango.READ_WRITE],
          {
-             'label':'External trigger level',
+             'label':'trigger signal inverted',
              'unit': 'N/A',
              'format': '',
-             'description': 'NORMAl or INVERTED'
+             'description': 'YES or NO'
              }],
-        'gate_level':
+        'gate_inverted':
         [[PyTango.DevString,
           PyTango.SCALAR,
           PyTango.READ_WRITE],
          {
-             'label':'External gate level',
+             'label':'gate signal inverted',
              'unit': 'N/A',
              'format': '',
-             'description': 'NORMAl or INVERTED'
+             'description': 'YES or NO'
              }],
         'output_signal':
         [[PyTango.DevString,

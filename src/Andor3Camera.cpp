@@ -1422,59 +1422,43 @@ lima::Andor3::Camera::getTriggerModeString(std::string &oModeString) const
 }
 
 void
-lima::Andor3::Camera::setGateLevel(A3_SignalLevel iLevel)
+lima::Andor3::Camera::setGateInverted(bool inverted)
 {
   DEB_MEMBER_FUNCT();
-  bool flag;
-  if (iLevel == Inverted) flag= true;
-  else flag= false;
   setEnumString(andor3::IOSelector, "External Exposure");
-  setBool(andor3::IOInvert, flag);
+  setBool(andor3::IOInvert, inverted);
 }
 
 void
-lima::Andor3::Camera::getGateLevel(A3_SignalLevel &iLevel)
+lima::Andor3::Camera::getGateInverted(bool& inverted)
 {
   DEB_MEMBER_FUNCT();
-  bool flag;
   setEnumString(andor3::IOSelector, "External Exposure");
-  getBool(andor3::IOInvert, &flag);
-  if (flag)
-    iLevel = Inverted;
-  else
-    iLevel = Normal;
+  getBool(andor3::IOInvert, &inverted);
 }
 
 void
-lima::Andor3::Camera::setTriggerLevel(A3_SignalLevel iLevel)
+lima::Andor3::Camera::setTriggerInverted(bool inverted)
 {
   DEB_MEMBER_FUNCT();
-  bool flag;
-  if (iLevel == Inverted) flag= true;
-  else flag= false;
   setEnumString(andor3::IOSelector, "External Trigger");
-  setBool(andor3::IOInvert, flag);
+  setBool(andor3::IOInvert, inverted);
 }
 
 void
-lima::Andor3::Camera::getTriggerLevel(A3_SignalLevel &iLevel)
+lima::Andor3::Camera::getTriggerInverted(bool& inverted)
 {
   DEB_MEMBER_FUNCT();
-  bool flag;
   setEnumString(andor3::IOSelector, "External Trigger");
-  getBool(andor3::IOInvert, &flag);
-  if (flag)
-    iLevel = Inverted;
-  else
-    iLevel = Normal;
+  getBool(andor3::IOInvert, &inverted);
 }
 
 void
-lima::Andor3::Camera::setOutputSignal(A3_OutputSignal iSignal)
+lima::Andor3::Camera::setOutputSignal(std::string iSignal)
 {
   DEB_MEMBER_FUNCT();
   if ( propImplemented(andor3::AuxiliaryOutSource) ) {
-    setEnumIndex(andor3::AuxiliaryOutSource, iSignal);
+    setEnumString(andor3::AuxiliaryOutSource, iSignal);
   }
   else {
     DEB_TRACE() << "The camera has no fan speed setting... Do nothing !";
@@ -1482,17 +1466,30 @@ lima::Andor3::Camera::setOutputSignal(A3_OutputSignal iSignal)
 }
 
 void
-lima::Andor3::Camera::getOutputSignal(A3_OutputSignal &oSignal) const
+lima::Andor3::Camera::getOutputSignal(std::string &oSignal) const
 {
   DEB_MEMBER_FUNCT();
   if ( propImplemented(andor3::AuxiliaryOutSource) ) {
-    int  value;
-    getEnumIndex(andor3::AuxiliaryOutSource, &value);
-    oSignal = static_cast<A3_OutputSignal>(value);
+    getEnumString(andor3::AuxiliaryOutSource, oSignal);
   }
   else {
     DEB_TRACE() << "The camera has no fan speed setting... Do nothing !";
+    oSignal = "not implemented";
   }  
+}
+
+void
+lima::Andor3::Camera::getOutputSignalList(std::vector<std::string> &signal_list) const
+{
+  int		enum_count;
+  std::string	s_value;
+  
+  AT_GetEnumCount(m_camera_handle, andor3::AuxiliaryOutSource, &enum_count);
+
+  for (int idx=0; enum_count != idx; ++idx) {
+    getEnumStringByIndex(andor3::AuxiliaryOutSource, idx, s_value);
+    signal_list.push_back(s_value);
+  }
 }
 
 //-----------------------------------------------------

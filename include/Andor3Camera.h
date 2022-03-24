@@ -80,9 +80,6 @@ namespace lima
       // trigger / gate level
       enum A3_SignalLevel { Normal=0, Inverted=1};
 
-      // output signal
-      enum A3_OutputSignal { FireRow1=0, FireRowN=1, FireAll=2, FireAny=3 };
-      
       struct SdkFrameDim {       
 	AT_64 width;
 	AT_64 height;
@@ -162,13 +159,14 @@ namespace lima
       void getAdcGain(A3_Gain &oGain) const;
       void getAdcGainString(std::string &oGainString) const;
 
-      void setGateLevel(A3_SignalLevel iLevel);
-      void getGateLevel(A3_SignalLevel &iLevel);
-      void setTriggerLevel(A3_SignalLevel iLevel);
-      void getTriggerLevel(A3_SignalLevel &iLevel);
+      void setGateInverted(bool inverted);
+      void getGateInverted(bool& inverted);
+      void setTriggerInverted(bool inverted);
+      void getTriggerInverted(bool& inverted);
 
-      void setOutputSignal(A3_OutputSignal iSignal);
-      void getOutputSignal(A3_OutputSignal &oSignal) const;
+      void setOutputSignal(std::string signal);
+      void getOutputSignal(std::string &signal) const;
+      void getOutputSignalList(std::vector<std::string> &signal_list) const;
 
       void setAdcRate(A3_ReadOutRate iRate);  // à exporter (avec le get)
       void getAdcRate(A3_ReadOutRate &oRate) const;
