@@ -1142,6 +1142,8 @@ lima::Andor3::Camera::getPixelSize(double& sizex, double& sizey)
   DEB_MEMBER_FUNCT();
   getFloat(andor3::PixelWidth, &sizex);
   getFloat(andor3::PixelHeight, &sizey);
+  sizex *= 1e-6;
+  sizey *= 1e-6;
 }
 
 void

@@ -62,8 +62,6 @@ namespace lima
       //! @TODO : later on should do a map (string to int and vice-versa) from parsed enum info for the next 3 :
       // In the same order/index as "PreAmpGainControl"
       enum A3_Gain { Gain1 = 0, Gain2 = 1, Gain3 = 2, Gain4 = 3, Gain1_Gain3 = 4, Gain1_Gain4 = 5, Gain2_Gain3 = 6, Gain2_Gain4 = 7 };
-      // The "simple" version :
-      // enum A3_SimpleGain { b11_hi_gain=0, b11_low_gain=1, b16_lh_gain=2, none=31};
 
       const std::vector<std::string> A3_SimpleGainString = {"b11_hi_gain", "b11_low_gain", "b16_lh_gain"};
 
