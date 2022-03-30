@@ -23,7 +23,7 @@ requirements:
     - lima-core
     - andor3-sdk
   build:
-    - git
+    - make
     - cmake
     - {{ compiler('cxx') }}
   run:
