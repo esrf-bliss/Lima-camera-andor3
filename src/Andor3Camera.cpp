@@ -168,7 +168,6 @@ m_bitflow_path(bitflow_path),
 m_camera_number(camera_number),
 m_camera_handle(AT_HANDLE_UNINITIALISED),
 m_adc_gain(Gain1_Gain4),
-m_electronic_shutter_mode(Rolling),
 m_bit_depth(b16),
 m_trig_mode(IntTrig),
 m_cooler(true),
@@ -1184,7 +1183,7 @@ lima::Andor3::Camera::initialiseController()
   A3_BitDepth		the_bd = m_bit_depth;
   
   // Carefully crafting the order, since some are affecting others...
-  setElectronicShutterMode(m_electronic_shutter_mode);
+  setElectronicShutterMode(RollingShutterMode);
   setTrigMode(m_trig_mode);
   setBitDepth(the_bd);
   setCooler(m_cooler);
@@ -1302,17 +1301,16 @@ lima::Andor3::Camera::getAdcRateList(std::vector<std::string> &adc_rate_list) co
 }
 
 void
-lima::Andor3::Camera::setElectronicShutterMode(A3_ShutterMode iMode)
+lima::Andor3::Camera::setElectronicShutterMode(std::string shut_mode)
 {
   DEB_MEMBER_FUNCT();
-  int the_mode;
-  setEnumIndex(andor3::ElectronicShutteringMode, iMode);
-  getEnumIndex(andor3::ElectronicShutteringMode, &the_mode);
-  m_electronic_shutter_mode = static_cast<A3_ShutterMode>(the_mode);
-  if ( m_electronic_shutter_mode != iMode ) {
+  std::string set_mode;
+  setEnumString(andor3::ElectronicShutteringMode, shut_mode);
+  getEnumString(andor3::ElectronicShutteringMode, set_mode);
+  if ( set_mode != shut_mode ) {
     DEB_ERROR() << "Proof-reading the electronic shutter mode :"
-    << "\n\tGot " << m_electronic_shutter_mode << " back,"
-    << "\n\twhile requesting " << iMode;
+    << "\n\tGot " << set_mode << " back,"
+    << "\n\twhile requesting " << shut_mode;
   }
   // Setting the trigger mode might change the ADCGain and ADCRate :
   std::string	the_rate;
@@ -1325,19 +1323,24 @@ lima::Andor3::Camera::setElectronicShutterMode(A3_ShutterMode iMode)
 }
 
 void
-lima::Andor3::Camera::getElectronicShutterMode(A3_ShutterMode &oMode) const
+lima::Andor3::Camera::getElectronicShutterMode(std::string &shut_mode) const
 {
   DEB_MEMBER_FUNCT();
-//  int the_mode;
-//  getEnumIndex(andor3::ElectronicShutteringMode, &the_mode);
-//  oMode = static_cast<A3_ShutterMode>(the_mode);
-  oMode = m_electronic_shutter_mode;
+  getEnumString(andor3::ElectronicShutteringMode, shut_mode);
 }
 
 void
-lima::Andor3::Camera::getElectronicShutterModeString(std::string &oModeString) const
+lima::Andor3::Camera::getElectronicShutterModeList(std::vector<std::string> &shut_mode_list) const
 {
-  getEnumStringByIndex(andor3::ElectronicShutteringMode, m_electronic_shutter_mode, oModeString);
+  int		enum_count;
+  AT_WC		s_value[1024];
+  
+  AT_GetEnumCount(m_camera_handle, andor3::ElectronicShutteringMode, &enum_count);
+
+  for (int idx=0; enum_count != idx; ++idx) {
+    AT_GetEnumStringByIndex(m_camera_handle, andor3::ElectronicShutteringMode, idx, s_value, 1024);
+    shut_mode_list.push_back(WStringToString(s_value));
+  }
 }
 
 void
@@ -1712,7 +1715,7 @@ lima::Andor3::Camera::setSimpleGain(std::string i_gain)
   }
   else {
     DEB_TRACE() << "SimplePreAmpGainControl not implemented, emulating it in software";
-    A3_ShutterMode		the_shutter;
+    std::string		the_shutter;
     
     getElectronicShutterMode(the_shutter);
 
@@ -1720,13 +1723,13 @@ lima::Andor3::Camera::setSimpleGain(std::string i_gain)
       setAdcGain(Gain1);
     }
     else if (i_gain == "b11_hi_gain") {
-      if ( Rolling == the_shutter )
+      if ( RollingShutterMode == the_shutter )
         setAdcGain(Gain4);
       else
         setAdcGain(Gain3);
     }
     else if (i_gain == "b16_lh_gain") {
-      if ( Rolling == the_shutter )
+      if ( RollingShutterMode == the_shutter )
         setAdcGain(Gain1_Gain4);
       else
         setAdcGain(Gain1_Gain3);
@@ -1757,12 +1760,12 @@ lima::Andor3::Camera::getSimpleGain(std::string &o_gain) const
     DEB_TRACE() << "SimplePreAmpGainControl not implemented, emulating it in software";
 
     A3_Gain		the_gain;
-    A3_ShutterMode	the_shutter;
+    std::string 	the_shutter;
     
     getAdcGain(the_gain);
     getElectronicShutterMode(the_shutter);
 
-    if ( Rolling == the_shutter ) {
+    if ( RollingShutterMode == the_shutter ) {
       switch (the_gain) {
         case Gain1:
           o_gain = "b11_low_gain";

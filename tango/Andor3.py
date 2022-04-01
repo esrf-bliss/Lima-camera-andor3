@@ -81,10 +81,8 @@ class Andor3(PyTango.Device_4Impl):
         # dictionnaries to be used with AttrHelper.get_attr_4u
         self.__AdcGain = andor_list2dict(_Andor3Camera.getSimpleGainList())
         self.__AdcRate = andor_list2dict(_Andor3Camera.getAdcRateList())
+        self.__ElectronicShutterMode = andor_list2dict(_Andor3Camera.getElectronicShutterModeList())
         self.__Cooler = {'ON':  True, 'OFF': False}
-        self.__ElectronicShutterMode = {'ROLLING': _Andor3Camera.Rolling,
-                                        'GLOBAL': _Andor3Camera.Global,
-                                        }
         self.__Overlap = {'ON':  True, 'OFF': False}
         self.__SpuriousNoiseFilter = {'ON':  True, 'OFF': False}
         self.__GateInverted = { 'YES': True, 'NO': False }
@@ -261,10 +259,10 @@ class Andor3Class(PyTango.DeviceClass):
           PyTango.SCALAR,
           PyTango.READ],
          {
-             'label':'Fast trigger mode, see manual for usage',
+             'label':'Cooling status',
              'unit': 'N/A',
              'format': '',
-             'description': '0-OFF / 1-ON',
+             'description': 'Cooling status',
              }],
         'adc_gain':
         [[PyTango.DevString,
@@ -304,7 +302,7 @@ class Andor3Class(PyTango.DeviceClass):
             'label':'Fan speed',
             'unit': 'N/A',
             'format': '',
-            'description': 'Fan speed, off, low or High',
+            'description': 'Fan speed setting',
             }],
         'frame_rate':
         [[PyTango.DevDouble,

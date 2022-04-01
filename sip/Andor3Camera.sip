@@ -32,9 +32,7 @@ namespace Andor3
     enum A3_TypeInfo { Unknown, Int, Float, Bool, Enum, String };
 
     enum A3_Gain { Gain1 = 0, Gain2 = 1, Gain3 = 2, Gain4 = 3, Gain1_Gain3 = 4, Gain1_Gain4 = 5, Gain2_Gain3 = 6, Gain2_Gain4 = 7 };
-    enum A3_ShutterMode { Rolling = 0, Global = 1 };
     enum A3_BitDepth { b11 = 0, b16= 1 };
-//    enum A3_TriggerMode { Internal = 0, ExternalLevelTransition = 1, ExternalStart = 2, ExternalExposure = 3, Software = 4, Advanced = 5, External = 6 };
     enum A3_Binning { B1x1=0, B2x2=1, B3x3=2, B4x4=3, B8x8=4};
     enum A3_PixelEncoding {Mono12=0, Mono12Packed = 1, Mono16=2, Mono32=3};
 
@@ -108,9 +106,9 @@ namespace Andor3
    void getAdcRate(std::string &adc_rate /Out/ ) const;
    void getAdcRateList(std::vector<std::string> &adc_rate_list /Out/ ) const;
 
-   void setElectronicShutterMode(A3_ShutterMode iMode /In/ );
-   void getElectronicShutterMode(A3_ShutterMode &oMode /Out/ ) const;
-   void getElectronicShutterModeString(std::string &oModeString /Out/) const;
+   void setElectronicShutterMode(std::string iMode /In/ );
+   void getElectronicShutterMode(std::string &oMode /Out/ ) const;
+   void getElectronicShutterModeList(std::vector<std::string> &oModeList /Out/) const;
 
    void setBitDepth(A3_BitDepth iMode /In/ );
    void getBitDepth(A3_BitDepth &oMode /Out/ ) const;

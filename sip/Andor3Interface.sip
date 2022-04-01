@@ -56,9 +56,9 @@ namespace Andor3
     virtual void		setAdcRate(std::string iRate /In/ );
     virtual void		getAdcRate(std::string &oRate /Out/ ) const;
     virtual void		getAdcRateList(std::vector<std::string> &oRateList /Out/ ) const;
-    virtual void		setElectronicShutterMode(Andor3::Camera::A3_ShutterMode iMode /In/ );
-    virtual void		getElectronicShutterMode(Andor3::Camera::A3_ShutterMode &oMode /Out/ ) const;
-    virtual void		getElectronicShutterModeString(std::string &oModeString /Out/ ) const;
+    virtual void		setElectronicShutterMode(std::string iMode /In/ );
+    virtual void		getElectronicShutterMode(std::string &oMode /Out/ ) const;
+    virtual void		getElectronicShutterModeList(std::vector<std::string> &oModeList /Out/ ) const;
 
     virtual void setOverlap(bool i_overlap /In/ );
     virtual void getOverlap(bool &o_overlap /Out/ ) const;

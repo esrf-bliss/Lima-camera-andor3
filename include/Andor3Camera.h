@@ -73,8 +73,9 @@ namespace lima
 
       const std::vector<std::string> A3_SimpleGainString = {"b11_hi_gain", "b11_low_gain", "b16_lh_gain"};
 
-      // In the same order/index as "ElectronicShutteringMode"
-      enum A3_ShutterMode { Rolling = 0, Global = 1 };
+      // Rolling Shutter mode
+      const std::string RollingShutterMode = "Rolling";
+
       // In the same order/index as 'BitDepth'
       enum A3_BitDepth { b11 = 0, b16= 1 };
 
@@ -174,21 +175,22 @@ namespace lima
       void getAdcRate(std::string &adc_rate) const;
       void getAdcRateList(std::vector<std::string> &adc_rate_list) const;
 
-      void setElectronicShutterMode(A3_ShutterMode iMode);  // à exporter (avec le get)
-      void getElectronicShutterMode(A3_ShutterMode &oMode) const;
-      void getElectronicShutterModeString(std::string &oModeString) const;
+      void setElectronicShutterMode(std::string shut_mode);
+      void getElectronicShutterMode(std::string &shut_mode) const;
+      void getElectronicShutterModeList(std::vector<std::string> &shut_mode_list) const;
+
       void setBitDepth(A3_BitDepth iMode);
       void getBitDepth(A3_BitDepth &oMode) const;
       void getBitDepthString(std::string &oDepthString) const;
       void getPxEncoding(A3_PixelEncoding &oPxEncoding) const;
       void getPxEncodingString(std::string &oPxEncoding) const;
       void getTriggerModeString(std::string &oModeString) const;
-      void setTemperatureSP(double temp);  // à exporter (avec le get)
+      void setTemperatureSP(double temp);
       void getTemperatureSP(double& temp) const;
-      void getTemperature(double& temp) const;   // à exporter (read-only)
-      void setCooler(bool flag);					 // à exporter (avec le get)
+      void getTemperature(double& temp) const;
+      void setCooler(bool flag);
       void getCooler(bool& flag) const;
-      void getCoolingStatus(std::string& status) const;  // à exporter (read-only)
+      void getCoolingStatus(std::string& status) const;
       
       void setBufferOverflow(bool i_overflow);
       void getBufferOverflow(bool &o_overflow) const;
@@ -311,7 +313,6 @@ namespace lima
       int                         m_camera_number;
       AT_H                        m_camera_handle;
       A3_Gain                     m_adc_gain;
-      A3_ShutterMode		  m_electronic_shutter_mode;
       A3_BitDepth                 m_bit_depth;
       bool                        m_cooler;
       double                      m_temperature_sp;

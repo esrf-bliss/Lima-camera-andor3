@@ -236,7 +236,7 @@ lima::Andor3::Interface::getAdcRateList(std::vector<std::string> &oRateList) con
 }
 
 void
-lima::Andor3::Interface::setElectronicShutterMode(Camera::A3_ShutterMode iMode)
+lima::Andor3::Interface::setElectronicShutterMode(std::string iMode)
 {
   DEB_MEMBER_FUNCT();
   m_cam.setElectronicShutterMode(iMode);
@@ -244,17 +244,17 @@ lima::Andor3::Interface::setElectronicShutterMode(Camera::A3_ShutterMode iMode)
 }
 
 void
-lima::Andor3::Interface::getElectronicShutterMode(Camera::A3_ShutterMode &oMode) const
+lima::Andor3::Interface::getElectronicShutterMode(std::string &oMode) const
 {
   DEB_MEMBER_FUNCT();
   m_cam.getElectronicShutterMode(oMode);
 }
 
 void
-lima::Andor3::Interface::getElectronicShutterModeString(std::string &oModeString) const
+lima::Andor3::Interface::getElectronicShutterModeList(std::vector<std::string> &oModeList) const
 {
   DEB_MEMBER_FUNCT();
-  m_cam.getElectronicShutterModeString(oModeString);
+  m_cam.getElectronicShutterModeList(oModeList);
 }
 
 void

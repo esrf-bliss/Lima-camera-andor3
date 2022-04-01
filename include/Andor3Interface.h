@@ -77,9 +77,9 @@ namespace lima
       virtual void		setAdcRate(std::string iRate);
       virtual void		getAdcRate(std::string &oRate) const;
       virtual void		getAdcRateList(std::vector<std::string> &oRateList) const;
-      virtual void		setElectronicShutterMode(Camera::A3_ShutterMode iMode);
-      virtual void		getElectronicShutterMode(Camera::A3_ShutterMode &oMode) const;
-      virtual void		getElectronicShutterModeString(std::string &oModeString) const;
+      virtual void		setElectronicShutterMode(std::string iMode);
+      virtual void		getElectronicShutterMode(std::string &oMode) const;
+      virtual void		getElectronicShutterModeList(std::vector<std::string> &oModeList) const;
 
       virtual void setOverlap(bool i_overlap);
       virtual void getOverlap(bool &o_overlap) const;
