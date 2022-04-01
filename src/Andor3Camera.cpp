@@ -1289,15 +1289,8 @@ lima::Andor3::Camera::getAdcRate(std::string &adc_rate) const
 void
 lima::Andor3::Camera::getAdcRateList(std::vector<std::string> &adc_rate_list) const
 {
-  int		enum_count;
-  AT_WC		s_value[1024];
-  
-  AT_GetEnumCount(m_camera_handle, andor3::PixelReadoutRate, &enum_count);
-
-  for (int idx=0; enum_count != idx; ++idx) {
-    AT_GetEnumStringByIndex(m_camera_handle, andor3::PixelReadoutRate, idx, s_value, 1024);
-    adc_rate_list.push_back(WStringToString(s_value));
-  }
+  DEB_MEMBER_FUNCT();
+  getEnumStringList(andor3::PixelReadoutRate, adc_rate_list);
 }
 
 void
@@ -1332,15 +1325,8 @@ lima::Andor3::Camera::getElectronicShutterMode(std::string &shut_mode) const
 void
 lima::Andor3::Camera::getElectronicShutterModeList(std::vector<std::string> &shut_mode_list) const
 {
-  int		enum_count;
-  AT_WC		s_value[1024];
-  
-  AT_GetEnumCount(m_camera_handle, andor3::ElectronicShutteringMode, &enum_count);
-
-  for (int idx=0; enum_count != idx; ++idx) {
-    AT_GetEnumStringByIndex(m_camera_handle, andor3::ElectronicShutteringMode, idx, s_value, 1024);
-    shut_mode_list.push_back(WStringToString(s_value));
-  }
+  DEB_MEMBER_FUNCT();
+  getEnumStringList(andor3::ElectronicShutteringMode, shut_mode_list);
 }
 
 void
@@ -1471,15 +1457,8 @@ lima::Andor3::Camera::getOutputSignal(std::string &oSignal) const
 void
 lima::Andor3::Camera::getOutputSignalList(std::vector<std::string> &signal_list) const
 {
-  int		enum_count;
-  std::string	s_value;
-  
-  AT_GetEnumCount(m_camera_handle, andor3::AuxiliaryOutSource, &enum_count);
-
-  for (int idx=0; enum_count != idx; ++idx) {
-    getEnumStringByIndex(andor3::AuxiliaryOutSource, idx, s_value);
-    signal_list.push_back(s_value);
-  }
+  DEB_MEMBER_FUNCT();
+  getEnumStringList(andor3::AuxiliaryOutSource, signal_list);
 }
 
 //-----------------------------------------------------
@@ -1648,15 +1627,8 @@ lima::Andor3::Camera::getBufferOverflow(bool &o_overflow) const
 void
 lima::Andor3::Camera::getFanSpeedList(std::vector<std::string> &fan_speed_list) const
 {
-  int		enum_count;
-  AT_WC		s_value[1024];
-  
-  AT_GetEnumCount(m_camera_handle, andor3::FanSpeed, &enum_count);
-
-  for (int idx=0; enum_count != idx; ++idx) {
-    AT_GetEnumStringByIndex(m_camera_handle, andor3::FanSpeed, idx, s_value, 1024);
-    fan_speed_list.push_back(WStringToString(s_value));
-  }
+  DEB_MEMBER_FUNCT();
+  getEnumStringList(andor3::FanSpeed, fan_speed_list);
 }
 
 void
@@ -1808,14 +1780,7 @@ lima::Andor3::Camera::getSimpleGainList(std::vector<std::string> &gain_list) con
 {
   DEB_MEMBER_FUNCT();
   if ( propImplemented(andor3::SimplePreAmpGainControl) ) {
-    int		enum_count;
-    std::string	s_value;
-    AT_GetEnumCount(m_camera_handle, andor3::SimplePreAmpGainControl, &enum_count);
-
-    for (int idx=0; enum_count != idx; ++idx) {
-      getEnumStringByIndex(andor3::SimplePreAmpGainControl, idx, s_value);
-      gain_list.push_back(s_value);
-    }
+    getEnumStringList(andor3::SimplePreAmpGainControl, gain_list);
   }
   else {
     DEB_TRACE() << "SimplePreAmpGainControl not implemented, emulating it in software";
@@ -2417,6 +2382,24 @@ lima::Andor3::Camera::getEnumString(const AT_WC* Feature, std::string& Value) co
 
   Value = WStringToString(value_str);
   return ierr;
+}
+
+int
+lima::Andor3::Camera::getEnumStringList(const AT_WC* Feature, std::vector<std::string> &value_list) const
+{
+  int		ierr, enum_count;
+  AT_WC		s_value[1024];
+  
+  ierr = AT_GetEnumCount(m_camera_handle, Feature, &enum_count);
+  if (AT_SUCCESS != ierr)
+    return ierr;
+
+  for (int idx=0; enum_count != idx; ++idx) {
+    ierr = AT_GetEnumStringByIndex(m_camera_handle, Feature, idx, s_value, 1024);
+    if (AT_SUCCESS != ierr)
+      return ierr;
+    value_list.push_back(WStringToString(s_value));
+  }
 }
 
 int

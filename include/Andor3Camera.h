@@ -266,6 +266,7 @@ namespace lima
       int getEnumIndex(const AT_WC* Feature, int* Value) const;
       int setEnumString(const AT_WC* Feature, std::string Value);
       int getEnumString(const AT_WC* Feature, std::string& Value) const;
+      int getEnumStringList(const AT_WC* Feature, std::vector<std::string> &ValueList) const;
       int getEnumCount(AT_H Hndl,const  AT_WC* Feature, int* Count) const;
       int isEnumIndexAvailable(const AT_WC* Feature, int Index, bool* Available) const;
       int isEnumIndexImplemented(const AT_WC* Feature, int Index, bool* Implemented) const;
