@@ -1444,7 +1444,8 @@ lima::Andor3::Camera::setOutputSignal(std::string iSignal)
 {
   DEB_MEMBER_FUNCT();
   if ( propImplemented(andor3::AuxiliaryOutSource) ) {
-    setEnumString(andor3::AuxiliaryOutSource, iSignal);
+    THROW_IF_NOT_SUCCESS(setEnumString(andor3::AuxiliaryOutSource, iSignal),
+                         "Failed to set output signal");
   }
   else {
     DEB_TRACE() << "The camera has no fan speed setting... Do nothing !";
@@ -1660,7 +1661,8 @@ lima::Andor3::Camera::setFanSpeed(std::string fan_speed)
 {
   DEB_MEMBER_FUNCT();
   if ( propImplemented(andor3::FanSpeed) ) {
-    setEnumString(andor3::FanSpeed, fan_speed);
+    THROW_IF_NOT_SUCCESS(setEnumString(andor3::FanSpeed, fan_speed),
+                        "Failed to set fan speed");
   }
   else {
     DEB_TRACE() << "The camera has no fan speed setting... Do nothing !";
