@@ -168,7 +168,6 @@ m_bitflow_path(bitflow_path),
 m_camera_number(camera_number),
 m_camera_handle(AT_HANDLE_UNINITIALISED),
 m_adc_gain(Gain1_Gain4),
-m_adc_rate(MHz100),
 m_electronic_shutter_mode(Rolling),
 m_bit_depth(b16),
 m_trig_mode(IntTrig),
@@ -1183,13 +1182,10 @@ lima::Andor3::Camera::initialiseController()
 {
   DEB_MEMBER_FUNCT();
   A3_BitDepth		the_bd = m_bit_depth;
-  A3_ReadOutRate	the_rate = m_adc_rate;
   
   // Carefully crafting the order, since some are affecting others...
   setElectronicShutterMode(m_electronic_shutter_mode);
   setTrigMode(m_trig_mode);
-  //setSimpleGain(the_simple_gain);
-  setAdcRate(the_rate);
   setBitDepth(the_bd);
   setCooler(m_cooler);
   initTemperature();
@@ -1277,43 +1273,32 @@ lima::Andor3::Camera::getAdcGainString(std::string &oGainString) const
 
 
 void
-lima::Andor3::Camera::setAdcRate(A3_ReadOutRate iRate)
+lima::Andor3::Camera::setAdcRate(std::string adc_rate)
 {
   DEB_MEMBER_FUNCT();
-  if ( m_real_camera ) {
-    int the_rate;
-    setEnumIndex(andor3::PixelReadoutRate, iRate);
-    getEnumIndex(andor3::PixelReadoutRate, &the_rate);
-    m_adc_rate = static_cast<A3_ReadOutRate>(the_rate);
-    if ( m_adc_rate != iRate ) {
-      DEB_ERROR() << "Proof-reading the ADC readout rate :"
-      << "\n\tGot " << m_adc_rate << " back,"
-      << "\n\twhile requesting " << iRate;
-    }
-  }
-  else {
-    int the_rate;
-    setEnumIndex(andor3::PixelReadoutRate, 0);
-    getEnumIndex(andor3::PixelReadoutRate, &the_rate);
-    m_adc_rate = static_cast<A3_ReadOutRate>(the_rate);
-    DEB_TRACE() << "The SIMCAM has only one rate setting (550MHz), making sure that's what we are doing now";
-  }
+  THROW_IF_NOT_SUCCESS(setEnumString(andor3::PixelReadoutRate, adc_rate),
+                       "Failed to set ADC Pixel Rate")
 }
 
 void
-lima::Andor3::Camera::getAdcRate(A3_ReadOutRate &oRate) const
+lima::Andor3::Camera::getAdcRate(std::string &adc_rate) const
 {
   DEB_MEMBER_FUNCT();
-//  int the_rate;
-//  getEnumIndex(andor3::PixelReadoutRate, &the_rate);
-//  oRate = static_cast<A3_ReadOutRate>(the_rate);
-  oRate = m_adc_rate;
+  getEnumString(andor3::PixelReadoutRate, adc_rate);
 }
 
 void
-lima::Andor3::Camera::getAdcRateString(std::string &oRateString) const
+lima::Andor3::Camera::getAdcRateList(std::vector<std::string> &adc_rate_list) const
 {
-  getEnumString(andor3::PixelReadoutRate, oRateString);
+  int		enum_count;
+  AT_WC		s_value[1024];
+  
+  AT_GetEnumCount(m_camera_handle, andor3::PixelReadoutRate, &enum_count);
+
+  for (int idx=0; enum_count != idx; ++idx) {
+    AT_GetEnumStringByIndex(m_camera_handle, andor3::PixelReadoutRate, idx, s_value, 1024);
+    adc_rate_list.push_back(WStringToString(s_value));
+  }
 }
 
 void
@@ -1330,13 +1315,13 @@ lima::Andor3::Camera::setElectronicShutterMode(A3_ShutterMode iMode)
     << "\n\twhile requesting " << iMode;
   }
   // Setting the trigger mode might change the ADCGain and ADCRate :
-  int		the_rate;
+  std::string	the_rate;
   std::string	the_gain;
  
   getSimpleGain(the_gain); 
-  getEnumIndex(andor3::PixelReadoutRate, &the_rate);
+  getAdcRate(the_rate);
   setSimpleGain(the_gain);
-  setAdcRate(static_cast<A3_ReadOutRate>(the_rate));
+  setAdcRate(the_rate);
 }
 
 void

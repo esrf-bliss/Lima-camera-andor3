@@ -214,7 +214,7 @@ lima::Andor3::Interface::getSimpleGainList(std::vector<std::string> &gain_list) 
 
 
 void
-lima::Andor3::Interface::setAdcRate(Camera::A3_ReadOutRate iRate)
+lima::Andor3::Interface::setAdcRate(std::string iRate)
 {
   DEB_MEMBER_FUNCT();
   m_cam.setAdcRate(iRate);
@@ -222,17 +222,17 @@ lima::Andor3::Interface::setAdcRate(Camera::A3_ReadOutRate iRate)
 }
 
 void
-lima::Andor3::Interface::getAdcRate(Camera::A3_ReadOutRate &oRate) const
+lima::Andor3::Interface::getAdcRate(std::string &oRate) const
 {
   DEB_MEMBER_FUNCT();
   m_cam.getAdcRate(oRate);
 }
 
 void
-lima::Andor3::Interface::getAdcRateString(std::string &oRateString) const
+lima::Andor3::Interface::getAdcRateList(std::vector<std::string> &oRateList) const
 {
   DEB_MEMBER_FUNCT();
-  m_cam.getAdcRateString(oRateString);
+  m_cam.getAdcRateList(oRateList);
 }
 
 void

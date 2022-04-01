@@ -33,7 +33,6 @@ namespace Andor3
 
     enum A3_Gain { Gain1 = 0, Gain2 = 1, Gain3 = 2, Gain4 = 3, Gain1_Gain3 = 4, Gain1_Gain4 = 5, Gain2_Gain3 = 6, Gain2_Gain4 = 7 };
     enum A3_ShutterMode { Rolling = 0, Global = 1 };
-    enum A3_ReadOutRate { MHz10 = 0, MHz100 = 1, MHz200 = 2, MHz280 = 3 };
     enum A3_BitDepth { b11 = 0, b16= 1 };
 //    enum A3_TriggerMode { Internal = 0, ExternalLevelTransition = 1, ExternalStart = 2, ExternalExposure = 3, Software = 4, Advanced = 5, External = 6 };
     enum A3_Binning { B1x1=0, B2x2=1, B3x3=2, B4x4=3, B8x8=4};
@@ -104,17 +103,21 @@ namespace Andor3
    void setAdcGain(A3_Gain iGain /In/ );
    void getAdcGain(A3_Gain &oGain /Out/ ) const;
    void getAdcGainString(std::string &oGainString /Out/ ) const;
-   void setAdcRate(A3_ReadOutRate iRate /In/ );
-   void getAdcRate(A3_ReadOutRate &oRate /Out/ ) const;
-   void getAdcRateString(std::string &oRateString /Out/ ) const;
+
+   void setAdcRate(std::string adc_rate /In/ );
+   void getAdcRate(std::string &adc_rate /Out/ ) const;
+   void getAdcRateList(std::vector<std::string> &adc_rate_list /Out/ ) const;
+
    void setElectronicShutterMode(A3_ShutterMode iMode /In/ );
    void getElectronicShutterMode(A3_ShutterMode &oMode /Out/ ) const;
    void getElectronicShutterModeString(std::string &oModeString /Out/) const;
+
    void setBitDepth(A3_BitDepth iMode /In/ );
    void getBitDepth(A3_BitDepth &oMode /Out/ ) const;
    void getBitDepthString(std::string &oDepthString /Out/ ) const;
    void getPxEncodingString(std::string &oPxEncoding /Out/ ) const;
    void getTriggerModeString(std::string &oModeString /Out/ ) const;
+
    void setTemperatureSP(double temp /In/ );
    void getTemperatureSP(double& temp /Out/ ) const;
    void getTemperature(double& temp /Out/ ) const;

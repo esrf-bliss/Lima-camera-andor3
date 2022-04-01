@@ -53,9 +53,9 @@ namespace Andor3
     virtual void		setSimpleGain(std::string iGain /In/ );
     virtual void		getSimpleGain(std::string &oGain /Out/ ) const;
     virtual void		getSimpleGainList(std::vector<std::string> &gain_list /Out/ ) const;
-    virtual void		setAdcRate(Andor3::Camera::A3_ReadOutRate iRate /In/ );
-    virtual void		getAdcRate(Andor3::Camera::A3_ReadOutRate &oRate /Out/ ) const;
-    virtual void		getAdcRateString(std::string &oRateString /Out/ ) const;
+    virtual void		setAdcRate(std::string iRate /In/ );
+    virtual void		getAdcRate(std::string &oRate /Out/ ) const;
+    virtual void		getAdcRateList(std::vector<std::string> &oRateList /Out/ ) const;
     virtual void		setElectronicShutterMode(Andor3::Camera::A3_ShutterMode iMode /In/ );
     virtual void		getElectronicShutterMode(Andor3::Camera::A3_ShutterMode &oMode /Out/ ) const;
     virtual void		getElectronicShutterModeString(std::string &oModeString /Out/ ) const;

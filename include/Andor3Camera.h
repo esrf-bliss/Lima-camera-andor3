@@ -61,25 +61,26 @@ namespace lima
 
       //! @TODO : later on should do a map (string to int and vice-versa) from parsed enum info for the next 3 :
       // In the same order/index as "PreAmpGainControl"
-      enum A3_Gain { Gain1 = 0, Gain2 = 1, Gain3 = 2, Gain4 = 3, Gain1_Gain3 = 4, Gain1_Gain4 = 5, Gain2_Gain3 = 6, Gain2_Gain4 = 7 };
+      enum A3_Gain { Gain1 = 0, 
+                     Gain2 = 1, 
+                     Gain3 = 2, 
+                     Gain4 = 3, 
+                     Gain1_Gain3 = 4, 
+                     Gain1_Gain4 = 5, 
+                     Gain2_Gain3 = 6, 
+                     Gain2_Gain4 = 7,
+      };
 
       const std::vector<std::string> A3_SimpleGainString = {"b11_hi_gain", "b11_low_gain", "b16_lh_gain"};
 
       // In the same order/index as "ElectronicShutteringMode"
       enum A3_ShutterMode { Rolling = 0, Global = 1 };
-      // In the same order/index as "PixelReadoutRate"
-      enum A3_ReadOutRate { MHz10 = 0, MHz100 = 1, MHz200 = 2, MHz280 = 3 };
       // In the same order/index as 'BitDepth'
       enum A3_BitDepth { b11 = 0, b16= 1 };
-      // Gain Mode for Marana detector
-      enum A3_GainMode { FastFrameRate=0, HighDynamicRange=1 };
 
       // The binning system of andor3 :
       enum A3_Binning { B1x1=0, B2x2=1, B3x3=2, B4x4=3, B8x8=4};
       enum A3_PixelEncoding {Mono12=0, Mono12Packed = 1, Mono16=2, Mono32=3};
-
-      // trigger / gate level
-      enum A3_SignalLevel { Normal=0, Inverted=1};
 
       struct SdkFrameDim {       
 	AT_64 width;
@@ -169,9 +170,10 @@ namespace lima
       void getOutputSignal(std::string &signal) const;
       void getOutputSignalList(std::vector<std::string> &signal_list) const;
 
-      void setAdcRate(A3_ReadOutRate iRate);  // à exporter (avec le get)
-      void getAdcRate(A3_ReadOutRate &oRate) const;
-      void getAdcRateString(std::string &oRateString) const;
+      void setAdcRate(std::string adc_rate);
+      void getAdcRate(std::string &adc_rate) const;
+      void getAdcRateList(std::vector<std::string> &adc_rate_list) const;
+
       void setElectronicShutterMode(A3_ShutterMode iMode);  // à exporter (avec le get)
       void getElectronicShutterMode(A3_ShutterMode &oMode) const;
       void getElectronicShutterModeString(std::string &oModeString) const;
@@ -309,7 +311,6 @@ namespace lima
       int                         m_camera_number;
       AT_H                        m_camera_handle;
       A3_Gain                     m_adc_gain;
-      A3_ReadOutRate	          m_adc_rate;
       A3_ShutterMode		  m_electronic_shutter_mode;
       A3_BitDepth                 m_bit_depth;
       bool                        m_cooler;
