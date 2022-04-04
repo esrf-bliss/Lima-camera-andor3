@@ -148,7 +148,7 @@ namespace lima {
 }
 
 
-lima::Andor3::Camera::Camera(const std::string& bitflow_path, int camera_number) :
+lima::Andor3::Camera::Camera(const std::string& bitflow_path, std::string serial_number) :
 m_acq_thread(NULL),
 m_cond(),
 m_acq_thread_waiting(true),
@@ -165,7 +165,7 @@ m_detector_serial("un-inited"),
 m_detector_size(1,1),
 m_exp_time(1.0),
 m_bitflow_path(bitflow_path),
-m_camera_number(camera_number),
+m_camera_number(-1),
 m_camera_handle(AT_HANDLE_UNINITIALISED),
 m_adc_gain(Gain1_Gain4),
 m_bit_depth(b16),
@@ -209,30 +209,58 @@ m_maximage_size_cb_active(false)
   }
   pthread_mutex_unlock(&sdkInitMutex);
 
-  // --- Get available cameras and select the choosen one.
+  // --- Get available cameras and found the serial_number asked
+  // --- if serial_number == "SIMULATION", use a simulation camera
+  // --- if serial_number == "", use first real camera
   AT_64 numCameras;
+  int iErr;
   DEB_TRACE() << "Get all attached cameras";
   THROW_IF_NOT_SUCCESS(getIntSystem(andor3::DeviceCount, &numCameras),
 		       "No camera present!");
 
   DEB_TRACE() << "Found "<< numCameras << " camera" << ((numCameras>1)? "s": "");
-  DEB_TRACE() << "Try to set current camera to number " << m_camera_number;
-  
-  if ( m_camera_number < numCameras && m_camera_number >=0 ) {
-    // Getting the m_camera_handle WITH some error checking :
-    THROW_IF_NOT_SUCCESS(AT_Open(m_camera_number, &m_camera_handle),
-			 "Cannot get camera handle");
+  if (serial_number.length() > 0) {
+    DEB_ALWAYS() << "Looking for camera with serial number " << serial_number;
   }
-  else {
-    THROW_HW_ERROR(InvalidValue) << "Invalid camera number " 
-				 << m_camera_number << ", there is "
-				 << numCameras << " available";
-  }
-  
-  // --- Get Camera model (and all other parameters which are not changing during camera setup and usage )
-  THROW_IF_NOT_SUCCESS(getString(andor3::CameraModel, m_detector_model),
-		       "Cannot get camera model");
+  for (int iCam = 0; iCam < numCameras; iCam++) {
+    iErr = AT_Open(iCam, &m_camera_handle);
+    if (iErr != AT_SUCCESS) {
+      DEB_ALWAYS() << "Camera " << iCam << " : Cannot open camera";
+      continue;
+    }
 
+    iErr = getString(andor3::CameraModel, m_detector_model);
+    if (iErr != AT_SUCCESS) {
+      DEB_ALWAYS() << "Camera " << iCam << " : Cannot get camera model";
+      m_detector_model = "unknown";
+    }
+      
+    iErr = getString(andor3::SerialNumber, m_detector_serial);
+    if (iErr != AT_SUCCESS) {
+      DEB_ALWAYS() << "Camera " << iCam << " : Cannot get camera serial";
+      m_detector_serial = "unknown";
+    }
+
+    DEB_ALWAYS() << "Camera " << iCam << " : Model " << m_detector_model << " SerialNumber " << m_detector_serial;
+
+    if ((m_detector_serial == serial_number) ||
+        ((serial_number.compare(0, 4, "SIMU")==0) && (m_detector_model.compare(0, 6, "SIMCAM")==0)) ||
+        ((serial_number.length()==0) && (m_detector_model.compare(0, 5, "SIMCAM")!=0))) {
+      DEB_ALWAYS() << "Found camera asked " << serial_number;
+      m_camera_number = iCam;
+      break;
+    }
+
+    iErr = AT_Close(m_camera_handle);
+    if (iErr != AT_SUCCESS) {
+      DEB_ALWAYS() << "Camera " << iCam << " : Cannot close connection";
+    }
+  }
+
+  if (m_camera_number == -1) {
+    THROW_HW_ERROR(Error) << "Cannot find asked camera serial " << serial_number;
+  }
+    
   // Adding some extra information on the model (more human readable) :
   // DC-152 -> Neo
   if ( ! m_detector_model.compare(0, 6, "DC-152 ")) {
@@ -258,12 +286,11 @@ m_maximage_size_cb_active(false)
   }
   
   if ( m_detector_model != "SIMCAM CMOS" ) {
-    std::string		the_serial, the_fw;
+    std::string	the_fw;
 
-    getSerialNumber(the_serial);
     getFirmwareVersion(the_fw);
     m_real_camera = true;
-    m_detector_model += " (SN : " + the_serial + ", firmware " + the_fw + ")";
+    m_detector_model += " (SN : " + m_detector_serial + ", firmware " + the_fw + ")";
     
     DEB_ALWAYS() << "Camera is ready: type " << m_detector_type << ", model "<< m_detector_model;
   }
@@ -276,8 +303,8 @@ m_maximage_size_cb_active(false)
   }
 
   // --- Get Camera Serial number
-  THROW_IF_NOT_SUCCESS(getString(andor3::SerialNumber, m_detector_serial),
-		       "Cannot get camera serial number");
+//  THROW_IF_NOT_SUCCESS(getString(andor3::SerialNumber, m_detector_serial),
+//		       "Cannot get camera serial number");
 
   // --- Get Camera maximum image size 
   AT_64 xmax, ymax;
@@ -1478,13 +1505,13 @@ lima::Andor3::Camera::initTemperature()
     float value;
 
     m_has_temperature_control = true;
-    DEB_ALWAYS() << "Camera has temperature setpoints pre-defined";
+    DEB_ALWAYS() << "Camera has temperature setpoints pre-defined :";
     getEnumCount(m_camera_handle, andor3::TemperatureControl, &ntemp);
     for (int idx=0; idx != ntemp; ++idx) {
       AT_GetEnumStringByIndex(m_camera_handle, andor3::TemperatureControl, idx, at_string, 255);
       value = std::stof(WStringToString(at_string));
       m_temperature_control_values.push_back(value);
-      DEB_ALWAYS() << "Index " << idx << " Setpoint " << value;
+      DEB_ALWAYS() << " - Setpoint = " << value;
     }
     getEnumIndex(andor3::TemperatureControl, &current_idx);
     m_temperature_sp = m_temperature_control_values[current_idx];

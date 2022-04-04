@@ -98,7 +98,7 @@ namespace lima
       
       int getHwBitDepth(int *bit_depth);
       
-      Camera(const std::string& bitflow_path, int camera_number=0);
+      Camera(const std::string& bitflow_path, std::string serial_number="");
       ~Camera();
 
       // Preparing the camera's SDK to acquire frames

@@ -36,7 +36,7 @@ namespace Andor3
     enum A3_Binning { B1x1=0, B2x2=1, B3x3=2, B4x4=3, B8x8=4};
     enum A3_PixelEncoding {Mono12=0, Mono12Packed = 1, Mono16=2, Mono32=3};
 
-    Camera(const std::string& bitflow_path, int camera_number=0);
+    Camera(const std::string& bitflow_path, std::string serial_number="");
     ~Camera();
 
     void prepareAcq();
