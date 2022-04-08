@@ -66,6 +66,6 @@ namespace Andor3
     virtual void getSyncTriggering(bool &o_sync /Out/ ) const;
 
   private:
-    Interface(const Andor3::Camera&);
+    Interface(const Andor3::Interface&);
   };
 };
