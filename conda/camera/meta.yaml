@@ -18,7 +18,7 @@ build:
 requirements:
   host:
     - python {{ python }}
-    - sip 4.19.8              # For compatibility with pyqt 5.9.2
+    - sip 4.19*
     - lima-core
     - andor3-sdk 3.14
   build:
@@ -27,7 +27,7 @@ requirements:
     - {{ compiler('cxx') }}
   run:
     - python {{ python }}
-    - sip >=4.19.4, <=4.19.8  # For compatibility with pyqt 5.9.2
+    - {{ pin_compatible('sip', min_pin='x.x.x', max_pin='x') }}
     - {{ pin_compatible('lima-core', max_pin='x.x') }}
     - andor3-sdk 3.14
 
