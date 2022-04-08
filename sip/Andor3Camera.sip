@@ -32,16 +32,11 @@ namespace Andor3
     enum A3_TypeInfo { Unknown, Int, Float, Bool, Enum, String };
 
     enum A3_Gain { Gain1 = 0, Gain2 = 1, Gain3 = 2, Gain4 = 3, Gain1_Gain3 = 4, Gain1_Gain4 = 5, Gain2_Gain3 = 6, Gain2_Gain4 = 7 };
-    enum A3_SimpleGain { b11_hi_gain=0, b11_low_gain=1, b16_lh_gain=2, none=31};
-    enum A3_ShutterMode { Rolling = 0, Global = 1 };
-    enum A3_ReadOutRate { MHz10 = 0, MHz100 = 1, MHz200 = 2, MHz280 = 3 };
     enum A3_BitDepth { b11 = 0, b16= 1 };
-    enum A3_TriggerMode { Internal = 0, ExternalLevelTransition = 1, ExternalStart = 2, ExternalExposure = 3, Software = 4, Advanced = 5, External = 6 };
     enum A3_Binning { B1x1=0, B2x2=1, B3x3=2, B4x4=3, B8x8=4};
-    enum A3_FanSpeed { Off=0, Low=1, On=2};
     enum A3_PixelEncoding {Mono12=0, Mono12Packed = 1, Mono16=2, Mono32=3};
 
-    Camera(const std::string& bitflow_path, int camera_number=0);
+    Camera(const std::string& bitflow_path, std::string serial_number="");
     ~Camera();
 
     void prepareAcq();
@@ -94,22 +89,33 @@ namespace Andor3
 // -- andor3 specific, LIMA don't worry about it !
    void initialiseController();
 
+   void setGateInverted(bool inverted /In/ );
+   void getGateInverted(bool &inverted /Out/ );
+   void setTriggerInverted(bool inverted /In/ );
+   void getTriggerInverted(bool &inverted /Out/ );
+
+   void setOutputSignal(std::string signal /In/ );
+   void getOutputSignal(std::string &signal /Out/ ) const;
+   void getOutputSignalList(std::vector<std::string> &signal_list /Out/ ) const;
+
    void setAdcGain(A3_Gain iGain /In/ );
    void getAdcGain(A3_Gain &oGain /Out/ ) const;
    void getAdcGainString(std::string &oGainString /Out/ ) const;
-   void setAdcRate(A3_ReadOutRate iRate /In/ );
-   void getAdcRate(A3_ReadOutRate &oRate /Out/ ) const;
-   void getAdcRateString(std::string &oRateString /Out/ ) const;
-   void setElectronicShutterMode(A3_ShutterMode iMode /In/ );
-   void getElectronicShutterMode(A3_ShutterMode &oMode /Out/ ) const;
-   void getElectronicShutterModeString(std::string &oModeString /Out/) const;
+
+   void setAdcRate(std::string adc_rate /In/ );
+   void getAdcRate(std::string &adc_rate /Out/ ) const;
+   void getAdcRateList(std::vector<std::string> &adc_rate_list /Out/ ) const;
+
+   void setElectronicShutterMode(std::string iMode /In/ );
+   void getElectronicShutterMode(std::string &oMode /Out/ ) const;
+   void getElectronicShutterModeList(std::vector<std::string> &oModeList /Out/) const;
+
    void setBitDepth(A3_BitDepth iMode /In/ );
    void getBitDepth(A3_BitDepth &oMode /Out/ ) const;
    void getBitDepthString(std::string &oDepthString /Out/ ) const;
    void getPxEncodingString(std::string &oPxEncoding /Out/ ) const;
-   void setTriggerMode(A3_TriggerMode iMode /In/ );
-   void getTriggerMode(A3_TriggerMode &oMode /Out/ ) const;
    void getTriggerModeString(std::string &oModeString /Out/ ) const;
+
    void setTemperatureSP(double temp /In/ );
    void getTemperatureSP(double& temp /Out/ ) const;
    void getTemperature(double& temp /Out/ ) const;
@@ -119,14 +125,18 @@ namespace Andor3
 
    void setBufferOverflow(bool i_overflow /In/ );
    void getBufferOverflow(bool &o_overflow /Out/ ) const;
-   void setFanSpeed(A3_FanSpeed iFS /In/ );
-   void getFanSpeed(A3_FanSpeed &oFS /Out/ ) const;
-   void getFanSpeedString(std::string &oFSString /Out/ ) const;
+
+   void setFanSpeed(std::string fan_speed /In/ );
+   void getFanSpeed(std::string &fan_speed /Out/ ) const;
+   void getFanSpeedList(std::vector<std::string> &fs_list /Out/ ) const;
+
    void setOverlap(bool i_overlap /In/ );
    void getOverlap(bool &o_overlap /Out/ ) const;
-   void setSimpleGain(A3_SimpleGain i_gain /In/ );
-   void getSimpleGain(A3_SimpleGain &o_gain /Out/ ) const;
-   void getSimpleGainString(std::string &o_gainString /Out/ ) const;
+
+   void setSimpleGain(std::string i_gain /In/ );
+   void getSimpleGain(std::string &o_gain /Out/ ) const;
+   void getSimpleGainList(std::vector<std::string> &gain_list /Out/ ) const;
+
    void setSpuriousNoiseFilter(bool i_filter /In/ );
    void getSpuriousNoiseFilter(bool &o_filter /Out/ ) const;
    void setSyncTriggering(bool i_sync /In/ );

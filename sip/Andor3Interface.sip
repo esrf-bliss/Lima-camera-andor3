@@ -50,19 +50,22 @@ namespace Andor3
     virtual void		setAdcGain(Andor3::Camera::A3_Gain iGain /In/ );
     virtual void		getAdcGain(Andor3::Camera::A3_Gain &oGain /Out/ ) const;
     virtual void		getAdcGainString(std::string &oGainString /Out/ ) const;
-    virtual void		setSimpleGain(Andor3::Camera::A3_SimpleGain iGain /In/ );
-    virtual void		getSimpleGain(Andor3::Camera::A3_SimpleGain &oGain /Out/ ) const;
-    virtual void		getSimpleGainString(std::string &oGainString /Out/ ) const;
-    virtual void		setAdcRate(Andor3::Camera::A3_ReadOutRate iRate /In/ );
-    virtual void		getAdcRate(Andor3::Camera::A3_ReadOutRate &oRate /Out/ ) const;
-    virtual void		getAdcRateString(std::string &oRateString /Out/ ) const;
-    virtual void		setElectronicShutterMode(Andor3::Camera::A3_ShutterMode iMode /In/ );
-    virtual void		getElectronicShutterMode(Andor3::Camera::A3_ShutterMode &oMode /Out/ ) const;
-    virtual void		getElectronicShutterModeString(std::string &oModeString /Out/ ) const;
+    virtual void		setSimpleGain(std::string iGain /In/ );
+    virtual void		getSimpleGain(std::string &oGain /Out/ ) const;
+    virtual void		getSimpleGainList(std::vector<std::string> &gain_list /Out/ ) const;
+    virtual void		setAdcRate(std::string iRate /In/ );
+    virtual void		getAdcRate(std::string &oRate /Out/ ) const;
+    virtual void		getAdcRateList(std::vector<std::string> &oRateList /Out/ ) const;
+    virtual void		setElectronicShutterMode(std::string iMode /In/ );
+    virtual void		getElectronicShutterMode(std::string &oMode /Out/ ) const;
+    virtual void		getElectronicShutterModeList(std::vector<std::string> &oModeList /Out/ ) const;
 
     virtual void setOverlap(bool i_overlap /In/ );
     virtual void getOverlap(bool &o_overlap /Out/ ) const;
     virtual void setSyncTriggering(bool i_sync /In/ );
     virtual void getSyncTriggering(bool &o_sync /Out/ ) const;
+
+  private:
+    Interface(const Andor3::Interface&);
   };
 };

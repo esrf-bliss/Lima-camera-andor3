@@ -48,6 +48,15 @@ from Lima import Andor3 as Andor3Module
 # and Lima interfaces.
 from Lima.Server import AttrHelper
 
+def andor_list2dict(alist):
+     adict = dict()
+     for name in alist:
+         newname = name.upper().strip()
+         newname = newname.replace("(", "").replace(")", "").replace("-", "_").replace(" ", "_")
+         adict[newname] = name
+     return adict
+
+         
 class Andor3(PyTango.Device_4Impl):
 
     Core.DEB_CLASS(Core.DebModApplication, 'LimaCCDs')
@@ -70,28 +79,17 @@ class Andor3(PyTango.Device_4Impl):
     def __init__(self,cl, name):
         PyTango.Device_4Impl.__init__(self,cl,name)
         # dictionnaries to be used with AttrHelper.get_attr_4u
-        self.__AdcGain = {'B11_HI_GAIN':  _Andor3Camera.b11_hi_gain,
-                             'B11_LOW_GAIN': _Andor3Camera.b11_low_gain,
-                             'B16_LH_GAIN':  _Andor3Camera.b16_lh_gain,
-                          }
-        self.__AdcRate = {'MHZ10':  _Andor3Camera.MHz10,
-                          'MHZ100': _Andor3Camera.MHz100,
-                          'MHZ200': _Andor3Camera.MHz200,
-                          'MHZ280': _Andor3Camera.MHz280,
-                          }
-        self.__Cooler = {'ON':  True,
-                         'OFF': False}
-        self.__FanSpeed = {'OFF':  _Andor3Camera.Off,
-                           'LOW':  _Andor3Camera.Low,
-                           'HIGH': _Andor3Camera.On,
-                           }
-        self.__ElectronicShutterMode = {'ROLLING': _Andor3Camera.Rolling,
-                                        'GLOBAL': _Andor3Camera.Global,
-                                        }
-        self.__Overlap = {'ON':  True,
-                         'OFF': False}
-        self.__SpuriousNoiseFilter = {'ON':  True,
-                         'OFF': False}
+        self.__AdcGain = andor_list2dict(_Andor3Camera.getSimpleGainList())
+        self.__AdcRate = andor_list2dict(_Andor3Camera.getAdcRateList())
+        self.__ElectronicShutterMode = andor_list2dict(_Andor3Camera.getElectronicShutterModeList())
+        self.__Cooler = {'ON':  True, 'OFF': False}
+        self.__Overlap = {'ON':  True, 'OFF': False}
+        self.__SpuriousNoiseFilter = {'ON':  True, 'OFF': False}
+        self.__GateInverted = { 'YES': True, 'NO': False }
+        self.__TriggerInverted = { 'YES': True, 'NO': False }
+        self.__OutputSignal = andor_list2dict(_Andor3Camera.getOutputSignalList())
+        self.__FanSpeed = andor_list2dict(_Andor3Camera.getFanSpeedList())
+
         self.__Attribute2FunctionBase = {'adc_gain': 'SimpleGain',
                                          'adc_rate': 'AdcRate',
                                          'temperature': 'Temperature',
@@ -105,7 +103,13 @@ class Andor3(PyTango.Device_4Impl):
                                          'readout_time': 'ReadoutTime',
                                          'overlap': 'Overlap',
                                          'spurious_noise_filter': 'SpuriousNoiseFilter',
+                                         'serial_number': 'SerialNumber',
+                                         'gate_inverted': 'GateInverted',
+                                         'trigger_inverted': 'TriggerInverted',
+                                         'output_signal': 'OutputSignal',
                                          }
+
+
         self.init_device()
                                                
 #------------------------------------------------------------------
@@ -127,16 +131,19 @@ class Andor3(PyTango.Device_4Impl):
 
         # Apply properties if any
         if self.adc_gain:
-            _Andor3Interface.setAdcGain(self.__AdcGain[self.adc_gain])
+            _Andor3Camera.setSimpleGain(self.__AdcGain[self.adc_gain])
             
         if self.adc_rate:
-            _Andor3Interface.setAdcRate(self.__AdcRate[self.adc_rate])
+            _Andor3Camera.setAdcRate(self.__AdcRate[self.adc_rate])
             
         if self.temperature_sp:            
             _Andor3Camera.setTemperatureSP(self.temperature_sp)
             
         if self.cooler:
             _Andor3Camera.setCooler(self.__Cooler[self.cooler])
+
+        if self.overlap:
+            _Andor3Camera.setOverlap(self.__Overlap[self.overlap])
             
 
 #==================================================================
@@ -186,8 +193,8 @@ class Andor3Class(PyTango.DeviceClass):
         'config_path':
         [PyTango.DevString,
          'configuration path directory', []],
-        'camera_number':
-        [PyTango.DevShort,
+        'serial_number':
+        [PyTango.DevString,
          'Camera number', []],
         'adc_gain':
         [PyTango.DevString,
@@ -201,6 +208,9 @@ class Andor3Class(PyTango.DeviceClass):
         'cooler':
         [PyTango.DevString,
          'Start or stop the cooler ("ON"/"OFF")', []],
+        'overlap':
+        [PyTango.DevString,
+         'Overlap mode', []],
         }
 
 
@@ -249,10 +259,10 @@ class Andor3Class(PyTango.DeviceClass):
           PyTango.SCALAR,
           PyTango.READ],
          {
-             'label':'Fast trigger mode, see manual for usage',
+             'label':'Cooling status',
              'unit': 'N/A',
              'format': '',
-             'description': '0-OFF / 1-ON',
+             'description': 'Cooling status',
              }],
         'adc_gain':
         [[PyTango.DevString,
@@ -292,7 +302,7 @@ class Andor3Class(PyTango.DeviceClass):
             'label':'Fan speed',
             'unit': 'N/A',
             'format': '',
-            'description': 'Fan speed, off, low or High',
+            'description': 'Fan speed setting',
             }],
         'frame_rate':
         [[PyTango.DevDouble,
@@ -344,6 +354,46 @@ class Andor3Class(PyTango.DeviceClass):
              'format': '',
              'description': 'OFF or ON',
              }],
+        'serial_number':
+        [[PyTango.DevString,
+          PyTango.SCALAR,
+          PyTango.READ],
+         {
+             'label':'Read camera serial number',
+             'unit': 'N/A',
+             'format': '',
+             'description': 'camera serial number',
+             }],
+        'trigger_inverted':
+        [[PyTango.DevString,
+          PyTango.SCALAR,
+          PyTango.READ_WRITE],
+         {
+             'label':'trigger signal inverted',
+             'unit': 'N/A',
+             'format': '',
+             'description': 'YES or NO'
+             }],
+        'gate_inverted':
+        [[PyTango.DevString,
+          PyTango.SCALAR,
+          PyTango.READ_WRITE],
+         {
+             'label':'gate signal inverted',
+             'unit': 'N/A',
+             'format': '',
+             'description': 'YES or NO'
+             }],
+        'output_signal':
+        [[PyTango.DevString,
+          PyTango.SCALAR,
+          PyTango.READ_WRITE],
+         {
+             'label':'Output signal selection',
+             'unit': 'N/A',
+             'format': '',
+             'description': 'FireRow1, FireRowN, FireAny, FireAll',
+             }],
         }
 
 #------------------------------------------------------------------
@@ -362,15 +412,15 @@ from Lima  import Andor3 as Andor3Acq
 _Andor3Camera = None
 _Andor3Interface = None
 
-def get_control(config_path='/users/blissadm/local/Andor3/andor/bitflow', camera_number = '0', **keys) :
+def get_control(config_path='/users/blissadm/local/Andor3/andor/bitflow', serial_number = '', **keys) :
     #properties are passed here as string
     global _Andor3Camera
     global _Andor3Interface
     if _Andor3Camera is None:
         print ('\n\nStarting and configuring the Andor3 camera ...')
-        _Andor3Camera = Andor3Acq.Camera(config_path, int(camera_number))
+        _Andor3Camera = Andor3Acq.Camera(config_path, serial_number)
         _Andor3Interface = Andor3Acq.Interface(_Andor3Camera)
-        print ('\n\nAndor3 Camera #%s (%s:%s) is started'%(camera_number,_Andor3Camera.getDetectorType(),_Andor3Camera.getDetectorModel()))
+        print ('\n\nAndor3 Camera (%s:%s) is started'%(_Andor3Camera.getDetectorType(),_Andor3Camera.getDetectorModel()))
     return Core.CtControl(_Andor3Interface)
 
     

@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <limits>
 #include <ostream>
+#include <vector>
 
 // Camera SDK headers :
 #include <atcore.h>
@@ -60,23 +61,28 @@ namespace lima
 
       //! @TODO : later on should do a map (string to int and vice-versa) from parsed enum info for the next 3 :
       // In the same order/index as "PreAmpGainControl"
-      enum A3_Gain { Gain1 = 0, Gain2 = 1, Gain3 = 2, Gain4 = 3, Gain1_Gain3 = 4, Gain1_Gain4 = 5, Gain2_Gain3 = 6, Gain2_Gain4 = 7 };
-      // The "simple" version :
-      enum A3_SimpleGain { b11_hi_gain=0, b11_low_gain=1, b16_lh_gain=2, none=31};
-      // In the same order/index as "ElectronicShutteringMode"
-      enum A3_ShutterMode { Rolling = 0, Global = 1 };
-      // In the same order/index as "PixelReadoutRate"
-      enum A3_ReadOutRate { MHz10 = 0, MHz100 = 1, MHz200 = 2, MHz280 = 3 };
+      enum A3_Gain { Gain1 = 0, 
+                     Gain2 = 1, 
+                     Gain3 = 2, 
+                     Gain4 = 3, 
+                     Gain1_Gain3 = 4, 
+                     Gain1_Gain4 = 5, 
+                     Gain2_Gain3 = 6, 
+                     Gain2_Gain4 = 7,
+      };
+
+      const std::vector<std::string> A3_SimpleGainString = {"b11_hi_gain", "b11_low_gain", "b16_lh_gain"};
+
+      // Rolling Shutter mode
+      const std::string RollingShutterMode = "Rolling";
+
       // In the same order/index as 'BitDepth'
       enum A3_BitDepth { b11 = 0, b16= 1 };
-      // The camera trigger mode (in the enum order) :
-      enum A3_TriggerMode { Internal = 0, ExternalLevelTransition = 1, ExternalStart = 2, ExternalExposure = 3, Software = 4, Advanced = 5, External = 6 };
+
       // The binning system of andor3 :
       enum A3_Binning { B1x1=0, B2x2=1, B3x3=2, B4x4=3, B8x8=4};
-      // The fan speed
-      enum A3_FanSpeed { Off=0, Low=1, On=2};
       enum A3_PixelEncoding {Mono12=0, Mono12Packed = 1, Mono16=2, Mono32=3};
-      
+
       struct SdkFrameDim {       
 	AT_64 width;
 	AT_64 height;
@@ -92,7 +98,7 @@ namespace lima
       
       int getHwBitDepth(int *bit_depth);
       
-      Camera(const std::string& bitflow_path, int camera_number=0);
+      Camera(const std::string& bitflow_path, std::string serial_number="");
       ~Camera();
 
       // Preparing the camera's SDK to acquire frames
@@ -156,37 +162,50 @@ namespace lima
       void getAdcGain(A3_Gain &oGain) const;
       void getAdcGainString(std::string &oGainString) const;
 
-      void setAdcRate(A3_ReadOutRate iRate);  // à exporter (avec le get)
-      void getAdcRate(A3_ReadOutRate &oRate) const;
-      void getAdcRateString(std::string &oRateString) const;
-      void setElectronicShutterMode(A3_ShutterMode iMode);  // à exporter (avec le get)
-      void getElectronicShutterMode(A3_ShutterMode &oMode) const;
-      void getElectronicShutterModeString(std::string &oModeString) const;
+      void setGateInverted(bool inverted);
+      void getGateInverted(bool& inverted);
+      void setTriggerInverted(bool inverted);
+      void getTriggerInverted(bool& inverted);
+
+      void setOutputSignal(std::string signal);
+      void getOutputSignal(std::string &signal) const;
+      void getOutputSignalList(std::vector<std::string> &signal_list) const;
+
+      void setAdcRate(std::string adc_rate);
+      void getAdcRate(std::string &adc_rate) const;
+      void getAdcRateList(std::vector<std::string> &adc_rate_list) const;
+
+      void setElectronicShutterMode(std::string shut_mode);
+      void getElectronicShutterMode(std::string &shut_mode) const;
+      void getElectronicShutterModeList(std::vector<std::string> &shut_mode_list) const;
+
       void setBitDepth(A3_BitDepth iMode);
       void getBitDepth(A3_BitDepth &oMode) const;
       void getBitDepthString(std::string &oDepthString) const;
       void getPxEncoding(A3_PixelEncoding &oPxEncoding) const;
       void getPxEncodingString(std::string &oPxEncoding) const;
-      void setTriggerMode(A3_TriggerMode iMode);
-      void getTriggerMode(A3_TriggerMode &oMode) const;
       void getTriggerModeString(std::string &oModeString) const;
-      void setTemperatureSP(double temp);  // à exporter (avec le get)
+      void setTemperatureSP(double temp);
       void getTemperatureSP(double& temp) const;
-      void getTemperature(double& temp) const;   // à exporter (read-only)
-      void setCooler(bool flag);					 // à exporter (avec le get)
+      void getTemperature(double& temp) const;
+      void setCooler(bool flag);
       void getCooler(bool& flag) const;
-      void getCoolingStatus(std::string& status) const;  // à exporter (read-only)
+      void getCoolingStatus(std::string& status) const;
       
       void setBufferOverflow(bool i_overflow);
       void getBufferOverflow(bool &o_overflow) const;
-      void setFanSpeed(A3_FanSpeed iFS);
-      void getFanSpeed(A3_FanSpeed &oFS) const;
-      void getFanSpeedString(std::string &oFSString) const;
+
+      void setFanSpeed(std::string fan_speed);
+      void getFanSpeed(std::string &fan_speed) const;
+      void getFanSpeedList(std::vector<std::string> &fan_speed_list) const;
+
       void setOverlap(bool i_overlap);
       void getOverlap(bool &o_overlap) const;
-      void setSimpleGain(A3_SimpleGain i_gain);
-      void getSimpleGain(A3_SimpleGain &o_gain) const;
-      void getSimpleGainString(std::string &o_gainString) const;
+
+      void setSimpleGain(std::string i_gain);
+      void getSimpleGain(std::string &o_gain) const;
+      void getSimpleGainList(std::vector<std::string> &gain_list) const;
+
       void setSpuriousNoiseFilter(bool i_filter);
       void getSpuriousNoiseFilter(bool &o_filter) const;
       void setSyncTriggering(bool i_sync);
@@ -220,6 +239,9 @@ namespace lima
       void _setStatus(Camera::Status iStatus, bool iForce);
       
     private:
+      void initTrigMode();
+      void initTemperature();
+
       // -- andor3 Lower level functions
       int printInfoForProp(const AT_WC * iPropName, A3_TypeInfo iPropType) const;
       bool propImplemented(const AT_WC * iPropName) const;
@@ -241,17 +263,19 @@ namespace lima
       int getBool(const AT_WC* Feature, bool* Value) const;
       
       int setEnumIndex(const AT_WC* Feature, int Value);
-      int setEnumString(const AT_WC* Feature, const AT_WC* String);
       int getEnumIndex(const AT_WC* Feature, int* Value) const;
-      int getEnumString(const AT_WC* Feature, AT_WC* String, int StringLength) const;
+      int setEnumString(const AT_WC* Feature, std::string Value);
+      int getEnumString(const AT_WC* Feature, std::string& Value) const;
+      int getEnumStringList(const AT_WC* Feature, std::vector<std::string> &ValueList) const;
       int getEnumCount(AT_H Hndl,const  AT_WC* Feature, int* Count) const;
       int isEnumIndexAvailable(const AT_WC* Feature, int Index, bool* Available) const;
       int isEnumIndexImplemented(const AT_WC* Feature, int Index, bool* Implemented) const;
-      int getEnumStringByIndex(const AT_WC* Feature, int Index, AT_WC* String, int StringLength) const;
-      int getEnumIndexByString(const AT_WC* Feature, AT_WC* String, int *Index) const;
+
+      int getEnumStringByIndex(const AT_WC* Feature, int Index, std::string& Value) const;
+      int getEnumIndexByString(const AT_WC* Feature, std::string Value, int *Index) const;
       
-      int setString(const AT_WC* Feature, const AT_WC* String);
-      int getString(const AT_WC* Feature, AT_WC* String, int StringLength) const;
+      int setString(const AT_WC* Feature, std::string Value);
+      int getString(const AT_WC* Feature, std::string& Value) const;
       
       int sendCommand(const AT_WC* Feature);
 
@@ -290,16 +314,15 @@ namespace lima
       int                         m_camera_number;
       AT_H                        m_camera_handle;
       A3_Gain                     m_adc_gain;
-      A3_SimpleGain               m_simple_gain;
-      A3_ReadOutRate	          m_adc_rate;
-      A3_ShutterMode		  m_electronic_shutter_mode;
       A3_BitDepth                 m_bit_depth;
-      A3_TriggerMode              m_trig_mode;
       bool                        m_cooler;
       double                      m_temperature_sp;
-      bool                        m_temperature_control_available;
+      bool			  m_has_temperature_sp;
+      bool                        m_has_temperature_control;
+      std::vector<float>	  m_temperature_control_values;
 
-      // std::map<TrigMode, int>     m_trig_mode_maps;
+      TrigMode                    m_trig_mode;
+      std::map<TrigMode, int>     m_trig_mode_map;
 
       static int                  sAndorSDK3InittedCounter;
     
