@@ -64,5 +64,8 @@ namespace Andor3
     virtual void getOverlap(bool &o_overlap /Out/ ) const;
     virtual void setSyncTriggering(bool i_sync /In/ );
     virtual void getSyncTriggering(bool &o_sync /Out/ ) const;
+
+  private:
+    Interface(const Andor3::Camera&);
   };
 };
