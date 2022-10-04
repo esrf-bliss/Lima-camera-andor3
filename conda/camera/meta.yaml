@@ -20,16 +20,16 @@ requirements:
     - python {{ python }}
     - sip 4.19*
     - lima-core >=1.9.20
-    - andor3-sdk 3.14
+    - andor3-sdk 3.15.30092.2
   build:
+    - ninja
     - cmake
-    - make
     - {{ compiler('cxx') }}
   run:
-    - python {{ python }}
+    - python
     - {{ pin_compatible('sip', min_pin='x.x.x', max_pin='x') }}
     - {{ pin_compatible('lima-core', max_pin='x.x') }}
-    - andor3-sdk 3.14
+    - andor3-sdk 3.15.30092.2
 
 test:
   requires:
