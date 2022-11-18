@@ -19,7 +19,7 @@ requirements:
   host:
     - python {{ python }}
     - sip 4.19*
-    - lima-core
+    - lima-core >=1.9.20
     - andor3-sdk 3.14
   build:
     - cmake
