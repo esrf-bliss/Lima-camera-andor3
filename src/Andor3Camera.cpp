@@ -1360,6 +1360,14 @@ void
 lima::Andor3::Camera::setBitDepth(A3_BitDepth iMode)
 {
   DEB_MEMBER_FUNCT();
+  AT_BOOL readonly, writable;
+  AT_IsReadOnly(m_camera_handle, andor3::BitDepth, &readonly);
+  AT_IsWritable(m_camera_handle, andor3::BitDepth, &writable);
+  if (readonly || !writable)
+  {
+    DEB_ALWAYS() << "BitDepth is not settable";
+    return;
+  }
   int the_mode;
   setEnumIndex(andor3::BitDepth, static_cast<int>(iMode));
   getHwBitDepth(&the_mode);
