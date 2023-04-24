@@ -87,7 +87,7 @@ namespace lima {
 
     static const AT_WC* SpuriousNoiseFilter = L"SpuriousNoiseFilter";
     static const AT_WC* SynchronousTriggering = L"SynchronousTriggering";
-    static const AT_WC* TargetSensorTemperature = L"TagetSensorTemperature";
+    static const AT_WC* TargetSensorTemperature = L"TargetSensorTemperature";
     static const AT_WC* TemperatureStatus = L"TemperatureStatus";
     static const AT_WC* TriggerMode = L"TriggerMode";
     static const AT_WC* FrameCount = L"FrameCount";
