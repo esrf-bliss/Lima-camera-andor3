@@ -2,7 +2,7 @@
 *bck
 *.swp
 *target*
-build/
+build*
 .DS_Store
 .AppleDouble
 *.o
@@ -11,3 +11,4 @@ andor3_pluggin.xcodeproj/xcuserdata/
 andor3_plugin.xcodeproj/project.xcworkspace/xcuserdata/
 andor3_plugin.xcodeproj/xcuserdata/
 andor3_plugin.xcodeproj/project.xcworkspace/xcshareddata/
+pyproject.toml

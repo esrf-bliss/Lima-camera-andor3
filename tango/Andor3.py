@@ -1,7 +1,7 @@
 ############################################################################
 # This file is part of LImA, a Library for Image Acquisition
 #
-# Copyright (C) : 2009-2014
+# Copyright (C) : 2009-2026
 # European Synchrotron Radiation Facility
 # BP 220, Grenoble 38043
 # FRANCE
@@ -42,11 +42,8 @@
 import PyTango
 import sys, types, os, time
 
-from Lima import Core
-from Lima import Andor3 as Andor3Module
-# import some useful helpers to create direct mapping between tango attributes
-# and Lima interfaces.
-from Lima.Server import AttrHelper
+from lima import core
+from lima.Server import AttrHelper
 
 def andor_list2dict(alist):
      adict = dict()
@@ -57,9 +54,9 @@ def andor_list2dict(alist):
      return adict
 
          
-class Andor3(PyTango.Device_4Impl):
+class Andor3(PyTango.LatestDeviceImpl):
 
-    Core.DEB_CLASS(Core.DebModApplication, 'LimaCCDs')
+    core.DEB_CLASS(core.DebModule.DebModApplication, 'LimaCCDs')
     
 #==================================================================
 #   Andor3 Class Description:
@@ -67,17 +64,12 @@ class Andor3(PyTango.Device_4Impl):
 #
 #==================================================================
 
-class Andor3(PyTango.Device_4Impl):
-
-#--------- Add you global variables here --------------------------
-    Core.DEB_CLASS(Core.DebModApplication, 'LimaCCDs')
-
 #------------------------------------------------------------------
 #    Device constructor
 #------------------------------------------------------------------
-    @Core.DEB_MEMBER_FUNCT
+    @core.DEB_MEMBER_FUNCT
     def __init__(self,cl, name):
-        PyTango.Device_4Impl.__init__(self,cl,name)
+        PyTango.LatestDeviceImpl.__init__(self,cl,name)
         # dictionnaries to be used with AttrHelper.get_attr_4u
         self.__AdcGain = andor_list2dict(_Andor3Camera.getSimpleGainList())
         self.__AdcRate = andor_list2dict(_Andor3Camera.getAdcRateList())
@@ -122,7 +114,7 @@ class Andor3(PyTango.Device_4Impl):
 #------------------------------------------------------------------
 #    Device initialization
 #------------------------------------------------------------------
-    @Core.DEB_MEMBER_FUNCT
+    @core.DEB_MEMBER_FUNCT
     def init_device(self):
         self.set_state(PyTango.DevState.ON)
 
@@ -172,7 +164,7 @@ class Andor3(PyTango.Device_4Impl):
 #    Description: return a list of authorized values if any
 #    argout: DevVarStringArray   
 #------------------------------------------------------------------
-    @Core.DEB_MEMBER_FUNCT
+    @core.DEB_MEMBER_FUNCT
     def getAttrStringValueList(self, attr_name):
         return AttrHelper.get_attr_string_value_list(self, attr_name)
     
@@ -407,7 +399,7 @@ class Andor3Class(PyTango.DeviceClass):
 #----------------------------------------------------------------------------
 #                              Plugins
 #----------------------------------------------------------------------------
-from Lima  import Andor3 as Andor3Acq
+from lima  import andor3 as Andor3Acq
 
 _Andor3Camera = None
 _Andor3Interface = None
@@ -421,7 +413,7 @@ def get_control(config_path='/users/blissadm/local/Andor3/andor/bitflow', serial
         _Andor3Camera = Andor3Acq.Camera(config_path, serial_number)
         _Andor3Interface = Andor3Acq.Interface(_Andor3Camera)
         print ('\n\nAndor3 Camera (%s:%s) is started'%(_Andor3Camera.getDetectorType(),_Andor3Camera.getDetectorModel()))
-    return Core.CtControl(_Andor3Interface)
+    return core.CtControl(_Andor3Interface)
 
     
 def get_tango_specific_class_n_device():
