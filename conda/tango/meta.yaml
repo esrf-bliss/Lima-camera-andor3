@@ -22,7 +22,8 @@ requirements:
     - ninja
     - lima-core
   run:
-    - lima-tango-server 1.10*
+    - python
+    - lima-tango-server
     - lima-camera-andor3
 
 about:
