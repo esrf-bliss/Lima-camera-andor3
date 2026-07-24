@@ -43,7 +43,7 @@ import PyTango
 import sys, types, os, time
 
 from lima import core
-from lima.Server import AttrHelper
+from lima.server import AttrHelper
 
 def andor_list2dict(alist):
      adict = dict()
